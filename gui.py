@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import *#QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt5.QtCore import Qt, QRectF, QPoint, QTimer
 
 from retrieve import get_game
+from buzzer import ServerController
+
 
 margin=50
 window_size=500
@@ -12,7 +14,7 @@ n=8 #even integer
 cell_size=(window_size-2*margin)//n
 fontSize=10
 
-class Memory(QWidget):
+class BoardWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setGeometry(50, 50, window_size, window_size)
@@ -74,7 +76,7 @@ class Memory(QWidget):
                             self.__complete=True
                 self.update()
 
-class App(QWidget):
+class Welcome(QWidget):
 
     def __init__(self):
         super().__init__()
@@ -98,7 +100,7 @@ class App(QWidget):
 
 
         self.startButton.setToolTip('Start Game')
-        self.startButton.move(200,200)
+        self.startButton.move(300,100)
         self.startButton.clicked.connect(self.start)
 
         self.textbox.move(200, 100)
@@ -124,5 +126,5 @@ if __name__ == '__main__':
     # 		print(q.answer)
             
     app = QApplication(sys.argv)
-    ex = App()
+    ex = Welcome()
     sys.exit(app.exec_())

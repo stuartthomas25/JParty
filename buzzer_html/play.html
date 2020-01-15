@@ -45,11 +45,47 @@
 </header>
 
 <div class="w3-container" style="margin-top:90px">
-    <form method="POST" action="play.html" class="name_form">
-    <input type='text' name="username" class="text_input" placeholder="Name"/>
-    <button type="submit" class="submit">Play!</button>
-    </form>
+    <button id="buzzer" onclick="buzz()">BUZZ!</button>
 </div>
+
+<footer class="w3-container w3-bottom w3-margin-top footer">
+  <h3>$18,000</h3>
+</footer>
+
+<script>
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function lights_on(i) {
+    for (l of document.getElementsByClassName("l" + i.toString())){
+        l.classList.add("lit");
+    };
+}
+
+function lights_off(i) {
+    for (l of document.getElementsByClassName("l" + i.toString())){
+        l.classList.remove("lit");
+    };
+}
+  
+async function buzz() {
+    var secs = 5;
+    var buzzer_obj = document.getElementById("buzzer");
+    buzzer_obj.classList.add('answering');
+    for (let i = 0; i < secs; i++) {
+        lights_on(i);
+    } 
+    for (let i = 0; i < secs; i++) {
+        await sleep(1000);
+        lights_off(i);
+    }
+    buzzer_obj.classList.remove('answering');
+    buzzer_obj.classList.add('toolate');
+    await sleep(1000);
+    buzzer_obj.classList.remove('toolate');
+}
+</script>
 
 </body>
 
