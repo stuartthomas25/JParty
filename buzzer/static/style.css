@@ -7,7 +7,15 @@ body {
     background-image: url(background.jpg);
 
 }
-
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+        user-select: none; /* Non-prefixed version, currently
+                              supported by Chrome and Opera */
+}
 #buzzer {
     display: block;
     width: 100%;
@@ -15,7 +23,7 @@ body {
     border: 8px solid black;
     border-radius: 5px;
     color: black;
-    background-color: #8c8c8c;
+    background-color: white;
     padding: 14px 28px;
     font-family: gyparody;
     font-size: 50px;
@@ -33,12 +41,12 @@ body {
 }
 
 #buzzer.toolate{
-    background-color: #ff0000;
+    background-color: white;
 }
 
 
 #buzzer:active {
-    background-color: #ddd;
+    background-color: white;
     color: black;
 }
 
@@ -93,4 +101,8 @@ body {
     font-size: 50px;
     text-align: center;
     touch-action: manipulation;
+}
+
+.buzz-page {
+    display: None;
 }

@@ -1,96 +1,36 @@
 import sys
 from random import shuffle
-from PyQt5.QtGui import QPainter, QPen, QBrush, QImage
+from PyQt5.QtGui import QPainter, QPen, QBrush, QImage, QColor
 from PyQt5.QtWidgets import *#QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt5.QtCore import Qt, QRectF, QPoint, QTimer
 
 from retrieve import get_game
-from buzzer import ServerController
+from buzzer.controller import BuzzerController
+from boardwindow import DisplayWindow
 
-
-margin=50
-window_size=500
-n=8 #even integer
-cell_size=(window_size-2*margin)//n
-fontSize=10
-
-class BoardWidget(QWidget):
-    def __init__(self):
+class Welcome(QMainWindow):
+    def __init__(self, SC):
         super().__init__()
-        self.setGeometry(50, 50, window_size, window_size)
-        self.setWindowTitle('Memory')
-        self.__timer = QTimer()
-        self.__timer.timeout.connect(self.callback)
-        self.__gameRect=QRectF(margin,margin,cell_size*n,cell_size*n)
-        self.__currentNumber=-1
-        udata=2*list(range(1,n**2//2+1))
-        shuffle(udata)
-        self.__data=[udata[n*x:n*(x+1)] for x in range(n)]
-        self.__visibleCells=[]
-        self.__paused=False
-        self.__complete=False
-        self.show()
-    def callback(self):
-        self.__visibleCells=self.__visibleCells[:-2]
-        self.__currentNumber=-1
-        self.__paused=False
-        self.__timer.stop()
-        self.update()
-    def numberFromCoord(self, coord):
-        return self.__data[coord[0]][coord[1]]
-    def paintEvent(self, event):
-        qp = QPainter()
-        qp.begin(self)
-# 		for i in range(n+1):
-# 			qp.drawLine(margin, margin+cell_size*i, window_size-margin, margin+cell_size*i)
-# 		for j in range(n+1):
-# 			qp.drawLine(margin+cell_size*j, margin, margin+cell_size*j, window_size-margin)
-        for x in range(n):
-            for y in range(n):
-                cell=(x,y)
-                if cell in self.__visibleCells:
-                    number=self.numberFromCoord(cell)
-                    qp.drawText((cell[0]+0.5)*cell_size+margin-fontSize/2,(cell[1]+0.5)*cell_size+margin+fontSize/2,str(number))
-                else:	
-                    source=QRectF(0,0,100,100)
-                    target=QRectF(cell[0]*cell_size+margin,cell[1]*cell_size+margin,cell_size,cell_size)
-                    qp.drawImage(target,QImage("card_back.png"),source)
-        if self.__complete:
-            qp.drawText(225,30,"You won!")
-        qp.end()
-    def mousePressEvent(self, event):
-        if not self.__paused:
-            coord=((event.x()-margin)//cell_size,(event.y()-margin)//cell_size)
-            if not coord in self.__visibleCells and self.__gameRect.contains(event.pos()):
-                self.__visibleCells.append(coord)
-                number=self.numberFromCoord(coord)
-                if self.__currentNumber==-1:
-                    self.__currentNumber=number
-                else:
-                    if self.__currentNumber!=number:
-                        self.__timer.start(1000)
-                        self.__paused=True
-                    else:
-                        self.__currentNumber=-1
-                        if len(self.__visibleCells)==n**2:
-                            self.__complete=True
-                self.update()
-
-class Welcome(QWidget):
-
-    def __init__(self):
-        super().__init__()
+        self.socket_controller = SC
+        self.socket_controller.welcome_window = self
         self.title = 'Jeopardy!'
         self.left = 10
         self.top = 10
         self.width = 500
         self.height = 300
 
+        self.alex_window = None
         self.startButton = QPushButton('Start!', self)
         self.textbox = QLineEdit(self)
+        self.host = QLabel("Join at http://"+self.socket_controller.host(), self)
+        self.player_heading = QLabel("Players:", self)
+        self.player_labels = [QLabel("<i>Waiting...</i>", self) for _ in range(3)]
+        self.players = []
+
         self.initUI()
-        
+
     def initUI(self):
+        print(self.socket_controller.localip())
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         qtRectangle = self.frameGeometry()
@@ -100,21 +40,46 @@ class Welcome(QWidget):
 
 
         self.startButton.setToolTip('Start Game')
-        self.startButton.move(300,100)
-        self.startButton.clicked.connect(self.start)
+        self.startButton.move(280,100)
+        self.startButton.clicked.connect(self.start_game)
 
-        self.textbox.move(200, 100)
+        self.textbox.move(180, 100)
         self.textbox.resize(100,40)
         self.textbox.setText("4727")
 
+        self.host.setGeometry(150, 10, 400, 50)
+
+        self.player_heading.setGeometry(150, 150, 100, 50)
+        for i,label in enumerate(self.player_labels):
+            label_width = 20
+            label.setGeometry(180, 190+label_width*i, 100, label_width)
 
         self.show()
 
-    def start(self):
-        game_id = int(self.textbox.text())
-        game = get_game(game_id)
-        print("start!")
 
+    def start_game(self):
+        try:
+            game_id = int(self.textbox.text())
+        except ValueError as e:
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage('Invalid game ID')
+            return False
+
+        game = get_game(game_id)
+        game.scores = {n:0 for n in self.players}
+        self.socket_controller.game = game
+        game.buzzer_controller = self.socket_controller
+        self.show_board(game)
+
+    def show_board(self, game):
+        self.alex_window = DisplayWindow(game,alex=True,monitor=0)
+        self.main_window = DisplayWindow(game,alex=False,monitor=1)
+        self.hide()
+
+    def new_player(self, name):
+        self.player_labels[len(self.players)].setText(name)
+        self.players.append(name)
+        self.update()
 
 if __name__ == '__main__':
 
@@ -124,7 +89,11 @@ if __name__ == '__main__':
     # for r in game.rounds:
     # 	for q in r.questions:
     # 		print(q.answer)
-            
+
     app = QApplication(sys.argv)
-    ex = Welcome()
+    SC = BuzzerController()
+    wel = Welcome(SC)
+    SC.start()
+    #wel.start_game(SC)
+
     sys.exit(app.exec_())

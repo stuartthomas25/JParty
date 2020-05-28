@@ -19,13 +19,17 @@
     </body>
 </html> -->
 
+
+
 <!DOCTYPE html>
 <html>
 <title>Buzzer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="w3style.css">
-<link href="https://www.fontify.me/wf/1f3ad59b12e7708c3255a7abb9820ff0" rel="stylesheet" type="text/css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" type="text/javascript"></script>
+<script src="{{ static_url( "buzzer.js") }}" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ static_url("style.css") }}">
+<link rel="stylesheet" href="{{ static_url("w3style.css") }}">
+<!-- <link href="https://www.fontify.me/wf/1f3ad59b12e7708c3255a7abb9820ff0" rel="stylesheet" type="text/css"> -->
 
 <body>
 
@@ -44,48 +48,34 @@
   </table>
 </header>
 
-<div class="w3-container" style="margin-top:90px">
+<div class="w3-container buzz-page noselect" style="margin-top:90px">
     <button id="buzzer" onclick="buzz()">BUZZ!</button>
 </div>
 
-<footer class="w3-container w3-bottom w3-margin-top footer">
-  <h3>$18,000</h3>
-</footer>
-
+<div class="w3-container name-page" style="margin-top:90px">
+    <form onsubmit="nameForm('hi');" action="javascript:void(0);" class="name_form">
+        <input type='text' name="playername" class="text_input" placeholder="Name"/>
+        <button type="submit" class="submit">Play!</button>
+    </form>
+</div>
+<!-- 
 <script>
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function lights_on(i) {
-    for (l of document.getElementsByClassName("l" + i.toString())){
-        l.classList.add("lit");
-    };
-}
-
-function lights_off(i) {
-    for (l of document.getElementsByClassName("l" + i.toString())){
-        l.classList.remove("lit");
-    };
-}
-  
-async function buzz() {
-    var secs = 5;
-    var buzzer_obj = document.getElementById("buzzer");
-    buzzer_obj.classList.add('answering');
-    for (let i = 0; i < secs; i++) {
-        lights_on(i);
-    } 
-    for (let i = 0; i < secs; i++) {
-        await sleep(1000);
-        lights_off(i);
+    function nameForm(obj) {
+        var name = $("input[value='playername']").val();
+        console.log(name);
+        var message = {message:'NAME', text: name};
+        $(".name-page").hide();
+        $(".buzz-page").show();
+    
+        
+        return false;
     }
-    buzzer_obj.classList.remove('answering');
-    buzzer_obj.classList.add('toolate');
-    await sleep(1000);
-    buzzer_obj.classList.remove('toolate');
-}
-</script>
+</script> -->
+
+<!--<footer class="w3-container w3-bottom w3-margin-top footer buzz-page">
+  <h3>$18,000</h3>
+</footer>-->
+
 
 </body>
 
