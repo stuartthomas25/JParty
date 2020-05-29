@@ -1,15 +1,25 @@
 import sys
 import os
 from random import shuffle
-from PyQt5.QtGui import QPainter, QPen, QBrush, QImage, QColor, QFont
+from PyQt5.QtGui import QPainter, QPen, QBrush, QImage, QColor, QFont, QMovie, QPixmap
 from PyQt5.QtWidgets import *#QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt5.QtCore import Qt, QRectF, QPoint, QTimer, QSize
 import logging
 import pickle
+from threading import Thread
+from random import choice
+import time
 
-from .retrieve import get_game
+from .retrieve import get_game, get_all_games, get_game_sum
 from .buzzer.controller import BuzzerController
 from .boardwindow import DisplayWindow
+
+def updateUI(f):
+    def wrapper(self, *args):
+        ret = f(self, *args)
+        self.update()
+        return ret
+    return wrapper
 
 class Welcome(QMainWindow):
     def __init__(self, SC):
@@ -21,15 +31,22 @@ class Welcome(QMainWindow):
         self.top = 10
         self.width = 500
         self.height = 300
+        self.all_games = None
+        self.valid_game = False
 
+        self.icon_label = QLabel(self)
         self.startButton = QPushButton('Start!', self)
 
-        self.randButton = QPushButton('Random', self)
+        self.randButton = QPushButton('loading...', self)
+        self.summary_label = QLabel("", self)
 
         self.textbox = QLineEdit(self)
         self.gameid_label = QLabel("Game ID:", self)
-        self.player_heading = QLabel("Players:", self)
-        self.player_labels = [QLabel("<i>Waiting...</i>", self) for _ in range(3)]
+        # self.player_heading = QLabel("Players:", self)
+        self.player_labels = [QLabel(self) for _ in range(3)]
+
+
+
         self.players = []
 
         self.monitor_error = QLabel("JParty requires two seperate monitors", self)
@@ -41,6 +58,39 @@ class Welcome(QMainWindow):
         if os.path.exists(".bkup"):
             self.run_game(pickle.load(open(".bkup",'rb')))
 
+        else:
+            self.full_index_thread = Thread(target=self.full_index)
+            self.full_index_thread.start()
+
+    def full_index(self):
+        self.all_games = get_all_games()
+        self.randButton.setEnabled(True)
+        self.randButton.setText("Random")
+        print('got all games')
+
+    @updateUI
+    def random(self, checked):
+        self.full_index_thread.join()
+        game_id = choice(self.all_games)
+        self.textbox.setText(str(game_id))
+        self.textbox.show()
+
+    @updateUI
+    def _show_summary(self,text):
+        try:
+            game_id = int(text)
+            self.summary_label.setText(get_game_sum(game_id))
+            self.valid_game = True
+        except ValueError as e:
+            self.summary_label.setText("invalid game id")
+            self.valid_game = False
+        self.check_start()
+
+    def show_summary(self, text):
+        t = Thread(target=self._show_summary, args=(text,))
+        t.start()
+
+
     def check_second_monitor(self):
         if len(qApp.screens()) > 1:
             self.monitor_error.hide()
@@ -49,6 +99,8 @@ class Welcome(QMainWindow):
             self.host_overlay = HostOverlay(self.socket_controller.host())
             self.host_overlay.windowHandle().setScreen(qApp.screens()[1])
             self.host_overlay.show()
+
+        self.check_start()
 
     def initUI(self):
         print(self.socket_controller.localip())
@@ -59,10 +111,16 @@ class Welcome(QMainWindow):
         qtRectangle.moveCenter(centerPoint)
         self.move(qtRectangle.topLeft())
 
+        icon_size = 64
+        icon = QPixmap(os.getcwd()+"/icon.png")
+        self.icon_label.setPixmap(icon.scaled(icon_size, icon_size, transformMode=Qt.SmoothTransformation))
+        self.icon_label.setGeometry((self.rect().width()-icon_size)/2, 10, icon_size, icon_size)
+
         self.monitor_error.setStyleSheet("QLabel { color: red}")
-        self.monitor_error.setGeometry(140, 30, self.rect().width(), 50)
+        self.monitor_error.setGeometry(140, 75, self.rect().width(), 20)
 
         qApp.screenAdded.connect(self.check_second_monitor)
+        qApp.screenRemoved.connect(self.check_second_monitor)
         self.check_second_monitor()
 
 
@@ -74,21 +132,48 @@ class Welcome(QMainWindow):
         self.randButton.setToolTip('Random Game')
         self.randButton.move(280,120)
         self.randButton.setFocus(False)
+        self.randButton.clicked.connect(self.random)
+        self.randButton.setEnabled(False)
+        summary_margin = 50
+        self.summary_label.setGeometry(summary_margin, 150, self.rect().width()-2*summary_margin,40)
+        self.summary_label.setAlignment(Qt.AlignHCenter)
 
         self.gameid_label.move(120,105)
         self.textbox.move(180, 100)
         self.textbox.resize(100,40)
+        self.textbox.textChanged.connect(self.show_summary)
+        f = self.textbox.font()
+        f.setPointSize(30) # sets the size to 27
+        self.textbox.setFont(f)
 
-        self.player_heading.setGeometry(120, 150, 100, 50)
+        loading_movie = QMovie("loading.gif")
+        movie_width = 64
+        loading_movie.setScaledSize(QSize(movie_width, movie_width))
+        label_fontsize = 25
+        # self.player_heading.setGeometry(0, 140, self.rect().width(), 50)
+        # self.player_heading.setAlignment(Qt.AlignHCenter)
         for i,label in enumerate(self.player_labels):
-            label_width = 20
-            label.setGeometry(150, 190+label_width*i, 100, label_width)
+            f = label.font()
+            f.setPointSize(label_fontsize) # sets the size to 27
+            label.setFont(f)
+
+            label.setMovie(loading_movie)
+            label_margin = (self.rect().width() - 3*movie_width)//4
+            label.setGeometry(label_margin * (i+1) + movie_width*i, 210, movie_width, movie_width)
+        loading_movie.start()
 
         self.show()
         print(len(qApp.screens()))
 
-    def activate_start(self):
-        self.startButton.setEnabled(True)
+    def check_start(self):
+        if self.startable():
+            self.startButton.setEnabled(True)
+        else:
+            self.startButton.setEnabled(False)
+
+
+    def startable(self):
+        return self.valid_game and len(self.players)>0 and len(qApp.screens())>1
 
 
     def start_game(self):
@@ -119,7 +204,7 @@ class Welcome(QMainWindow):
     def new_player(self, name):
         self.player_labels[len(self.players)].setText(name)
         self.players.append(name)
-        self.activate_start()
+        self.check_start()
         self.update()
 
     def closeEvent(self, event):

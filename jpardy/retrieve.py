@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+from threading import Thread
+from queue import Queue
 from .game import Question, Board, Game
 
 import pickle
@@ -40,3 +42,79 @@ def get_game(game_id):
 
     pickle.dump(boards, open("board_download.dat", 'wb'))
     return Game(boards)
+
+def get_all_games():
+    r = requests.get("http://j-archive.com/listseasons.php")
+    soup = BeautifulSoup(r.text, 'html.parser')
+    seasons = soup.find_all("tr")
+
+    # Using Queue
+    concurrent = 40
+    game_ids = []
+    def send_requests():
+        while True:
+            url = q.get()
+            season_r = requests.get("http://j-archive.com/"+url)
+            season_soup = BeautifulSoup(season_r.text, 'html.parser')
+            for game in season_soup.find_all("tr"):
+                if game:
+                    game_id = int(re.search(r'(\d+)\s*$', game.find('a')['href']).groups()[0])
+                    game_ids.append(game_id)
+            q.task_done()
+
+    q = Queue(concurrent * 2)
+    for _ in range(concurrent):
+        t = Thread(target=send_requests)
+        t.daemon = True
+        t.start()
+    for season in seasons:
+        link = season.find('a')['href']
+        q.put(link)
+    q.join()
+#     games_info = {}
+    # game_ids = []
+    # for season in seasons:
+        # link = season.find('a')['href']
+        # print(link)
+        # season_r = requests.get("http://j-archive.com/"+link)
+        # season_soup = BeautifulSoup(season_r.text, 'html.parser')
+        # for game in season_soup.find_all("tr"):
+            # if game:
+                # game_id = int(re.search(r'(\d+)\s*$', game.find('a')['href']).groups()[0])
+                # game_ids.append(game_id)
+# #                 game_date = re.search(r'([\-\d]*)$', str(game.find('a').contents[0])).groups()[0]
+                # # summary = re.search(r'^\s+(.*)\s+$', game.find_all('td')[-1].contents[0])
+                # # stripped_summary = '' if summary is None else summary.groups()[0]
+                # # games_info[game_id] = game_date + ': ' + stripped_summary
+
+
+    return game_ids
+
+def get_game_sum(game_id):
+    r = requests.get(f"http://www.j-archive.com/showgame.php?game_id={game_id}")
+    soup = BeautifulSoup(r.text, 'html.parser')
+    if soup.find(class_="error"):
+        return None
+    date = re.search(r'- \w+, (.*?)$', soup.select("#game_title > h1")[0].contents[0]).groups()[0]
+    comments = soup.select("#game_comments")[0].contents
+    if len(comments)>0:
+        return date+'\n'+str(comments[0])
+    else:
+        return date
+
+
+
+
+
+
+
+# def getStatus(ourl):
+    # try:
+        # url = urlparse(ourl)
+        # conn = httplib.HTTPConnection(url.netloc)
+        # conn.request("HEAD", url.path)
+        # res = conn.getresponse()
+        # return res.status, ourl
+    # except:
+        # return "error", ourl
+
