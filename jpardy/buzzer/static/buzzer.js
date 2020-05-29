@@ -24,20 +24,20 @@ async function buzz() {
 
 }
 
-async function yourturn() {
+/*async function yourturn() {*/
 
-    //var secs = 5;
-    //var buzzer_obj = document.getElementById("buzzer");
-    //buzzer_obj.classList.add('answering');
-    //for (let i = 0; i < secs; i++) {
-        //lights_on(i);
-    //}
-    //for (let i = 0; i < secs; i++) {
-        //await sleep(1000);
-        //lights_off(i);
-    //}
-    /*buzzer_obj.classList.remove('answering');*/
-}
+    ////var secs = 5;
+    ////var buzzer_obj = document.getElementById("buzzer");
+    ////buzzer_obj.classList.add('answering');
+    ////for (let i = 0; i < secs; i++) {
+        ////lights_on(i);
+    ////}
+    ////for (let i = 0; i < secs; i++) {
+        ////await sleep(1000);
+        ////lights_off(i);
+    ////}
+    //[>buzzer_obj.classList.remove('answering');<]
+/*}*/
 
 function nameForm() {
     var name = $("input[name='playername']").val();
@@ -69,20 +69,20 @@ var updater = {
             jsondata = JSON.parse(event.data);
             switch (jsondata.message) {
                 case "GAMEFULL":
-                    game_full();
+                    alert("This game already has three players!")
                     break;
-                case "TOOLATE":
-                    alert("toolate");
+                case "NAMETAKEN":
+                    alert("That name is already taken");
+                    window.location.reload()
                     break;
-                case "YOURTURN":
-                    yourturn();
+                //case "YOURTURN":
+                    /*yourturn();*/
             }
         }
     }
 };
 
 function game_full() {
-    alert("This game already has enough players!")
 }
 
 

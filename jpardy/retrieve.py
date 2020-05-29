@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-from game import Question, Board, Game
+from .game import Question, Board, Game
 
 import pickle
 

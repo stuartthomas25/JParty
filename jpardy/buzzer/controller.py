@@ -57,8 +57,13 @@ class BuzzerHandler(tornado.web.RequestHandler):
     def post(self):
         #self.set_header("Content-Type", "text/html")
         playername = self.get_body_argument("playername")
-        global playernames
-        playernames[self.request.remote_ip] = playername
+        if not self.get_cookie("test"):
+            self.set_cookie("test","test_val")
+            print("set cookie")
+        else:
+            print("cookie:", self.get_cookie("test"))
+        # global playernames
+        # playernames[self.request.remote_ip] = playername
         self.render("play.html", messages=BuzzerSocketHandler.cache)
 
 
@@ -78,11 +83,13 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         return {}
 
     def open(self):
-        if len(BuzzerSocketHandler.waiters)<3:
-            BuzzerSocketHandler.waiters.add(self)
-        else:
+        print(self.name,BuzzerSocketHandler.player_names)
+        if len(BuzzerSocketHandler.waiters)>=3:
             print("Game full!")
             BuzzerSocketHandler.send("GAMEFULL", waiters=[self])
+            return
+
+        BuzzerSocketHandler.waiters.add(self)
 
     def on_close(self):
         BuzzerSocketHandler.waiters.remove(self)
@@ -110,7 +117,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         cls.send("YOURTURN", waiters=[handler])
 
     def on_message(self, message):
-        print(' >',message)
+        #print(' >',message)
         parsed = tornado.escape.json_decode(message)
         msg = parsed["message"]
         if msg == "BUZZ":
@@ -119,13 +126,17 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
             self.init_player(parsed["text"])
 
     def init_player(self,name):
+        if  name in BuzzerSocketHandler.player_names:
+            print("Name taken!")
+            BuzzerSocketHandler.send("NAMETAKEN", waiters=[self])
+            return
+
         print("New Player:",name,self.request.remote_ip)
         BuzzerSocketHandler.player_names[name] = self
         self.name = name
         self.application.controller.new_player(self.name)
 
     def buzz(self):
-        print(self.name, "BUZZ")
         self.application.controller.buzz(self.name)
 
     @classmethod

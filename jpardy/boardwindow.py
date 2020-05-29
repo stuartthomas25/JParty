@@ -2,7 +2,7 @@ from PyQt5.QtGui import QPainter, QPen, QBrush, QImage, QColor, QFont, QPalette
 from PyQt5.QtWidgets import *#QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt5.QtCore import Qt, QRectF, QRect, QPoint, QTimer
 
-from game import game_params as gp
+from .game import game_params as gp
 import time
 import threading
 
@@ -78,8 +78,6 @@ class ScoreWidget(QWidget):
         colorpal.setColor(QPalette.Background, BLACK)
         self.setPalette(colorpal)
 
-        self.__highlighted_player = None
-
         self.__light_level = 0
         self.__light_thread = None
 
@@ -91,8 +89,6 @@ class ScoreWidget(QWidget):
             self.__light_level -= 1
             self.update()
             time.sleep(1.)
-
-        self.dehighlight()
 
     def run_lights(self):
         self.__light_thread = threading.Thread(target = self.__lights, name="lights")
@@ -134,26 +130,15 @@ class ScoreWidget(QWidget):
 
             namerect = QRectF(sw*i, h-NAMEHEIGHT, sw, NAMEHEIGHT)
             qp.setFont(NAMEFONT)
-            if n == self.__highlighted_player:
+            if n == self.game.answering_player:
                 qp.setBrush(HIGHLIGHTBRUSH)
                 qp.drawRect(namerect)
                 qp.setPen(HIGHLIGHTPEN)
             qp.drawText(namerect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, n)
 
-
-    @updateUI
-    def highlight(self, name):
-        self.run_lights()
-        self.__highlighted_player = name
-
-    @updateUI
-    def dehighlight(self):
-        self.__highlighted_player = None
-
     @updateUI
     def stop_lights(self):
         self.__light_level = 0
-        self.dehighlight()
 
 class BorderWidget(QWidget):
     def __init__(self, game, boardrect, parent=None):
