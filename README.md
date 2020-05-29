@@ -1,19 +1,19 @@
-<img src="resources/icon.png" align="center" />
+<img src="resources/icon.png" align="left" height="100"/>
 
 # JParty
 > A Jeopardy! simulator
 
 Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full Jeopardy! simulator complete with real questions from actual games.
 
-##Features:
+## Features:
 - WebSocket buzzer for use on mobile devices
 - Access to J-Archive
 
-##Requirements:
+## Requirements:
 ### Hardware
 - Two monitors
 - A device with web access for each player
 
-### Software
+### Software (for compiling from source code)
 - Python
 - PyQt5
