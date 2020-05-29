@@ -1,4 +1,4 @@
-<img src="resources/icon.png" align="left" height="100"/>
+<img src="resources/icon.png" align="right" height="100"/>
 
 # JParty
 > A Jeopardy! simulator
