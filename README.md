@@ -6,7 +6,7 @@
 Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full Jeopardy! simulator complete with real questions from actual games.
 
 ## Download:
-- https://files.stuartthomas.us/JParty.app
+- https://files.stuartthomas.us/JParty.zip
 
 ## Features:
 - WebSocket buzzer for use on mobile devices
