@@ -200,8 +200,6 @@ class Welcome(QMainWindow):
 
         self.socket_controller.connected_players = [
         Player("Stuart", None),
-        Player("Mitchell", None),
-        Player("Alex", None)
         ]
         self.socket_controller.connected_players[0].token = bytes.fromhex("6ab3a010ce36cc5c62e3e8f219c9be")
         self.init_game()

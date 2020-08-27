@@ -225,6 +225,13 @@ class BuzzerController:
                 return p
         return None
 
+    def open_wagers(self, players=None):
+        if players is None:
+            players = self.connected_players
+
+        for p in players:
+            p.waiter.send("PROMPTWAGER", str(p.score))
+
 
 
 

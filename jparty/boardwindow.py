@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt, QRectF, QRect, QPoint, QTimer, QRect, QSize
 from .game import game_params as gp
 import time
 import threading
+import re
 
 margin=50
 window_size=500
@@ -211,7 +212,6 @@ class BoardWidget(QWidget):
     def __init__(self, game, parent=None):
         super().__init__(parent)
         self.game = game
-        self.board = game.rounds[0]
 
         self.responses_open = False
 
@@ -229,6 +229,11 @@ class BoardWidget(QWidget):
 
         self.show()
 
+    @property
+    def board(self):
+        return self.game.current_round
+
+
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
@@ -238,33 +243,34 @@ class BoardWidget(QWidget):
             pheight = parent.geometry().height()
             height = pheight * (1 - SCOREHEIGHT)
             width = height / CELLRATIO
-            for x in range(self.board.size[0]):
-                for y in range(-1,self.board.size[1]):
-                    rel_pos = (x*self.cellsize[0] + BORDERWIDTH/2, (y+1)*self.cellsize[1])
-                    cell=(x,y)
-                    qp.setPen(BORDERPEN)
-                    qp.setBrush(FILLBRUSH)
-                    cell_rect=QRectF(*rel_pos, *self.cellsize)
-                    text_rect = QRectF(cell_rect)
-                    text_rect.setX(cell_rect.x()+TEXTPADDING)
-                    text_rect.setWidth(cell_rect.width()-2*TEXTPADDING)
-                    qp.drawRect(cell_rect)
-                    if y==-1:
-                        # Categories
-                        qp.setPen(CATPEN)
-                        qp.setFont(CATFONT)
-                        qp.drawText(text_rect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, self.board.categories[x])
-                    else:
-                        # Questions
-                        q = self.board.get_question(*cell)
-                        if not q in self.game.completed_questions:
-                            qp.setPen(MONPEN)
-                            qp.setFont(MONFONT)
-                            if not self.board.dj:
-                                monies = gp.money1
-                            else:
-                                monies = gp.money2
-                            qp.drawText(text_rect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, "$"+str(q.value))
+            if not self.board.final:
+                for x in range(self.board.size[0]):
+                    for y in range(-1,self.board.size[1]):
+                        rel_pos = (x*self.cellsize[0] + BORDERWIDTH/2, (y+1)*self.cellsize[1])
+                        cell=(x,y)
+                        qp.setPen(BORDERPEN)
+                        qp.setBrush(FILLBRUSH)
+                        cell_rect=QRectF(*rel_pos, *self.cellsize)
+                        text_rect = QRectF(cell_rect)
+                        text_rect.setX(cell_rect.x()+TEXTPADDING)
+                        text_rect.setWidth(cell_rect.width()-2*TEXTPADDING)
+                        qp.drawRect(cell_rect)
+                        if y==-1:
+                            # Categories
+                            qp.setPen(CATPEN)
+                            qp.setFont(CATFONT)
+                            qp.drawText(text_rect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, format_text(self.board.categories[x]))
+                        else:
+                            # Questions
+                            q = self.board.get_question(*cell)
+                            if not q in self.game.completed_questions:
+                                qp.setPen(MONPEN)
+                                qp.setFont(MONFONT)
+                                if not self.board.dj:
+                                    monies = gp.money1
+                                else:
+                                    monies = gp.money2
+                                qp.drawText(text_rect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, "$"+str(q.value))
 
 
         else:
@@ -278,12 +284,12 @@ class BoardWidget(QWidget):
                 anheight = ANSWERHEIGHT * self.size().height()
                 qurect = self.rect().adjusted(QUMARGIN, QUMARGIN, -2*QUMARGIN, - ANSWERHEIGHT * self.size().height())
                 anrect = QRectF(QUMARGIN, self.size().height()*(1-ANSWERHEIGHT), self.size().width()-2*QUMARGIN, ANSWERHEIGHT * self.size().height())
-                qp.drawText(anrect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, self.game.active_question.answer.upper())
+                qp.drawText(anrect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, format_text(self.game.active_question.answer))
                 qp.drawLine(0, (1-ANSWERHEIGHT) * self.size().height(), self.size().width(), (1-ANSWERHEIGHT) * self.size().height())
 
             else:
                 qurect = self.rect().adjusted(QUMARGIN, QUMARGIN, -2*QUMARGIN, -2*QUMARGIN)
-            qp.drawText(qurect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, self.game.active_question.text.upper())
+            qp.drawText(qurect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, format_text(self.game.active_question.text))
 
 
     def load_question(self,i,j):
@@ -332,3 +338,7 @@ class DisplayWindow(QWidget):
 
     def keyPressEvent(self, event):
         self.game.keystroke_manager.call(event.key())
+
+
+def format_text(s):
+    return re.sub("</?i>", "", s).upper()

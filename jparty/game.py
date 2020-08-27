@@ -149,6 +149,7 @@ class Game(object):
         self.completed_questions = []
         self.previous_answerer = None
         self.timer = None
+        self.__current_round = 1 # EDIT
 
         self.buzzer_controller = None
 
@@ -159,10 +160,17 @@ class Game(object):
         self.keystroke_manager.addEvent('OPEN_RESPONSES', Qt.Key_Space, self.open_responses, persistent=False)
         self.keystroke_manager.addEvent('NEXT_ROUND', Qt.Key_Space, self.next_round, persistent=False)
 
-        self.completed_questions = self.board.questions[:-1] # EDIT
+        self.completed_questions = self.rounds[1].questions[:-1] # EDIT
 
     def update(self):
         self.dc.update()
+
+    def complete(self):
+        return all(b.complete for b in self.rounds)
+
+    @property
+    def current_round(self):
+        return self.rounds[self.__current_round]
 
     @updateUI
     def open_responses(self):
@@ -218,12 +226,18 @@ class Game(object):
         self.active_question = None
         self.previous_answerer = None
         rasync(self.save)
-        if len(self.completed_questions) == len(self.board.questions):
+        if len(self.completed_questions) == len(self.current_round.questions):
             self.keystroke_manager.activate('NEXT_ROUND')
 
+    @updateUI
     def next_round(self):
-        print("Next round")
+        self.completed_questions = []
+        self.__current_round += 1
+        if self.__current_round == 2:
+            self.start_final()
 
+    def start_final(self):
+        self.buzzer_controller.open_wagers()
 
 
 
@@ -234,6 +248,7 @@ class Game(object):
     @updateUI
     def correct_answer(self):
         print("correct")
+
         self.timer.cancel()
         self.answering_player.score += self.active_question.value
         self.answer_given()
@@ -271,6 +286,10 @@ class Game(object):
         self.players = state[1]
         print(1,state[1])
         self.completed_questions = state[2]
+
+
+
+    ### Final Jeopardy ###
 
 class Player(object):
     def __init__(self, name, waiter):
