@@ -6,7 +6,7 @@ block_cipher = None
 a = Analysis(['cli.py'],
              pathex=['/Users/Stuart/Documents/Development_Projects/JParty'],
              binaries=[],
-             datas=[],
+             datas=[('jparty/buzzer', 'buzzer')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -34,4 +34,8 @@ exe = EXE(pyz,
 app = BUNDLE(exe,
              name='JParty.app',
              icon='resources/icon.icns',
-             bundle_identifier=None)
+             bundle_identifier=None,
+             info_plist={
+                 'NSPrincipalClass': 'NSApplication'
+                 }
+             )

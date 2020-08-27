@@ -1,0 +1,134 @@
+
+@font-face {
+    font-family: gyparody;
+    src: url(gyparody/gyparodyhv.ttf);
+}
+body {
+    background-image: url(background.jpg);
+
+}
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+        user-select: none; /* Non-prefixed version, currently
+                              supported by Chrome and Opera */
+}
+#buzzer {
+    display: block;
+    width: 100%;
+    height: 330px;
+    border: 8px solid black;
+    border-radius: 5px;
+    color: black;
+    background-color: white;
+    padding: 14px 28px;
+    font-family: gyparody;
+    font-size: 50px;
+    text-align: center;
+    touch-action: manipulation;
+    
+}
+
+#buzzer:disabled {
+    background-color: #a6a6a6;
+}
+
+#buzzer.answering{
+    background-color: white;
+}
+
+#buzzer.toolate{
+    background-color: white;
+}
+
+
+#buzzer:active {
+    background-color: white;
+    color: black;
+}
+
+/* @import url('https://www.fontify.me/wf/1f3ad59b12e7708c3255a7abb9820ff0'); */
+.footer {
+    text-align: center;
+    font-family: font72778;
+    font-style: bold;
+    color: white;
+    border-top: 5px solid white;
+    background-color: #031591;
+
+}
+
+.lights_table {
+    width: 100%;
+    height: 20px;
+    background-color: black;
+
+}
+
+.lights_table td {
+    border: 2px solid grey;
+}
+
+.light.lit {
+    background-color: red;
+}
+
+.name_form {
+    text-align: center;
+}
+.text_input {
+    top:100px;
+    display: block;
+    width: 100%;
+    padding: 14px 28px;
+    text-align: center;
+
+}
+.submit {
+    margin-top: 20px; 
+    display: block;
+    width: 100%;
+    height: 100px;
+    border: 8px solid black;
+    border-radius: 5px;
+    color: black;
+    background-color: white;
+    padding: 5px 28px;
+    font-family: gyparody;
+    font-size: 50px;
+    text-align: center;
+    touch-action: manipulation;
+}
+
+.buzz-page {
+    display: None;
+}
+.wager-page {
+    display: None;
+}
+
+.wager_input {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='48px' width='85px'><text x='15' y='35' fill='gray' font-size='30' font-family='arial'>$</text></svg>");
+    padding-left: 12px;
+    background-repeat: no-repeat;
+}
+.answer-page {
+    display: None;
+}
+.prompt {
+    color: white;
+    text-align: center;
+    font-family: gyparody;
+    font-size: 20pt;
+    top: 50px;
+    margin:20px;
+}
+.answer_input {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='48px' width='60'><text x='15' y='35' fill='gray' font-size='30' font-family='arial'>?</text></svg>");
+    padding-left: 12px;
+    background-repeat: no-repeat;
+    background-position: right;
+}
