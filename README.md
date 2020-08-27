@@ -5,15 +5,19 @@
 
 Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full Jeopardy! simulator complete with real questions from actual games.
 
+## Download:
+- https://files.stuartthomas.us/JParty.zip
+
 ## Features:
 - WebSocket buzzer for use on mobile devices
 - Access to J-Archive
 
 ## Requirements:
-### Hardware
+### For running
+- macOS
 - Two monitors
 - A device with web access for each player
 
-### Software (for compiling from source code)
+### For compiling from source code
 - Python
 - PyQt5
