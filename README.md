@@ -3,7 +3,7 @@
 # JParty
 > A Jeopardy! simulator
 
-Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full Jeopardy! simulator complete with real questions from actual games.
+Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full "Jeopardy!" simulator complete with real questions from actual games.
 
 ## Download:
 - https://files.stuartthomas.us/JParty.zip
