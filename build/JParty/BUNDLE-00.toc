@@ -1,3 +1,0 @@
-([('JParty',
-   '/Users/Stuart/Documents/Development_Projects/JParty/dist/JParty',
-   'EXECUTABLE')],)
