@@ -4,6 +4,8 @@ import threading
 import time
 from dataclasses import dataclass
 import pickle
+import os
+import sys
 
 def rasync(f,*args,**kwargs):
     t = threading.Thread(target=f, args=args, kwargs=kwargs)
@@ -95,7 +97,6 @@ class CompoundObject(object):
     def __repr__(self):
         return "CompoundObject("+", ".join([ repr(o) for o in self.__objs])+")"
 
-
 class Question(object):
     def __init__(self,index,text,answer,value):
         self.index = index
@@ -105,6 +106,8 @@ class Question(object):
 
 class Board(object):
     def __init__(self,categories, questions, final=False, dj=False):
+        print(len(questions),"questions in round")
+        self.complete = len(questions) == 30 if not final else len(questions) == 1
         if final:
             self.size = (1,1)
         else:
@@ -121,6 +124,7 @@ class Board(object):
             if q.index == (i,j):
                 return q
         return None
+
 def updateUI(f):
     def wrapper(self, *args):
         ret = f(self, *args)
@@ -129,12 +133,14 @@ def updateUI(f):
     return wrapper
 
 class Game(object):
-    def __init__(self,rounds):
-        self.new_game(rounds)
+    def __init__(self, rounds, date, comments):
+        self.new_game(rounds, date, comments)
 
-    def new_game(self, rounds):
+    def new_game(self, rounds, date, comments):
+        self.date = date
+        self.comments = comments
         self.rounds = rounds
-        self.scores = {}
+        self.players = []
         self.dc = CompoundObject()
         self.paused = False
         self.active_question = None
@@ -151,6 +157,9 @@ class Game(object):
         self.keystroke_manager.addEvent('INCORRECT_RESPONSE', Qt.Key_Right, self.incorrect_answer)
         self.keystroke_manager.addEvent('BACK_TO_BOARD', Qt.Key_Space, self.back_to_board, persistent=False)
         self.keystroke_manager.addEvent('OPEN_RESPONSES', Qt.Key_Space, self.open_responses, persistent=False)
+        self.keystroke_manager.addEvent('NEXT_ROUND', Qt.Key_Space, self.next_round, persistent=False)
+
+        self.completed_questions = self.board.questions[:-1] # EDIT
 
     def update(self):
         self.dc.update()
@@ -172,26 +181,29 @@ class Game(object):
         self.dc.borderwidget.lit = True
 
 
-
     @updateUI
     def buzz(self, player):
         print("buzz")
         if self.accepting_responses and player is not self.previous_answerer:
+            self.accepting_responses = False
             print("buzz accepted")
             self.timer.pause()
             self.previous_answerer = player
             self.dc.scoreboard.run_lights()
 
             self.answering_player = player
-            self.buzzer_controller.activate_buzzer(player)
             self.keystroke_manager.activate('CORRECT_RESPONSE')
             self.keystroke_manager.activate('INCORRECT_RESPONSE')
+            self.dc.borderwidget.hints = True
+            self.dc.borderwidget.lit = False
+
 
     def answer_given(self):
         print("answer given")
         self.dc.scoreboard.stop_lights()
         self.deactivate_responses()
         self.answering_player = None
+        self.dc.borderwidget.hints = False
 
     def deactivate_responses(self):
         print("deactivate responses")
@@ -206,15 +218,24 @@ class Game(object):
         self.active_question = None
         self.previous_answerer = None
         rasync(self.save)
+        if len(self.completed_questions) == len(self.board.questions):
+            self.keystroke_manager.activate('NEXT_ROUND')
+
+    def next_round(self):
+        print("Next round")
+
+
+
 
     def save(self):
-        pickle.dump(self, open(".bkup",'wb'))
+        #pickle.dump(self, open(".bkup",'wb'))
+        pass
 
     @updateUI
     def correct_answer(self):
         print("correct")
         self.timer.cancel()
-        self.scores[self.answering_player] += self.active_question.value
+        self.answering_player.score += self.active_question.value
         self.answer_given()
         self.back_to_board()
         self.dc.borderwidget.lit = False
@@ -222,7 +243,7 @@ class Game(object):
     @updateUI
     def incorrect_answer(self):
         print("incorrect")
-        self.scores[self.answering_player] -= self.active_question.value
+        self.answering_player.score -= self.active_question.value
         self.answer_given()
         self.open_responses()
         self.timer.resume()
@@ -243,16 +264,27 @@ class Game(object):
         self.keystroke_manager.activate('BACK_TO_BOARD')
 
     def __getstate__(self):
-        return (self.rounds, self.scores, self.completed_questions)
+        return ((self.rounds, self.date, self.comments), self.players, self.completed_questions)
 
     def __setstate__(self, state):
-
-        self.new_game(state[0])
-        self.scores = state[1]
+        self.new_game(*state[0])
+        self.players = state[1]
         print(1,state[1])
         self.completed_questions = state[2]
+
+class Player(object):
+    def __init__(self, name, waiter):
+        self.name = name
+        self.token = os.urandom(15)
+        self.score = 0
+        self.waiter = waiter
+
+    def __hash__(self):
+        return int.from_bytes(self.token, sys.byteorder)
+
 
 
 game_params = SimpleNamespace()
 game_params.money1 = [200,400,600,800,1000]
 game_params.money2 = [400,800,1200,1600,2000]
+

@@ -1,6 +1,6 @@
-from PyQt5.QtGui import QPainter, QPen, QBrush, QImage, QColor, QFont, QPalette
+from PyQt5.QtGui import QPainter, QPen, QBrush, QImage, QColor, QFont, QPalette, QPixmap
 from PyQt5.QtWidgets import *#QWidget, QApplication, QDesktopWidget, QPushButton
-from PyQt5.QtCore import Qt, QRectF, QRect, QPoint, QTimer
+from PyQt5.QtCore import Qt, QRectF, QRect, QPoint, QTimer, QRect, QSize
 
 from .game import game_params as gp
 import time
@@ -18,6 +18,7 @@ RED = QColor("#ff0000")
 BLACK = QColor("#000000")
 GREY = QColor("#505050")
 WHITE = QColor("#ffffff")
+GREEN = QColor("#33cc33")
 
 BOARDSIZE = (6,6)
 
@@ -38,11 +39,16 @@ QUMARGIN = 50
 NAMEHEIGHT = 50
 NAMEFONT = QFont()
 NAMEFONT.setPointSize(20)
+NAMEPEN = QPen(WHITE)
 SCOREFONT = QFont()
 SCOREFONT.setPointSize(50)
 SCOREPEN = QPen(WHITE)
+HOLEPEN = QPen(RED)
 HIGHLIGHTPEN = QPen(BLUE)
 HIGHLIGHTBRUSH = QBrush(WHITE)
+
+CORRECTBRUSH = QBrush(GREEN)
+INCORRECTBRUSH = QBrush(RED)
 
 LIGHTPEN = QPen(GREY)
 LIGHTBRUSH = QBrush(RED)
@@ -120,21 +126,26 @@ class ScoreWidget(QWidget):
                     qp.drawRect(rect)
 
         margin = 50
-        scores = self.game.scores
-        sw = w//len(scores)
-        for i,(n,s) in enumerate(scores.items()):
-            qp.setPen(SCOREPEN)
+        players = self.game.players
+        sw =  w // len(players)
+        for i,p in enumerate(players):
+            if p.score < 0:
+                qp.setPen(HOLEPEN)
+            else:
+                qp.setPen(SCOREPEN)
+
             qp.setFont(SCOREFONT)
             scorerect = QRectF(sw*i, DIVIDERWIDTH, sw, h-NAMEHEIGHT-DIVIDERWIDTH)
-            qp.drawText(scorerect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, f'{s:,}')
+            qp.drawText(scorerect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, f'{p.score:,}')
 
             namerect = QRectF(sw*i, h-NAMEHEIGHT, sw, NAMEHEIGHT)
             qp.setFont(NAMEFONT)
-            if n == self.game.answering_player:
+            qp.setPen(NAMEPEN)
+            if p == self.game.answering_player:
                 qp.setBrush(HIGHLIGHTBRUSH)
                 qp.drawRect(namerect)
                 qp.setPen(HIGHLIGHTPEN)
-            qp.drawText(namerect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, n)
+            qp.drawText(namerect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, p.name)
 
     @updateUI
     def stop_lights(self):
@@ -145,18 +156,40 @@ class BorderWidget(QWidget):
         super().__init__(parent)
         self.game = game
         self.boardrect = boardrect
+        margin_size = self.boardrect.x()
         self.__answerbarrect = boardrect.adjusted(-ANSWERBARS, 0, ANSWERBARS, 0)
+
+        self.__correctrect = QRect(0, 0, margin_size, self.boardrect.height())
+        self.__incorrectrect = QRect(self.boardrect.right(), 0, margin_size, self.boardrect.height())
+        arrow_size = QSize(int(margin_size*0.7), int(margin_size*0.7))
+        self.__leftarrowrect = QRect(QPoint(0,0), arrow_size)
+        self.__leftarrowrect.moveCenter(self.__correctrect.center())
+        self.__leftarrowimage = QPixmap(":data/left-arrow.png")
+        self.__rightarrowrect = QRect(QPoint(0,0), arrow_size)
+        self.__rightarrowrect.moveCenter(self.__incorrectrect.center())
+        self.__rightarrowimage = QPixmap(":data/right-arrow.png")
+
         self.show()
         self.__lit = False
+        self.__hints = False
 
     @property
     def lit(self):
         return self.__lit
 
+    @property
+    def hints(self):
+        return self.__hints
+
     @lit.setter
+    @updateUI
     def lit(self, val):
         self.__lit = val
-        self.update()
+
+    @hints.setter
+    @updateUI
+    def hints(self, val):
+       self.__hints = val
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -164,15 +197,21 @@ class BorderWidget(QWidget):
         if self.lit:
             qp.setBrush(HIGHLIGHTBRUSH)
             qp.drawRect(self.__answerbarrect)
-
-
+        if self.hints:
+            print("Drawing hints...")
+            qp.setBrush(CORRECTBRUSH)
+            qp.drawRect(self.__correctrect)
+            qp.setBrush(INCORRECTBRUSH)
+            qp.drawRect(self.__incorrectrect)
+            qp.setBrush(HIGHLIGHTBRUSH)
+            qp.drawPixmap(self.__leftarrowrect, self.__leftarrowimage)
+            qp.drawPixmap(self.__rightarrowrect, self.__rightarrowimage)
 
 class BoardWidget(QWidget):
-    def __init__(self, game, alex=True, parent=None):
+    def __init__(self, game, parent=None):
         super().__init__(parent)
         self.game = game
         self.board = game.rounds[0]
-        self.alex = alex
 
         self.responses_open = False
 
@@ -217,14 +256,15 @@ class BoardWidget(QWidget):
                         qp.drawText(text_rect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, self.board.categories[x])
                     else:
                         # Questions
-                        if not self.board.get_question(*cell) in self.game.completed_questions:
+                        q = self.board.get_question(*cell)
+                        if not q in self.game.completed_questions:
                             qp.setPen(MONPEN)
                             qp.setFont(MONFONT)
                             if not self.board.dj:
                                 monies = gp.money1
                             else:
                                 monies = gp.money2
-                            qp.drawText(text_rect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, "$"+str(monies[y]))
+                            qp.drawText(text_rect, Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter, "$"+str(q.value))
 
 
         else:
@@ -234,7 +274,7 @@ class BoardWidget(QWidget):
             qp.setPen(CATPEN)
             qp.setFont(QUFONT)
 
-            if self.alex:
+            if self.parent().alex:
                 anheight = ANSWERHEIGHT * self.size().height()
                 qurect = self.rect().adjusted(QUMARGIN, QUMARGIN, -2*QUMARGIN, - ANSWERHEIGHT * self.size().height())
                 anrect = QRectF(QUMARGIN, self.size().height()*(1-ANSWERHEIGHT), self.size().width()-2*QUMARGIN, ANSWERHEIGHT * self.size().height())
@@ -263,7 +303,8 @@ class BoardWidget(QWidget):
 class DisplayWindow(QWidget):
     def __init__(self,game, alex=True, monitor=0):
         super().__init__()
-        self.setWindowTitle('Alex')
+        self.alex=alex
+        self.setWindowTitle('Alex' if alex else "Board")
 
         colorpal = QPalette()
         colorpal.setColor(QPalette.Background, BLACK)
@@ -273,7 +314,7 @@ class DisplayWindow(QWidget):
         self.move(monitor.left(), monitor.top()) #move to monitor 0
         self.showFullScreen()
 
-        self.boardwidget = BoardWidget(game, alex=alex, parent=self)
+        self.boardwidget = BoardWidget(game, parent=self)
         self.boardwidget.move(self.geometry().width()/2 - self.boardwidget.geometry().width()/2, 0)
 
         self.boardwidget.update()
@@ -288,9 +329,6 @@ class DisplayWindow(QWidget):
         self.game.dc += self
         self.show()
 
-
-    def update_scores(self, scores):
-        self.scoreboard.update_scores(scores)
 
     def keyPressEvent(self, event):
         self.game.keystroke_manager.call(event.key())

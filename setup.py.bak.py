@@ -6,9 +6,14 @@ Usage:
 """
 
 from setuptools import setup, find_packages
+print("TEST")
 
 APP = ['gui.py']
-DATA_FILES = ['resources/icon.icns']
+DATA_FILES = ['resources/icon.icns', 'jpardy/icon.png', 'jpardy/loading.gif']
+datadir = '/'
+DATA_FILES = [(d, [os.path.join(d,f) for f in files])
+    for d, folders, files in os.walk(datadir)]
+
 OPTIONS = {
         'iconfile': 'resources/icon.icns',
         'argv_emulation': True,

@@ -80,7 +80,7 @@ body {
     text-align: center;
 }
 .text_input {
-    margin-top:100px;
+    top:100px;
     display: block;
     width: 100%;
     padding: 14px 28px;
@@ -105,4 +105,30 @@ body {
 
 .buzz-page {
     display: None;
+}
+.wager-page {
+    display: None;
+}
+
+.wager_input {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='48px' width='85px'><text x='15' y='35' fill='gray' font-size='30' font-family='arial'>$</text></svg>");
+    padding-left: 12px;
+    background-repeat: no-repeat;
+}
+.answer-page {
+    display: None;
+}
+.prompt {
+    color: white;
+    text-align: center;
+    font-family: gyparody;
+    font-size: 20pt;
+    top: 50px;
+    margin:20px;
+}
+.answer_input {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='48px' width='60'><text x='15' y='35' fill='gray' font-size='30' font-family='arial'>?</text></svg>");
+    padding-left: 12px;
+    background-repeat: no-repeat;
+    background-position: right;
 }
