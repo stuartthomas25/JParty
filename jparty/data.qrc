@@ -4,5 +4,7 @@
     <file>data/loading.gif</file>
     <file>data/right-arrow.png</file>
     <file>data/left-arrow.png</file>
+    <file>data/space.png</file>
+    <file>data/song.wav</file>
   </qresource>
 </RCC>
