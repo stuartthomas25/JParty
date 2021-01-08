@@ -81,9 +81,11 @@ function send(msg, text="") {
     updater.socket.send(JSON.stringify(message));
 }
 function wagerForm() {
-    var amount =$("input[name='wager']").val();
-    alert("Wagered" + amount);
-    send("WAGER", amount);
+    var amount =$("input[name='wager']").val().replace(/[\s,]/g, '');
+    if (amount != "") {
+        send("WAGER", amount);
+        load_page(null);
+    }
     return false;
 }
 function answerForm() {
@@ -95,9 +97,11 @@ function answerForm() {
 
 function nameForm() {
     var name = $("input[name='playername']").val();
-    console.log(name);
-    send("NAME",name);
-    load_page("buzz");
+    if (name != "") {
+        console.log(name);
+        send("NAME",name);
+        load_page("buzz");
+    }
     return false;
 }
 
@@ -142,10 +146,10 @@ var updater = {
                     load_page("wager");
                     $(".wager_input").attr("max",jsondata.text);
                     console.log("Max wager:" + $(".wager_input").attr("max"));
-
                     break;
                 case "PROMPTANSWER":
                     load_page("answer");
+                    setInterval(function () {load_page(null)}, 31000);
                     break;
                 //case "YOURTURN":
                     /*yourturn();*/
