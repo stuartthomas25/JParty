@@ -1,4 +1,4 @@
-name: jeopardy
+name: jparty
 channels:
   - conda-forge
   - dsdale24
@@ -35,4 +35,6 @@ dependencies:
   - pip:
     - pyqt5==5.14.1
     - pyqt5-sip==12.7.0
-prefix: /Users/Stuart/anaconda3/envs/jeopardy
+variables:
+  QT_MAC_WANTS_LAYER: '1'
+prefix: /opt/miniforge3/envs/jparty
