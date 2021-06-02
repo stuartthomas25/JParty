@@ -6,6 +6,7 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 import tornado.websocket
+import tornado.speedups
 import os
 import uuid
 import time
@@ -74,35 +75,12 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         return {}
 
     def open(self):
-        pass
+        self.set_nodelay(True)
         # self.controller.connected_players.add(self)
 
     def on_close(self):
         pass
         # self.controller.waiters.remove(self)
-
-    # @classmethod
-    # def update_cache(cls, chat):
-    # cls.cache.append(chat)
-    # if len(cls.cache) > cls.cache_size:
-    # cls.cache = cls.cache[-cls.cache_size :]
-
-    # @classmethod
-    # def send_updates(cls, chat):
-    # logging.info("sending message to %d waiters", len(cls.waiters))
-    # print(f"sending message to {len(cls.waiters)} waiters")
-    # for waiter in cls.waiters:
-    # print()
-
-    # try:
-    # waiter.write_message(chat)
-    # except:
-    # logging.error("Error sending message", exc_info=True)
-    # @classmethod
-    # def activate_buzzer(cls, name):
-    # print("Activating "+name+"'s buzzer")
-    # handler = cls.player_names[name]
-    # cls.send("YOURTURN", waiters=[handler])
 
     def check_if_exists(self, token):
         p = self.controller.player_with_token(token)
@@ -112,28 +90,16 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
             p.waiter = self
             self.send("EXISTS")
 
-        # for waiter in self.controller.waiters:
-
-        # print(waiter.token.hex() , token)
-        # if waiter.token.hex() == token:
-        # print(f"Exists as {waiter.name}")
-        # self.name = waiter.name
-        # self.token = token
-        # BuzzerSocketHandler.waiters.remove(waiter)
-        # BuzzerSocketHandler.player_names[self.name] = self
-        # BuzzerSocketHandler.send("EXISTS", waiters=[self])
-
-        # return None
-
     def on_message(self, message):
-        # print(' >',message)
-        print("MSG RECIEVED: " + message)
+        #do this first to kill latency
+        if "BUZZ" in message:
+            logging.info('buzz')
+            self.buzz()
+            return
         parsed = tornado.escape.json_decode(message)
         msg = parsed["message"]
         text = parsed["text"]
-        if msg == "BUZZ":
-            self.buzz()
-        elif msg == "NAME":
+        if msg == "NAME":
             self.init_player(text)
         elif msg == "CHECK_IF_EXISTS":
             print(f"Checking if {parsed['text']} exists")
@@ -204,6 +170,8 @@ class BuzzerController:
     def buzz(self, player):
         if self.game:
             self.game.buzz(player)
+        else:
+            self.welcome_window.buzz_hint(player)
 
     def wager(self, player, amount):
         if self.game:
@@ -222,7 +190,7 @@ class BuzzerController:
 
     @classmethod
     def localip(self):
-        return socket.gethostname()
+        # return socket.gethostname()
         return [
             l
             for l in (

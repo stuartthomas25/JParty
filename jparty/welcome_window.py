@@ -1,7 +1,7 @@
 import sys
 import os
 from random import shuffle
-from PyQt5.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMovie, QPixmap
+from PyQt5.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMovie, QPixmap, QPalette
 from PyQt5.QtMultimedia import QSound
 from PyQt5.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt5.QtCore import Qt, QRectF, QPoint, QTimer, QSize
@@ -10,12 +10,16 @@ import pickle
 from threading import Thread, active_count
 from random import choice
 import time
+import subprocess
+
+import threading
 
 from .data_rc import *
 from .retrieve import get_game, get_all_games, get_game_sum
 from .controller import BuzzerController
 from .boardwindow import DisplayWindow
 from .game import Player
+from .constants import DEBUG
 
 def updateUI(f):
     def wrapper(self, *args):
@@ -84,7 +88,8 @@ class Welcome(QMainWindow):
 
     def full_index(self):
         self.all_games = []
-        # self.all_games = get_all_games() # EDIT
+        if not DEBUG:
+            self.all_games = get_all_games()
         print("got all games")
 
     @updateUI
@@ -197,7 +202,8 @@ class Welcome(QMainWindow):
             )
         loading_movie.start()
 
-        self.textbox.setText(str(2534))  # EDIT
+        if DEBUG:
+            self.textbox.setText(str(2534))  # EDIT
 
         self.show()
         print("Number of screens:", len(qApp.screens()))
@@ -251,10 +257,25 @@ class Welcome(QMainWindow):
 
     @updateUI
     def new_player(self, player):
-        self.player_labels[len(self.socket_controller.connected_players) - 1].setText(
-            player.name
-        )
+        label = self.player_labels[len(self.socket_controller.connected_players) - 1]
+        label.setText(player.name)
+        label.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
         self.check_start()
+
+    @updateUI
+    def buzz_hint(self, player):
+        for l in self.player_labels:
+            if player.name == l.text():
+                l.setStyleSheet("QLabel { background-color : grey}")
+
+                def return_to_default(label=l, widget=self):
+                    l.setStyleSheet("QLabel { background-color : none}")
+                    self.update()
+
+                t = threading.Timer(0.1, return_to_default)
+                t.start()
+
+                break
 
     def closeEvent(self, event):
         if os.path.exists(".bkup"):
@@ -309,6 +330,9 @@ def main():
     wel = Welcome(SC)
     SC.start()
     # wel.start_game(SC)
+    ping_command = ['/sbin/ping -i 0.19 192.168.1.1 > /dev/null']
+    subprocess.Popen(ping_command, shell=True)
+    print('run')
 
     sys.exit(app.exec_())
 
