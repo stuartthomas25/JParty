@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['cli.py'],
-             pathex=['/Users/Stuart/Documents/Development_Projects/JParty'],
+             pathex=['/Users/stuart/Documents/Programming/JParty'],
              binaries=[],
              datas=[],
              hiddenimports=[],

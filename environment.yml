@@ -1,7 +1,6 @@
 name: jparty
 channels:
   - conda-forge
-  - dsdale24
   - defaults
 dependencies:
   - beautifulsoup4=4.8.2=py38_0
@@ -37,4 +36,4 @@ dependencies:
     - pyqt5-sip==12.7.0
 variables:
   QT_MAC_WANTS_LAYER: '1'
-prefix: /opt/miniforge3/envs/jparty
+prefix: /Users/stuart/.conda/envs/jparty
