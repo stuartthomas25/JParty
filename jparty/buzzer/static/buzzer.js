@@ -18,6 +18,7 @@ async function buzz() {
     var now = new Date().getTime();
     if (now - last_buzz > 250) {
         last_buzz = now;
+        //console.log("BUZZ");
         send("BUZZ");
     };
 
@@ -125,10 +126,11 @@ var updater = {
         var url = "ws://" + location.host + "/buzzersocket";
         updater.socket = new WebSocket(url);
         updater.socket.onmessage = function(event) {
-            console.log("MSG RECIEVED: "+event.data);
+            //console.log("MSG RECIEVED: "+event.data);
             jsondata = JSON.parse(event.data);
             switch (jsondata.message) {
                 case "GAMEFULL":
+                    //alert((Date.now()-last_buzz) % 1000);
                     alert("This game already has three players!")
                     break;
                 case "NAMETAKEN":
@@ -145,21 +147,14 @@ var updater = {
                 case "PROMPTWAGER":
                     load_page("wager");
                     $(".wager_input").attr("max",jsondata.text);
+                    $(".wager_input").attr("min",0);
                     console.log("Max wager:" + $(".wager_input").attr("max"));
                     break;
                 case "PROMPTANSWER":
                     load_page("answer");
-                    setInterval(function () {load_page(null)}, 31000);
+                    setInterval(answerForm, 31000);
                     break;
-                //case "YOURTURN":
-                    /*yourturn();*/
             }
         }
     }
 };
-
-
-function game_full() {
-}
-
-

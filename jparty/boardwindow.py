@@ -6,6 +6,7 @@ from .game import game_params as gp
 import time
 import threading
 import re
+import logging
 
 margin = 50
 window_size = 500
@@ -371,11 +372,27 @@ class BoardWidget(QWidget):
                 qurect = self.rect().adjusted(
                     QUMARGIN, QUMARGIN, -2 * QUMARGIN, -2 * QUMARGIN
                 )
-            qp.drawText(
-                qurect,
-                Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter,
-                format_text(self.game.active_question.text),
-            )
+
+            if self.game.active_question.dd:
+                qp.drawText(
+                    qurect,
+                    Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter,
+                    format_text("DAILY DOUBLE!"),
+                )
+            else:
+                qp.drawText(
+                    qurect,
+                    Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter,
+                    format_text(self.game.active_question.text),
+                )
+
+            # qp.drawText(
+                # qurect,
+                # Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter,
+                # format_text(self.game.active_question.text),
+            # )
+
+
     @updateUI
     def load_question(self, i, j):
         q = self.board.get_question(i, j)
@@ -445,10 +462,11 @@ class FinalAnswerWidget(QWidget):
 
         if self.info_level > 0:
             answerrect = QRectF(0, NAMEHEIGHT + 2*margin, w, 2*NAMEHEIGHT)
+            finalanswer = p.finalanswer if len(p.finalanswer.replace(' ','')) > 0 else "_________"
             qp.drawText(
                 answerrect,
                 Qt.TextWordWrap | Qt.AlignVCenter | Qt.AlignHCenter,
-                p.finalanswer,
+                finalanswer,
             )
 
         if self.info_level > 1:
@@ -494,9 +512,11 @@ class DisplayWindow(QWidget):
         self.game.dc += self
         self.show()
 
+
     def keyPressEvent(self, event):
         self.game.keystroke_manager.call(event.key())
 
 
 def format_text(s):
     return re.sub("</?i>", "", s).upper()
+

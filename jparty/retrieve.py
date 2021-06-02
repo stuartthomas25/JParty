@@ -4,10 +4,12 @@ import re
 from threading import Thread
 from queue import Queue
 from .game import Question, Board, Game
+import logging
 
 import pickle
 
-monies = [200, 400, 600, 800, 1000]
+monies = [[200, 400, 600, 800, 1000],
+          [400, 800, 1200, 1600, 2000]]
 
 
 def get_game(game_id, soup=None):
@@ -43,14 +45,17 @@ def get_game(game_id, soup=None):
             if not final:
                 index = (int(index_key[-3]) - 1, int(index_key[-1]) - 1)
                 js = clue.find("div")["onmouseover"]
-                value = monies[index[1]]
+                dd = clue.find(class_="clue_value_daily_double") is not None
+                value = monies[i][index[1]]
             else:
                 index = (0, 0)
                 js = list(clue.parents)[1].find("div")["onmouseover"]
                 value = None
+                dd = False
             answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
-            questions.append(Question(index, text, answer, value))
-        boards.append(Board(categories, questions, final=final, dj=i == 1))
+            questions.append(Question(index, text, answer, value, dd))
+        boards.append(Board(categories, questions, final=final, dj=(i==1)))
+    print("Boards", len(boards))
 
     return Game(boards, date, comments)
 

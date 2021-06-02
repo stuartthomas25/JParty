@@ -8,6 +8,12 @@ import pickle
 import os
 import sys
 
+from .constants import DEBUG
+
+# BUZZ_DELAY = 0 # ms
+
+activation_time = 0
+
 
 def rasync(f, *args, **kwargs):
     t = threading.Thread(target=f, args=args, kwargs=kwargs)
@@ -108,11 +114,12 @@ class CompoundObject(object):
 
 
 class Question(object):
-    def __init__(self, index, text, answer, value):
+    def __init__(self, index, text, answer, value, dd=False):
         self.index = index
         self.text = text
         self.answer = answer
         self.value = value
+        self.dd = dd
 
 
 class Board(object):
@@ -143,7 +150,6 @@ def updateUI(f):
         ret = f(self, *args)
         self.update()
         return ret
-
     return wrapper
 
 
@@ -164,7 +170,11 @@ class Game(object):
         self.completed_questions = []
         self.previous_answerer = None
         self.timer = None
-        self.__current_round = 1 #EDIT
+        if DEBUG:
+            self.__current_round = 1
+        else:
+            self.__current_round = 0
+
         self.song = QSound(':data/song.wav')
         self.__judgement_round = -1
         self.__judgement_subround = 2
@@ -192,7 +202,8 @@ class Game(object):
             "NEXT_SLIDE", Qt.Key_Space, self.final_next_slide, persistent=True
         )
 
-        self.completed_questions = self.rounds[1].questions[:-2]  # EDIT
+        # if DEBUG:
+            # self.completed_questions = self.rounds[1].questions[:-1]
 
     def update(self):
         self.dc.update()
@@ -204,6 +215,13 @@ class Game(object):
     def current_round(self):
         return self.rounds[self.__current_round]
 
+    def __accept_responses(self):
+        print("accepting responses")
+        self.accepting_responses = True
+        global activation_time
+        activation_time = time.time()
+
+
     @updateUI
     def open_responses(self):
         print("open responses")
@@ -214,7 +232,10 @@ class Game(object):
             self.song.play()
             self.timer = QuestionTimer(31, self.stumped)
         else:
-            self.accepting_responses = True
+            # accept_timer = threading.Timer(BUZZ_DELAY/1000, self.__accept_responses)
+            # accept_timer.start()
+            self.__accept_responses()
+
             if not self.timer:
                 self.timer = QuestionTimer(4, self.stumped)
         self.timer.start()
@@ -226,12 +247,11 @@ class Game(object):
         self.accepting_responses = False
         self.dc.borderwidget.lit = True
 
-    @updateUI
+    # Don't update UI every buzz
     def buzz(self, player):
-        print("buzz")
         if self.accepting_responses and player is not self.previous_answerer:
+            print(f"✅ {player.name}: buzz ({time.time() - activation_time:.6f} s)")
             self.accepting_responses = False
-            print("buzz accepted")
             self.timer.pause()
             self.previous_answerer = player
             self.dc.scoreboard.run_lights()
@@ -241,6 +261,9 @@ class Game(object):
             self.keystroke_manager.activate("INCORRECT_RESPONSE")
             self.dc.borderwidget.arrowhints = True
             self.dc.borderwidget.lit = False
+            self.update()
+        else:
+            print(f"❌ {player.name}: buzz")
 
     def answer_given(self):
         print("answer given")
