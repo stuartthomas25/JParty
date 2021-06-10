@@ -1,6 +1,7 @@
 #!/bin/sh
 export CC=clang
 export CXX=clang++
+export PYTHONPATH=/opt/homebrew/lib/python3.9/site-packages/
 export QT_MAC_WANTS_LAYER=1
 rm -R build
 rm -R dist

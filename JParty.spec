@@ -34,4 +34,4 @@ exe = EXE(pyz,
 app = BUNDLE(exe,
              name='JParty.app',
              icon='resources/icon.icns',
-             bundle_identifier=None)
+             bundle_identifier='us.stuartthomas.jparty')
