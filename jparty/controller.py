@@ -6,7 +6,7 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 import tornado.websocket
-import tornado.speedups
+# import tornado.speedups
 import os
 import uuid
 import time
@@ -17,7 +17,7 @@ from .game import Player
 
 from tornado.options import define, options
 
-define("port", default=9999, help="run on the given port", type=int)
+define("port", default=80, help="run on the given port", type=int)
 
 
 class Application(tornado.web.Application):
@@ -211,7 +211,10 @@ class BuzzerController:
 
     def host(self):
         localip = BuzzerController.localip()
-        return f"{localip}:{self.port}"
+        if self.port == 80:
+            return f"{localip}"
+        else:
+            return f"{localip}:{self.port}"
 
     def player_with_token(self, token):
         for p in self.connected_players:

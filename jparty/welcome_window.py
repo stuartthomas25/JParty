@@ -1,10 +1,10 @@
 import sys
 import os
 from random import shuffle
-from PyQt5.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMovie, QPixmap, QPalette
-from PyQt5.QtMultimedia import QSound
-from PyQt5.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
-from PyQt5.QtCore import Qt, QRectF, QPoint, QTimer, QSize
+from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMovie, QPixmap, QPalette, QGuiApplication, QFontDatabase
+# from PyQt6.QtMultimedia import QSound
+from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
+from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir
 import logging
 import pickle
 from threading import Thread, active_count
@@ -14,12 +14,13 @@ import subprocess
 
 import threading
 
-from .data_rc import *
+# from .data_rc import *
 from .retrieve import get_game, get_all_games, get_game_sum
 from .controller import BuzzerController
 from .boardwindow import DisplayWindow
 from .game import Player
 from .constants import DEBUG
+from .utils import SongPlayer
 
 def updateUI(f):
     def wrapper(self, *args):
@@ -29,6 +30,8 @@ def updateUI(f):
 
     return wrapper
 
+MOVIEWIDTH = 64
+LABELWIDTH = 150
 
 # def list_files(startpath='.'):
 # for root, dirs, files in os.walk(startpath):
@@ -53,14 +56,18 @@ class Welcome(QMainWindow):
         self.valid_game = False
         self.game = None
         # final_song = QSound("data/song.mp3")
-        self.song = QSound(':data/song.wav')
+        # self.song = QSound('data:song.wav')
+        self.song_player = SongPlayer()
+
+
         # print(final_song.fileName())
         # final_song.play()
         # print("play")
 
 
-        self.song.setLoops(QSound.Infinite)
-        self.song.play()
+        # self.song.setLoops(QSound.Infinite)
+        # self.song.play()
+        self.song_player.play(repeat=True)
 
         self.icon_label = QLabel(self)
         self.startButton = QPushButton("Start!", self)
@@ -125,31 +132,32 @@ class Welcome(QMainWindow):
         t.start()
 
     def check_second_monitor(self):
-        if len(qApp.screens()) > 1:
+        if len(QApplication.instance().screens()) > 1:
             print("hide monitor error")
             self.monitor_error.hide()
-            self.windowHandle().setScreen(qApp.screens()[0])
+            self.windowHandle().setScreen(QApplication.instance().screens()[0])
 
             self.host_overlay = HostOverlay(self.socket_controller.host())
-            self.host_overlay.windowHandle().setScreen(qApp.screens()[1])
+            self.host_overlay.windowHandle().setScreen(QApplication.instance().screens()[1])
+            print(QApplication.instance().screens()[0].size().width())
+            print(QApplication.instance().screens()[1].size().width())
             self.host_overlay.show()
 
         self.check_start()
 
     def initUI(self):
-        print(self.socket_controller.localip())
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         qtRectangle = self.frameGeometry()
-        centerPoint = QDesktopWidget().availableGeometry().center()
+        centerPoint = QGuiApplication.screens()[0].geometry().center()
         qtRectangle.moveCenter(centerPoint)
         self.move(qtRectangle.topLeft())
 
         icon_size = 64
 
-        icon = QPixmap(":data/icon.png")
+        icon = QPixmap("data:icon.png")
         self.icon_label.setPixmap(
-            icon.scaled(icon_size, icon_size, transformMode=Qt.SmoothTransformation)
+            icon.scaled(icon_size, icon_size, transformMode=Qt.TransformationMode.SmoothTransformation)
         )
         self.icon_label.setGeometry(
             (self.rect().width() - icon_size) / 2, 10, icon_size, icon_size
@@ -157,8 +165,8 @@ class Welcome(QMainWindow):
         self.monitor_error.setStyleSheet("QLabel { color: red}")
         self.monitor_error.setGeometry(140, 75, self.rect().width(), 20)
 
-        qApp.screenAdded.connect(self.check_second_monitor)
-        qApp.screenRemoved.connect(self.check_second_monitor)
+        QApplication.instance().screenAdded.connect(self.check_second_monitor)
+        QApplication.instance().screenRemoved.connect(self.check_second_monitor)
         self.check_second_monitor()
 
         self.startButton.setToolTip("Start Game")
@@ -168,13 +176,13 @@ class Welcome(QMainWindow):
 
         self.randButton.setToolTip("Random Game")
         self.randButton.move(280, 120)
-        self.randButton.setFocus(False)
+        # self.randButton.setFocus(False)
         self.randButton.clicked.connect(self.random)
         summary_margin = 50
         self.summary_label.setGeometry(
             summary_margin, 150, self.rect().width() - 2 * summary_margin, 40
         )
-        self.summary_label.setAlignment(Qt.AlignHCenter)
+        self.summary_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.gameid_label.move(120, 105)
         self.textbox.move(180, 100)
@@ -184,21 +192,20 @@ class Welcome(QMainWindow):
         f.setPointSize(30)  # sets the size to 27
         self.textbox.setFont(f)
 
-        loading_movie = QMovie(":data/loading.gif")
-        movie_width = 64
-        loading_movie.setScaledSize(QSize(movie_width, movie_width))
+        loading_movie = QMovie("data:loading.gif")
+        loading_movie.setScaledSize(QSize(MOVIEWIDTH, MOVIEWIDTH))
         label_fontsize = 15
         # self.player_heading.setGeometry(0, 140, self.rect().width(), 50)
-        # self.player_heading.setAlignment(Qt.AlignHCenter)
+        # self.player_heading.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         for i, label in enumerate(self.player_labels):
             f = label.font()
             f.setPointSize(label_fontsize)  # sets the size to 27
             label.setFont(f)
 
             label.setMovie(loading_movie)
-            label_margin = (self.rect().width() - 3 * movie_width) // 4
+            label_margin = (self.rect().width() - 3 * MOVIEWIDTH) // 4
             label.setGeometry(
-                label_margin * (i + 1) + movie_width * i, 210, movie_width, movie_width
+                label_margin * (i + 1) + MOVIEWIDTH * i, 210, MOVIEWIDTH, MOVIEWIDTH
             )
         loading_movie.start()
 
@@ -206,7 +213,7 @@ class Welcome(QMainWindow):
             self.textbox.setText(str(2534))  # EDIT
 
         self.show()
-        print("Number of screens:", len(qApp.screens()))
+        print("Number of screens:", len(QApplication.instance().screens()))
 
         ### FOR TESTING
 
@@ -228,7 +235,7 @@ class Welcome(QMainWindow):
         return (
             self.valid_game
             and len(self.socket_controller.connected_players) > 0
-            and len(qApp.screens()) > 1
+            and len(QApplication.instance().screens()) > 1
         )
 
     def init_game(self):
@@ -244,7 +251,8 @@ class Welcome(QMainWindow):
         self.run_game(self.game)
 
     def run_game(self, game):
-        self.song.stop()
+        # self.song.stop()
+        self.song_player.stop()
         self.socket_controller.game = game
         game.buzzer_controller = self.socket_controller
         self.host_overlay.hide()
@@ -259,7 +267,9 @@ class Welcome(QMainWindow):
     def new_player(self, player):
         label = self.player_labels[len(self.socket_controller.connected_players) - 1]
         label.setText(player.name)
-        label.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        label.setFixedWidth(LABELWIDTH)
+        label.move(label.pos() + QPoint((MOVIEWIDTH - LABELWIDTH)/2,0))
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.check_start()
 
     @updateUI
@@ -286,23 +296,24 @@ class Welcome(QMainWindow):
 class HostOverlay(QMainWindow):
     def __init__(self, host):
         QMainWindow.__init__(self)
+        screen = QGuiApplication.screens()[1]
 
-        screen_width = QDesktopWidget().screenGeometry(1).width()
+        screen_width = screen.size().width()
         display_width = int(0.7 * screen_width)
         display_height = int(0.1 * display_width)
         font_size = int(0.6 * display_height)
 
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint
-            | Qt.FramelessWindowHint
-            | Qt.X11BypassWindowManagerHint
+            Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.X11BypassWindowManagerHint
         )
         self.setGeometry(
             QStyle.alignedRect(
-                Qt.LeftToRight,
-                Qt.AlignCenter,
+                Qt.LayoutDirection.LeftToRight,
+                Qt.AlignmentFlag.AlignCenter,
                 QSize(display_width, display_height),
-                QDesktopWidget().screenGeometry(1),
+                screen.geometry(),
             )
         )
 
@@ -310,7 +321,7 @@ class HostOverlay(QMainWindow):
         font.setPointSize(font_size)
         self.label = QLabel("http://" + host, self)
         self.label.setGeometry(self.rect())
-        self.label.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setFont(font)
 
         self.show()
@@ -324,15 +335,26 @@ def main():
     # 	for q in r.questions:
     # 		print(q.answer)
 
+    QDir.addSearchPath('data', 'data/')
     app = QApplication(sys.argv)
+    # r = QFontDatabase.addApplicationFont("data:ITC_Korinna.ttf")
+    # print("Loading font: ",r)
 
     SC = BuzzerController()
     wel = Welcome(SC)
     SC.start()
     # wel.start_game(SC)
-    ping_command = ['/sbin/ping -i 0.19 192.168.1.1 > /dev/null']
-    subprocess.Popen(ping_command, shell=True)
-    print('run')
+    ping_command = ['ping','-i','0.19','192.168.1.1']
+    ping_process = subprocess.Popen(ping_command, stdout=open(os.devnull, 'wb'))
+    try:
+        r = app.exec()
+    finally:
+        ping_process.terminate()
+        print("terminate")
+        wel.song_player.stop()
+        sys.exit(r)
 
-    sys.exit(app.exec_())
+
+
+
 

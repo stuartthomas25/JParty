@@ -1,6 +1,6 @@
 from types import SimpleNamespace
-from PyQt5.QtCore import Qt
-from PyQt5.QtMultimedia import QSound
+from PyQt6.QtCore import Qt
+# from PyQt6.QtMultimedia import QSound
 import threading
 import time
 from dataclasses import dataclass
@@ -9,6 +9,7 @@ import os
 import sys
 
 from .constants import DEBUG
+from .utils import SongPlayer
 
 # BUZZ_DELAY = 0 # ms
 
@@ -175,7 +176,8 @@ class Game(object):
         else:
             self.__current_round = 0
 
-        self.song = QSound(':data/song.wav')
+        # self.song = QSound('data:song.wav')
+        self.song_player = SongPlayer()
         self.__judgement_round = -1
         self.__judgement_subround = 2
         self.__sorted_players = None
@@ -184,22 +186,22 @@ class Game(object):
 
         self.keystroke_manager = KeystrokeManager()
         self.keystroke_manager.addEvent(
-            "CORRECT_RESPONSE", Qt.Key_Left, self.correct_answer
+            "CORRECT_RESPONSE", Qt.Key.Key_Left, self.correct_answer
         )
         self.keystroke_manager.addEvent(
-            "INCORRECT_RESPONSE", Qt.Key_Right, self.incorrect_answer
+            "INCORRECT_RESPONSE", Qt.Key.Key_Right, self.incorrect_answer
         )
         self.keystroke_manager.addEvent(
-            "BACK_TO_BOARD", Qt.Key_Space, self.back_to_board, persistent=False
+            "BACK_TO_BOARD", Qt.Key.Key_Space, self.back_to_board, persistent=False
         )
         self.keystroke_manager.addEvent(
-            "OPEN_RESPONSES", Qt.Key_Space, self.open_responses, persistent=False
+            "OPEN_RESPONSES", Qt.Key.Key_Space, self.open_responses, persistent=False
         )
         self.keystroke_manager.addEvent(
-            "NEXT_ROUND", Qt.Key_Space, self.next_round, persistent=False
+            "NEXT_ROUND", Qt.Key.Key_Space, self.next_round, persistent=False
         )
         self.keystroke_manager.addEvent(
-            "NEXT_SLIDE", Qt.Key_Space, self.final_next_slide, persistent=True
+            "NEXT_SLIDE", Qt.Key.Key_Space, self.final_next_slide, persistent=True
         )
 
         # if DEBUG:
@@ -229,7 +231,8 @@ class Game(object):
         self.dc.borderwidget.lit = True
         if self.current_round.final:
             self.buzzer_controller.prompt_answers()
-            self.song.play()
+            # self.song.play()
+            self.song_player.play()
             self.timer = QuestionTimer(31, self.stumped)
         else:
             # accept_timer = threading.Timer(BUZZ_DELAY/1000, self.__accept_responses)
@@ -291,6 +294,7 @@ class Game(object):
     def back_to_board(self):
         print("back_to_board")
         self.dc.borderwidget.spacehints = False
+        self.dc.hide_question()
         self.timer = None
         self.completed_questions.append(self.active_question)
         self.active_question = None
