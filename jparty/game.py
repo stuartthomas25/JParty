@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QInputDialog
 # from PyQt6.QtMultimedia import QSound
 import threading
 import time
@@ -11,7 +12,7 @@ import sys
 from .constants import DEBUG
 from .utils import SongPlayer
 
-# BUZZ_DELAY = 0 # ms
+BUZZ_DELAY = 100 # ms
 
 activation_time = 0
 
@@ -163,7 +164,10 @@ class Game(object):
         self.comments = comments
         self.rounds = rounds
         self.players = []
+
         self.dc = CompoundObject()
+        self.alex_window = None
+        self.main_window = None
         self.paused = False
         self.active_question = None
         self.accepting_responses = False
@@ -171,6 +175,7 @@ class Game(object):
         self.completed_questions = []
         self.previous_answerer = None
         self.timer = None
+
         if DEBUG:
             self.__current_round = 1
         else:
@@ -204,8 +209,8 @@ class Game(object):
             "NEXT_SLIDE", Qt.Key.Key_Space, self.final_next_slide, persistent=True
         )
 
-        # if DEBUG:
-            # self.completed_questions = self.rounds[1].questions[:-1]
+        if DEBUG:
+            self.completed_questions = self.rounds[1].questions[:-1]
 
     def update(self):
         self.dc.update()
@@ -220,8 +225,8 @@ class Game(object):
     def __accept_responses(self):
         print("accepting responses")
         self.accepting_responses = True
-        global activation_time
-        activation_time = time.time()
+        # global activation_time
+        # activation_time = time.time()
 
 
     @updateUI
@@ -235,9 +240,9 @@ class Game(object):
             self.song_player.play()
             self.timer = QuestionTimer(31, self.stumped)
         else:
-            # accept_timer = threading.Timer(BUZZ_DELAY/1000, self.__accept_responses)
-            # accept_timer.start()
-            self.__accept_responses()
+            accept_timer = threading.Timer(BUZZ_DELAY/1000, self.__accept_responses)
+            accept_timer.start()
+            # self.__accept_responses()
 
             if not self.timer:
                 self.timer = QuestionTimer(4, self.stumped)
@@ -355,14 +360,37 @@ class Game(object):
 
     @updateUI
     def end_game(self):
-        self.dc.finalanswerwindow.setVisible(False)
-        self.answering_player = max(self.players, key = lambda x:x.score)
+        winner = max(self.players, key = lambda p:p.score)
+        self.dc.finalanswerwindow.winner = winner
+        self.answering_player = winner
 
+    @updateUI
+    def run_dd(self):
+        player_name = QInputDialog.getItem(self.alex_window, "Player selection", "Who found the Daily Double?", [p.name for p in self.players], editable=False)[0]
+        player = next((p for p in self.players if p.name == player_name), None)
+        wager = QInputDialog.getInt(self.alex_window, "Wager", f"How much does {player_name} wager?", min=0, max=player.score)[0]
+        self.active_question.value = wager
+
+        self.answering_player = player
+        self.keystroke_manager.activate("CORRECT_RESPONSE")
+        self.keystroke_manager.activate("INCORRECT_RESPONSE")
+        self.dc.borderwidget.arrowhints = True
+        self.dc.boardwidget.questionwidget.show_question = True
+
+    @updateUI
+    def load_question(self, q):
+        self.active_question = q
+        if q.dd:
+            print("Daily double!")
+            self.run_dd()
+        else:
+            self.dc.borderwidget.spacehints = True
+            self.keystroke_manager.activate("OPEN_RESPONSES")
 
     @updateUI
     def open_final(self):
         self.dc.borderwidget.spacehints = True
-        self.active_question = self.current_round.questions[0]
+        self.dc.load_question(self.current_round.questions[0])
         self.keystroke_manager.activate("OPEN_RESPONSES")
 
     def save(self):
@@ -373,7 +401,8 @@ class Game(object):
     def correct_answer(self):
         print("correct")
         if not self.current_round.final:
-            self.timer.cancel()
+            if self.timer:
+                self.timer.cancel()
             self.answering_player.score += self.active_question.value
             self.back_to_board()
             self.dc.borderwidget.lit = False
@@ -386,8 +415,11 @@ class Game(object):
         print("incorrect")
         if not self.current_round.final:
             self.answering_player.score -= self.active_question.value
-            self.open_responses()
-            self.timer.resume()
+            if self.active_question.dd:
+                self.back_to_board()
+            else:
+                self.open_responses()
+                self.timer.resume()
         else:
             self.answering_player.score -= self.answering_player.wager
         self.answer_given()

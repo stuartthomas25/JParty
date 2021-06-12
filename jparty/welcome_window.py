@@ -13,6 +13,7 @@ import time
 import subprocess
 
 import threading
+import netifaces
 
 # from .data_rc import *
 from .retrieve import get_game, get_all_games, get_game_sum
@@ -259,8 +260,8 @@ class Welcome(QMainWindow):
         self.show_board(game)
 
     def show_board(self, game):
-        self.alex_window = DisplayWindow(game, alex=True, monitor=0)
-        self.main_window = DisplayWindow(game, alex=False, monitor=1)
+        self.game.alex_window = DisplayWindow(game, alex=True, monitor=0)
+        self.game.main_window = DisplayWindow(game, alex=False, monitor=1)
 
 
     @updateUI
@@ -326,6 +327,21 @@ class HostOverlay(QMainWindow):
 
         self.show()
 
+def find_gateway():
+      Interfaces= netifaces.interfaces()
+      for inter in Interfaces:
+           if inter == "wlan0":
+                temp_list = []
+                Addresses = netifaces.ifaddresses(inter)
+                gws = netifaces.gateways()
+                temp_list = list (gws['default'][netifaces.AF_INET])
+                count =0
+                for item in temp_list:
+                      count +=1
+                      if count ==1:
+                           return item
+                      else:
+                           pass
 
 def main():
     # game_id = 4727
@@ -344,8 +360,11 @@ def main():
     wel = Welcome(SC)
     SC.start()
     # wel.start_game(SC)
-    ping_command = ['ping','-i','0.19','192.168.1.1']
+
+    ip_addr = '192.168.1.254'
+    ping_command = ['ping','-i','0.19',ip_addr]
     ping_process = subprocess.Popen(ping_command, stdout=open(os.devnull, 'wb'))
+
     try:
         r = app.exec()
     finally:
