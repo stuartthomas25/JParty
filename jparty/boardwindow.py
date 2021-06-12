@@ -354,14 +354,17 @@ class DailyDoubleWidget(QuestionWidget):
         qp.setPen(CATPEN)
         qp.setFont(QUFONT)
 
-        question_flag = Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter
-
         qurect = self.rect().adjusted(
             QUMARGIN, QUMARGIN, -2 * QUMARGIN, -2 * QUMARGIN
         )
 
-
         self.displayHtml(qp, "<i>DAILY DOUBLE!</i>", qurect)
+
+    def paintEvent(self, event):
+        if self.show_question:
+            self.paint_question()
+        else:
+            self.paint_dailydouble()
 
 
 
@@ -462,7 +465,11 @@ class BoardWidget(QWidget):
 
     @updateUI
     def load_question(self, q):
-        self.questionwidget = QuestionWidget(q, self)
+        if q.dd:
+            self.questionwidget = DailyDoubleWidget(q, self)
+        else:
+            print("Question widget!")
+            self.questionwidget = QuestionWidget(q, self)
 
     @updateUI
     def hide_question(self):
@@ -470,13 +477,17 @@ class BoardWidget(QWidget):
 
     def _identify_question(self, event):
         dc = self.game.dc
-        if not self.board.final:
-            coord = (event.position().x() // self.cellsize[0], event.position().y() // self.cellsize[1] - 1)
-            q = self.board.get_question(*coord)
-            if not q in self.game.completed_questions:
-                dc.load_question(q)
-        else:
-            self.game.open_final()
+
+        if self.board.final:
+            if all(p.wager is not None for p in self.game.players):
+                self.game.open_final()
+            return
+
+        coord = (event.position().x() // self.cellsize[0], event.position().y() // self.cellsize[1] - 1)
+        q = self.board.get_question(*coord)
+        if not q in self.game.completed_questions:
+            dc.load_question(q)
+            self.game.load_question(q)
 
     def mousePressEvent(self, event):
         if not self.game.paused and self.game.active_question is None:
@@ -491,6 +502,7 @@ class FinalAnswerWidget(QWidget):
         super().__init__(parent)
         self.game = game
         self.__margin = 50
+        self.winner = None
 
         if parent.alex:
             self.setGeometry(
@@ -528,6 +540,15 @@ class FinalAnswerWidget(QWidget):
         qp.setPen(SCOREPEN)
         qp.setFont(SCOREFONT)
 
+        if self.winner:
+            winnerrect = QRectF(0, NAMEHEIGHT + 2*margin, w, 2*NAMEHEIGHT)
+            qp.drawText(
+                winnerrect,
+                Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
+                f"{self.winner.name} is the winner!",
+            )
+            return
+
         namerect = QRectF(0, margin, w, NAMEHEIGHT)
         qp.drawText(
             namerect, Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter, p.name
@@ -549,6 +570,7 @@ class FinalAnswerWidget(QWidget):
                 Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
                 f"{p.wager:,}",
             )
+
 
 class DisplayWindow(QWidget):
     def __init__(self, game, alex=True, monitor=0):
@@ -596,13 +618,10 @@ class DisplayWindow(QWidget):
         self.game.keystroke_manager.call(event.key())
 
     def load_question(self, q):
-        self.game.active_question = q
-        self.game.keystroke_manager.activate("OPEN_RESPONSES")
-        self.borderwidget.spacehints = True
+        print("DC load_question")
         self.boardwidget.load_question(q)
 
 
-    # def show_question(self, )
 
 
 def format_text(s):
