@@ -363,6 +363,7 @@ class Game(object):
         winner = max(self.players, key = lambda p:p.score)
         self.dc.finalanswerwindow.winner = winner
         self.answering_player = winner
+        self.dc.borderwidget.spacehints = False
 
     @updateUI
     def run_dd(self):
@@ -455,8 +456,11 @@ class Game(object):
         print(1, state[1])
         # self.completed_questions = state[2]
 
-    ### Final Jeopardy ###
-
+    @updateUI
+    def adjust_score(self, player):
+        new_score, answered = QInputDialog.getInt(self.alex_window, "Adjust Score", f"Enter a new score for {player.name}", value=player.score)
+        if answered:
+            player.score = new_score
 
 class Player(object):
     def __init__(self, name, waiter):

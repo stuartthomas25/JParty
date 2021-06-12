@@ -162,9 +162,8 @@ class ScoreWidget(QWidget):
                 qp.setPen(SCOREPEN)
 
             qp.setFont(SCOREFONT)
-            scorerect = QRectF(sw * i, DIVIDERWIDTH, sw, h - NAMEHEIGHT - DIVIDERWIDTH)
             qp.drawText(
-                scorerect,
+                self.__scorerect(i),
                 Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
                 f"{p.score:,}",
             )
@@ -179,7 +178,17 @@ class ScoreWidget(QWidget):
             qp.drawText(
                 namerect, Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter, p.name
             )
+    def __scorerect(self, i):
+        w = self.geometry().width()
+        h = self.geometry().height()
+        sw = w // len(self.game.players)
+        return QRectF(sw * i, DIVIDERWIDTH, sw, h - NAMEHEIGHT - DIVIDERWIDTH)
 
+    def mousePressEvent(self, event):
+        for i,p in enumerate(self.game.players):
+            if self.__scorerect(i).contains(event.position()):
+                self.game.adjust_score(p)
+                break
 
     @updateUI
     def stop_lights(self):

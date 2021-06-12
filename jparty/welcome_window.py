@@ -13,7 +13,6 @@ import time
 import subprocess
 
 import threading
-import netifaces
 
 # from .data_rc import *
 from .retrieve import get_game, get_all_games, get_game_sum

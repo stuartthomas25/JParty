@@ -32,6 +32,7 @@ class Application(tornado.web.Application):
             template_path=os.path.join(os.path.join(root, "buzzer", "templates")),
             static_path=os.path.join(root, "buzzer", "static"),
             xsrf_cookies=False,
+            websocket_ping_interval = 0.19
         )
         super(Application, self).__init__(handlers, **settings)
         self.controller = controller
@@ -154,7 +155,7 @@ class BuzzerController:
         self.game = None
         self.welcome_window = None
         tornado.options.parse_command_line()
-        self.app = Application(self)
+        self.app = Application(self) # this is to remove sleep mode on Macbook network card
         self.port = options.port
         self.connected_players = set()
 
@@ -168,8 +169,7 @@ class BuzzerController:
             tornado.ioloop.IOLoop.current().start()
 
     def buzz(self, player):
-        if self.game:
-            self.game.buzz(player)
+        if self.game:            self.game.buzz(player)
         else:
             self.welcome_window.buzz_hint(player)
 
@@ -238,9 +238,3 @@ class BuzzerController:
     def toolate(self):
         for p in self.connected_players:
             p.waiter.send("TOOLATE")
-
-
-
-if __name__ == "__main__":
-    BC = BuzzerController()
-    BC.start(False)
