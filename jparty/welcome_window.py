@@ -1,7 +1,7 @@
 import sys
 import os
 from random import shuffle
-from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMovie, QPixmap, QPalette, QGuiApplication, QFontDatabase
+from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMovie, QPixmap, QPalette, QGuiApplication, QFontDatabase, QColor
 # from PyQt6.QtMultimedia import QSound
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir
@@ -201,6 +201,7 @@ class Welcome(QMainWindow):
             f = label.font()
             f.setPointSize(label_fontsize)  # sets the size to 27
             label.setFont(f)
+            label.setAutoFillBackground(True)
 
             label.setMovie(loading_movie)
             label_margin = (self.rect().width() - 3 * MOVIEWIDTH) // 4
@@ -276,6 +277,7 @@ class Welcome(QMainWindow):
     def buzz_hint(self, player):
         for l in self.player_labels:
             if player.name == l.text():
+
                 l.setStyleSheet("QLabel { background-color : grey}")
 
                 def return_to_default(label=l, widget=self):
