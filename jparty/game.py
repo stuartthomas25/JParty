@@ -209,8 +209,8 @@ class Game(object):
             "NEXT_SLIDE", Qt.Key.Key_Space, self.final_next_slide, persistent=True
         )
 
-        if DEBUG:
-            self.completed_questions = self.rounds[1].questions[:-1]
+        # if DEBUG:
+            # self.completed_questions = self.rounds[1].questions[:-1]
 
     def update(self):
         self.dc.update()
@@ -376,7 +376,7 @@ class Game(object):
         self.keystroke_manager.activate("CORRECT_RESPONSE")
         self.keystroke_manager.activate("INCORRECT_RESPONSE")
         self.dc.borderwidget.arrowhints = True
-        self.dc.boardwidget.questionwidget.show_question = True
+        self.dc.boardwidget.questionwidget.show_question()
 
     @updateUI
     def load_question(self, q):

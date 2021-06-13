@@ -252,6 +252,20 @@ class BorderWidget(QWidget):
             qp.drawPixmap(self.__leftarrowrect, self.__spaceimage)
             qp.drawPixmap(self.__rightarrowrect, self.__spaceimage)
 
+class QuestionLabel(QLabel):
+    def __init__(self, text, rect, parent=None):
+        super().__init__(text, parent)
+        self.setStyleSheet("color: white;")
+        self.setGeometry(QRect(rect))
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setWordWrap(True)
+        self.setFont(QFont("Helvetica", 72))
+
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(40)
+        shadow.setColor(QColor('black'))
+        shadow.setOffset(3)
+        self.setGraphicsEffect(shadow)
 
 
 class QuestionWidget(QWidget):
@@ -269,63 +283,66 @@ class QuestionWidget(QWidget):
             # self.parent().geometry().width() / 2 - self.parent().boardwidget.geometry().width() / 2, 0
         # )
 
-        self.show()
-
-    def displayHtml(self, painter, html, rect):
-        textoption = QTextOption(Qt.AlignmentFlag.AlignCenter)
-        textoption.setWrapMode(QTextOption.WrapMode.WordWrap)
-
-        td = QTextDocument()
-        # td.setDefaultFont(QUFONT)
-        # td.setDefaultStyleSheet("font-family: 'Arial'; font-size: 72pt; text-align: center;")
-        style = "text-align: center;" \
-                "font-family: Helvetica;" \
-                "font-size: 72pt;" \
-                "color: white;"
-        td.setTextWidth(rect.width())
-        # td.setUseDesignMetrics(True)
-        td.setHtml(f"<table style='width:100%' width='100%' ><tr><td style='{style}'>{html}</td></tr></table>")
-        top = rect.y() + rect.height()/2 - td.size().height()/2 # center the view
-        left = rect.x() + rect.width()/2 - td.size().width()/2
-
-        painter.translate(QPointF(left, top))
-        td.drawContents(painter)
-        painter.translate(QPointF(-left, -top))
-
-
-    def paint_question(self):
-        qp = QPainter()
-        qp.begin(self)
-        # Show question
-
-        qp.setBrush(FILLBRUSH)
-        qp.drawRect(self.rect())
-        qp.setPen(CATPEN)
-        qp.setFont(QUFONT)
-
-        question_flag = Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter
 
         if self.parent().alex:
             anheight = ANSWERHEIGHT * self.size().height()
-            qurect = self.rect().adjusted(
+            self.qurect = self.rect().adjusted(
                 QUMARGIN,
                 QUMARGIN,
                 -2 * QUMARGIN,
                 -ANSWERHEIGHT * self.size().height(),
             )
-            anrect = QRectF(
+            self.anrect = QRect(
                 QUMARGIN,
                 self.size().height() * (1 - ANSWERHEIGHT),
                 self.size().width() - 2 * QUMARGIN,
                 ANSWERHEIGHT * self.size().height(),
             )
-            # qp.drawText(
-                # anrect,
-                # question_flag,
-                # format_text(self.question.answer),
-            # )
-            self.displayHtml(qp, self.question.answer, anrect)
+            self.answer_label = QuestionLabel(question.answer, self.anrect, self)
 
+
+        else:
+            self.qurect = self.rect().adjusted(
+                QUMARGIN, QUMARGIN, -2 * QUMARGIN, -2 * QUMARGIN
+            )
+            self.anrect=None
+            self.answer_label = None
+
+        self.question_label = QuestionLabel(question.text.upper(), self.qurect, self)
+
+        self.show()
+
+    # def displayHtml(self, painter, html, rect):
+        # textoption = QTextOption(Qt.AlignmentFlag.AlignCenter)
+        # textoption.setWrapMode(QTextOption.WrapMode.WordWrap)
+
+        # td = QTextDocument()
+        # # td.setDefaultFont(QUFONT)
+        # # td.setDefaultStyleSheet("font-family: 'Arial'; font-size: 72pt; text-align: center;")
+        # style = "text-align: center;" \
+                # "font-family: Helvetica;" \
+                # "font-size: 72pt;" \
+                # "color: white;"
+        # td.setTextWidth(rect.width())
+        # # td.setUseDesignMetrics(True)
+        # td.setHtml(f"<table style='width:100%' width='100%' ><tr><td style='{style}'>{html}</td></tr></table>")
+        # top = rect.y() + rect.height()/2 - td.size().height()/2 # center the view
+        # left = rect.x() + rect.width()/2 - td.size().width()/2
+
+        # painter.translate(QPointF(left, top))
+        # td.drawContents(painter)
+        # painter.translate(QPointF(-left, -top))
+
+
+    def paintEvent(self, event):
+        qp = QPainter()
+        qp.begin(self)
+
+        qp.setBrush(FILLBRUSH)
+        qp.drawRect(self.rect())
+        # Show question
+        if self.parent().alex:
+            anheight = ANSWERHEIGHT * self.size().height()
             qp.drawLine(
                 0,
                 (1 - ANSWERHEIGHT) * self.size().height(),
@@ -333,47 +350,24 @@ class QuestionWidget(QWidget):
                 (1 - ANSWERHEIGHT) * self.size().height(),
             )
 
-        else:
-            qurect = self.rect().adjusted(
-                QUMARGIN, QUMARGIN, -2 * QUMARGIN, -2 * QUMARGIN
-            )
-
-
-        self.displayHtml(qp, self.question.text.upper(), qurect)
-
-    def paintEvent(self, event):
-        self.paint_question()
-
-
-
-
-
 
 class DailyDoubleWidget(QuestionWidget):
     def __init__(self, game, parent=None):
         super().__init__(game, parent)
-        self.show_question = False
+        self.question_label.setVisible(False)
+        if self.parent().alex:
+            self.answer_label.setVisible(False)
 
-    def paint_dailydouble(self):
-        qp = QPainter()
-        qp.begin(self)
+        self.dd_label = QuestionLabel("DAILY<br/>DOUBLE!", self.qurect, self)
+        self.dd_label.setFont(QFont("Helvetica", 140))
+        self.dd_label.setVisible(True)
+        self.update()
 
-        qp.setBrush(FILLBRUSH)
-        qp.drawRect(self.rect())
-        qp.setPen(CATPEN)
-        qp.setFont(QUFONT)
-
-        qurect = self.rect().adjusted(
-            QUMARGIN, QUMARGIN, -2 * QUMARGIN, -2 * QUMARGIN
-        )
-
-        self.displayHtml(qp, "<i>DAILY DOUBLE!</i>", qurect)
-
-    def paintEvent(self, event):
-        if self.show_question:
-            self.paint_question()
-        else:
-            self.paint_dailydouble()
+    def show_question(self):
+        self.question_label.setVisible(True)
+        if self.parent().alex:
+            self.answer_label.setVisible(True)
+        self.dd_label.setVisible(False)
 
 
 
