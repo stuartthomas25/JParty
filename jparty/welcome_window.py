@@ -20,7 +20,7 @@ from .controller import BuzzerController
 from .boardwindow import DisplayWindow
 from .game import Player
 from .constants import DEBUG
-from .utils import SongPlayer
+from .utils import SongPlayer, resource_path
 
 def updateUI(f):
     def wrapper(self, *args):
@@ -55,8 +55,6 @@ class Welcome(QMainWindow):
         self.all_games = None
         self.valid_game = False
         self.game = None
-        # final_song = QSound("data/song.mp3")
-        # self.song = QSound('data:song.wav')
         self.song_player = SongPlayer()
 
 
@@ -155,7 +153,7 @@ class Welcome(QMainWindow):
 
         icon_size = 64
 
-        icon = QPixmap("data:icon.png")
+        icon = QPixmap(resource_path("icon.png"))
         self.icon_label.setPixmap(
             icon.scaled(icon_size, icon_size, transformMode=Qt.TransformationMode.SmoothTransformation)
         )
@@ -192,7 +190,7 @@ class Welcome(QMainWindow):
         f.setPointSize(30)  # sets the size to 27
         self.textbox.setFont(f)
 
-        loading_movie = QMovie("data:loading.gif")
+        loading_movie = QMovie(resource_path("loading.gif"))
         loading_movie.setScaledSize(QSize(MOVIEWIDTH, MOVIEWIDTH))
         label_fontsize = 15
         # self.player_heading.setGeometry(0, 140, self.rect().width(), 50)
@@ -352,7 +350,6 @@ def main():
     # 	for q in r.questions:
     # 		print(q.answer)
 
-    QDir.addSearchPath('data', 'data/')
     app = QApplication(sys.argv)
     # r = QFontDatabase.addApplicationFont("data:ITC_Korinna.ttf")
     # print("Loading font: ",r)
@@ -362,7 +359,7 @@ def main():
     SC.start()
     # wel.start_game(SC)
 
-    ip_addr = '192.168.1.254'
+    ip_addr = '192.168.1.1'
     ping_command = ['ping','-i','0.19',ip_addr]
     ping_process = subprocess.Popen(ping_command, stdout=open(os.devnull, 'wb'))
 

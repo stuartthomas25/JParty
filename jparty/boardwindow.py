@@ -3,7 +3,9 @@ from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushBut
 from PyQt6.QtCore import Qt, QRectF, QRect, QPoint, QPointF, QTimer, QRect, QSize, QSizeF
 from PyQt6.sip import delete
 
+
 from .game import game_params as gp
+from .utils import resource_path
 import time
 import threading
 import re
@@ -214,9 +216,9 @@ class BorderWidget(QWidget):
         self.__rightarrowrect = QRect(QPoint(0, 0), arrow_size)
         self.__rightarrowrect.moveCenter(self.__incorrectrect.center())
 
-        self.__leftarrowimage = QPixmap("data:left-arrow.png")
-        self.__rightarrowimage = QPixmap("data:right-arrow.png")
-        self.__spaceimage = QPixmap("data:space.png")
+        self.__leftarrowimage = QPixmap(resource_path("left-arrow.png"))
+        self.__rightarrowimage = QPixmap(resource_path("right-arrow.png"))
+        self.__spaceimage = QPixmap(resource_path("space.png"))
 
         self.show()
         self.__lit = False
