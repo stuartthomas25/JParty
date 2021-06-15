@@ -62,7 +62,7 @@
 
 <div class="w3-container wager-page" style="margin-top:90px">
     <form onsubmit="wagerForm();" action="javascript:void(0);" class="wager_form">
-        <input type='number' name="wager" class="text_input wager_input" min="0" max="100" step="0"/>
+        <input type='number' name="wager" pattern="[0-9]*" class="text_input wager_input" min="0" max="100" step="0"/>
         <button type="submit" class="submit">Wager</button>
     </form>
 </div>
