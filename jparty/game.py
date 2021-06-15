@@ -369,7 +369,7 @@ class Game(object):
     def run_dd(self):
         player_name = QInputDialog.getItem(self.alex_window, "Player selection", "Who found the Daily Double?", [p.name for p in self.players], editable=False)[0]
         player = next((p for p in self.players if p.name == player_name), None)
-        wager = QInputDialog.getInt(self.alex_window, "Wager", f"How much does {player_name} wager?", min=0, max=player.score)[0]
+        wager = QInputDialog.getInt(self.alex_window, "Wager", f"How much does {player_name} wager?", min=0, max=max(player.score, 1000))[0]
         self.active_question.value = wager
 
         self.answering_player = player
@@ -462,6 +462,7 @@ class Game(object):
         if answered:
             player.score = new_score
 
+
 class Player(object):
     def __init__(self, name, waiter):
         self.name = name
@@ -470,6 +471,7 @@ class Player(object):
         self.waiter = waiter
         self.wager = None
         self.finalanswer = ""
+        self.connected = True
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)
