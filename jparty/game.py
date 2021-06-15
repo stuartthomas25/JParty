@@ -258,7 +258,7 @@ class Game(object):
     # Don't update UI every buzz
     def buzz(self, player):
         if self.accepting_responses and player is not self.previous_answerer:
-            print(f"✅ {player.name}: buzz ({time.time() - activation_time:.6f} s)")
+            print(f"{player.name}: buzz ({time.time() - activation_time:.6f} s)")
             self.accepting_responses = False
             self.timer.pause()
             self.previous_answerer = player
@@ -271,7 +271,7 @@ class Game(object):
             self.dc.borderwidget.lit = False
             self.update()
         else:
-            print(f"❌ {player.name}: buzz")
+            print(f"{player.name}: buzz")
 
     def answer_given(self):
         print("answer given")

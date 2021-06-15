@@ -229,7 +229,7 @@ class BuzzerController:
             players = self.connected_players
 
         for p in players:
-            p.waiter.send("PROMPTWAGER", str(p.score))
+            p.waiter.send("PROMPTWAGER", str(min(p.score, 0)))
 
     def prompt_answers(self):
         for p in self.connected_players:

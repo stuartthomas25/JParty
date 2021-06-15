@@ -6,7 +6,10 @@ block_cipher = None
 a = Analysis(['cli.py'],
              pathex=['/Users/stuart/Documents/Programming/JParty'],
              binaries=[],
-             datas=[],
+             datas=[
+                 ("jparty/data/*", "data"),
+                 ("jparty/buzzer", "buzzer"),
+             ],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
