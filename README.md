@@ -10,6 +10,16 @@ Ever wanted to play the game show Jeopardy? This Python-based application aims t
 ## How does is work?
 JParty scrapes the J-Archive (https://j-archive.com) to download a previously-played game and then simulates that on the screen. JParty then uses PyQt6 to produce a GUI that simuates the motions of a full _Jeopardy!_ game. A `tornado` web server uses WebSockets to connect to the contestants' smartphones.
 
+## Screenshots:
+Welcome screen:
+<img src="screenshots/welcome_screen.png" height="300"/>
+
+The main game board:
+<img src="screenshots/main_board.png" height="300"/>
+
+The "Alex" player sees the answer on the laptop screen and can adjudicate with the arrow keys.
+<img src="screenshots/alex_view.png" height="300"/>
+
 ## Features:
 - WebSocket buzzer for use on mobile devices
 - Complete access to all games on J-Archive
