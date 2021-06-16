@@ -292,6 +292,11 @@ class Welcome(QMainWindow):
             os.remove(".bkup")
         QApplication.quit()
 
+    def buzzer_disconnected(self):
+        print("Buzzer disconnected!")
+        error_msg = QErrorMessage(self)
+        error_msg.showMessage(f"buzzer is disconnected!")
+
 
 class HostOverlay(QMainWindow):
     def __init__(self, host):

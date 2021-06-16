@@ -15,10 +15,11 @@ import socket
 from .environ import root
 from .game import Player
 
+from PyQt6.QtWidgets import QApplication
+
 from tornado.options import define, options
 
 define("port", default=80, help="run on the given port", type=int)
-
 
 class Application(tornado.web.Application):
     def __init__(self, controller):
@@ -79,15 +80,13 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         self.set_nodelay(True)
         # self.controller.connected_players.add(self)
 
-    def on_close(self):
-        pass
-        # self.controller.waiters.remove(self)
 
     def check_if_exists(self, token):
         p = self.controller.player_with_token(token)
         if p is not None:
             print(f"Reconnected as {p.name}")
             self.player = p
+            p.connected = True
             p.waiter = self
             self.send("EXISTS")
 
@@ -148,6 +147,10 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         except:
             logging.error(f"Error sending message {msg}", exc_info=True)
 
+    def on_close(self):
+        self.application.controller.buzzer_disconnected(self.player)
+
+
 
 class BuzzerController:
     def __init__(self):
@@ -169,7 +172,8 @@ class BuzzerController:
             tornado.ioloop.IOLoop.current().start()
 
     def buzz(self, player):
-        if self.game:            self.game.buzz(player)
+        if self.game:
+            self.game.buzz(player)
         else:
             self.welcome_window.buzz_hint(player)
 
@@ -238,3 +242,12 @@ class BuzzerController:
     def toolate(self):
         for p in self.connected_players:
             p.waiter.send("TOOLATE")
+
+    def buzzer_disconnected(self, player):
+        player.connected = False
+        # self.welcome_window.buzzer_disconnected(player.name)
+        # QApplication.instance().thread().finished.connect(self.welcome_window.buzzer_disconnected)
+        # self.welcome_window.signal.connect(self.welcomeb
+
+
+
