@@ -3,6 +3,8 @@
 # JParty
 _A Jeopardy! simulator_
 
+Homepage: https://www.stuartthomas.us/jparty/
+
 Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full _Jeopardy!_ simulator complete with real questions from actual games. This game is perfect for parties and takes 3-4 players. For ideal usage, plug a TV into to a laptop, setting the laptop as the main monitor, instruct contestants to navigate to the local IP address on the screen. The person with the laptop is "Alex" and runs the game.
 
 ## How does is work?
