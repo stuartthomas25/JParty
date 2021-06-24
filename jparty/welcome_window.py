@@ -65,7 +65,8 @@ class Welcome(QMainWindow):
 
         # self.song.setLoops(QSound.Infinite)
         # self.song.play()
-        self.song_player.play(repeat=True)
+        if not DEBUG:
+            self.song_player.play(repeat=True)
 
         self.icon_label = QLabel(self)
         self.startButton = QPushButton("Start!", self)
@@ -137,8 +138,6 @@ class Welcome(QMainWindow):
 
             self.host_overlay = HostOverlay(self.socket_controller.host())
             self.host_overlay.windowHandle().setScreen(QApplication.instance().screens()[1])
-            print(QApplication.instance().screens()[0].size().width())
-            print(QApplication.instance().screens()[1].size().width())
             self.host_overlay.show()
 
         self.check_start()
@@ -305,7 +304,7 @@ class HostOverlay(QMainWindow):
 
         screen_width = screen.size().width()
         display_width = int(0.7 * screen_width)
-        display_height = int(0.1 * display_width)
+        display_height = int(0.2 * display_width)
         font_size = int(0.6 * display_height)
 
         self.setWindowFlags(
@@ -348,30 +347,20 @@ def find_gateway():
                            pass
 
 def main():
-    # game_id = 4727
-
-    # game = get_game(game_id)
-    # for r in game.rounds:
-    # 	for q in r.questions:
-    # 		print(q.answer)
-
     app = QApplication(sys.argv)
     # r = QFontDatabase.addApplicationFont("data:ITC_Korinna.ttf")
     # print("Loading font: ",r)
-
     SC = BuzzerController()
     wel = Welcome(SC)
     SC.start()
-    # wel.start_game(SC)
 
-    ip_addr = '192.168.1.1'
-    ping_command = ['ping','-i','0.19',ip_addr]
-    ping_process = subprocess.Popen(ping_command, stdout=open(os.devnull, 'wb'))
+    # ip_addr = '192.168.1.1'
+    # ping_command = ['ping','-i','0.19',ip_addr]
+    # ping_process = subprocess.Popen(ping_command, stdout=open(os.devnull, 'wb'))
 
     try:
         r = app.exec()
     finally:
-        ping_process.terminate()
         print("terminate")
         wel.song_player.stop()
         sys.exit(r)
