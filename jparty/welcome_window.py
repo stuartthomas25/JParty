@@ -4,7 +4,7 @@ from random import shuffle
 from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMovie, QPixmap, QPalette, QGuiApplication, QFontDatabase, QColor
 # from PyQt6.QtMultimedia import QSound
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
-from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir
+from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
 import logging
 import pickle
 from threading import Thread, active_count
@@ -13,6 +13,7 @@ import time
 import subprocess
 
 import threading
+from functools import partial
 
 # from .data_rc import *
 from .retrieve import get_game, get_all_games, get_game_sum
@@ -32,6 +33,7 @@ def updateUI(f):
 
 MOVIEWIDTH = 64
 LABELWIDTH = 150
+LABELFONTSIZE = 15
 
 # def list_files(startpath='.'):
 # for root, dirs, files in os.walk(startpath):
@@ -67,6 +69,8 @@ class Welcome(QMainWindow):
         # self.song.play()
         if not DEBUG:
             self.song_player.play(repeat=True)
+        else:
+            self.song_player = None
 
         self.icon_label = QLabel(self)
         self.startButton = QPushButton("Start!", self)
@@ -78,7 +82,7 @@ class Welcome(QMainWindow):
         self.textbox = QLineEdit(self)
         self.gameid_label = QLabel("Game ID:", self)
         # self.player_heading = QLabel("Players:", self)
-        self.player_labels = [QLabel(self) for _ in range(3)]
+        # self.player_labels = [QLabel(self) for _ in range(3)]
 
         self.monitor_error = QLabel("JParty requires two seperate monitors", self)
 
@@ -189,23 +193,7 @@ class Welcome(QMainWindow):
         f.setPointSize(30)  # sets the size to 27
         self.textbox.setFont(f)
 
-        loading_movie = QMovie(resource_path("loading.gif"))
-        loading_movie.setScaledSize(QSize(MOVIEWIDTH, MOVIEWIDTH))
-        label_fontsize = 15
-        # self.player_heading.setGeometry(0, 140, self.rect().width(), 50)
-        # self.player_heading.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        for i, label in enumerate(self.player_labels):
-            f = label.font()
-            f.setPointSize(label_fontsize)  # sets the size to 27
-            label.setFont(f)
-            label.setAutoFillBackground(True)
-
-            label.setMovie(loading_movie)
-            label_margin = (self.rect().width() - 3 * MOVIEWIDTH) // 4
-            label.setGeometry(
-                label_margin * (i + 1) + MOVIEWIDTH * i, 210, MOVIEWIDTH, MOVIEWIDTH
-            )
-        loading_movie.start()
+        self.player_view = PlayerView(self.rect() - QMargins(0, 210, 0, 0), self)
 
         if DEBUG:
             self.textbox.setText(str(2534))  # EDIT
@@ -263,28 +251,29 @@ class Welcome(QMainWindow):
 
     @updateUI
     def new_player(self, player):
-        label = self.player_labels[len(self.socket_controller.connected_players) - 1]
-        label.setText(player.name)
-        label.setFixedWidth(LABELWIDTH)
-        label.move(label.pos() + QPoint((MOVIEWIDTH - LABELWIDTH)/2,0))
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        PlayerView.new_player(player)
         self.check_start()
+        # label = self.player_labels[len(self.socket_controller.connected_players) - 1]
+        # label.setText(player.name)
+        # label.setFixedWidth(LABELWIDTH)
+        # label.move(label.pos() + QPoint((MOVIEWIDTH - LABELWIDTH)/2,0))
+        # label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # self.check_start()
 
     @updateUI
     def buzz_hint(self, player):
-        for l in self.player_labels:
-            if player.name == l.text():
+        PlayerView.buzz_hint(player)
+        # for l in self.player_labels:
+            # if player.name == l.text():
+                # l.setStyleSheet("QLabel { background-color : grey}")
+                # def return_to_default(label=l, widget=self):
+                    # l.setStyleSheet("QLabel { background-color : none}")
+                    # self.update()
 
-                l.setStyleSheet("QLabel { background-color : grey}")
+                # t = threading.Timer(0.1, return_to_default)
+                # t.start()
 
-                def return_to_default(label=l, widget=self):
-                    l.setStyleSheet("QLabel { background-color : none}")
-                    self.update()
-
-                t = threading.Timer(0.1, return_to_default)
-                t.start()
-
-                break
+                # break
 
     def closeEvent(self, event):
         if os.path.exists(".bkup"):
@@ -296,8 +285,99 @@ class Welcome(QMainWindow):
         error_msg = QErrorMessage(self)
         error_msg.showMessage(f"buzzer is disconnected!")
 
+class PlayerLabel(QLabel):
+    loading_movie = None
+    trigger = pyqtSignal()
 
-class HostOverlay(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        cls = type(self)
+        if not cls.loading_movie:
+            cls.loading_movie = QMovie(resource_path("loading.gif"))
+            cls.loading_movie.setScaledSize(QSize(MOVIEWIDTH, MOVIEWIDTH))
+            cls.loading_movie.start()
+        # self.player_heading.setGeometry(0, 140, self.rect().width(), 50)
+        # self.player_heading.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        f = self.font()
+        f.setPointSize(LABELFONTSIZE)
+        self.setFont(f)
+        self.setAutoFillBackground(True)
+
+        self.setMovie(cls.loading_movie)
+
+        self.blink_timer = None
+        self.trigger.connect(self._run_buzz_hint)
+
+    def buzz_hint(self):
+        self.trigger.emit()
+
+
+
+    def _run_buzz_hint(self):
+        self.setStyleSheet("QLabel { background-color : grey}")
+        self.blink_timer = QTimer()
+        # self.blink_timer.moveToThread(QApplication.instance().thread())
+        self.blink_timer.timeout.connect(self._buzz_hint_callback)
+        self.blink_timer.start(100)
+
+    def _buzz_hint_callback(self):
+        self.setStyleSheet("QLabel { background-color : none}")
+
+
+class PlayerView(QWidget):
+    instances = set()
+    def __init__(self, rect, parent=None):
+        super().__init__(parent)
+        self.setGeometry(rect)
+        self.num_players = 0
+
+        self.labels = [PlayerLabel(self) for _ in range(3)]
+        for i,label in enumerate(self.labels):
+            label_margin = (rect.width() - 3 * MOVIEWIDTH) // 4
+            label.setGeometry(label_margin * (i + 1) + MOVIEWIDTH * i, 10, MOVIEWIDTH, MOVIEWIDTH)
+
+        PlayerView.instances.add(self)
+        self.show()
+
+
+    @classmethod
+    def new_player(cls, player):
+        for i in cls.instances:
+            i._new_player(player)
+
+    @classmethod
+    def buzz_hint(cls, player):
+        for i in cls.instances:
+            i._buzz_hint(player)
+
+    @updateUI
+    def _new_player(self, player):
+        label = self.labels[self.num_players]
+        self.num_players += 1
+        label.setText(player.name)
+        label.setFixedWidth(LABELWIDTH)
+        label.move(label.pos() + QPoint((MOVIEWIDTH - LABELWIDTH)/2,0))
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    @updateUI
+    def _buzz_hint(self, player):
+        for l in self.labels:
+            if player.name == l.text():
+                # QMetaObject.invokeMethod(l, 'buzz_hint') # to run on main thread
+                l.buzz_hint()
+                # l.setStyleSheet("QLabel { background-color : grey}")
+                # t = QTimer()
+                # t.timer.timeout.connect(partial(self._buzz_hint_callback, l))
+                # t.start(100)
+
+                break
+
+    # @updateUI
+    # def _buzz_hint_callback(self, l):
+        # l.setStyleSheet("QLabel { background-color : none}")
+
+class HostOverlay(QWidget):
     def __init__(self, host):
         QMainWindow.__init__(self)
         screen = QGuiApplication.screens()[1]
@@ -305,7 +385,7 @@ class HostOverlay(QMainWindow):
         screen_width = screen.size().width()
         display_width = int(0.7 * screen_width)
         display_height = int(0.2 * display_width)
-        font_size = int(0.6 * display_height)
+        font_size = int(0.06 * display_width)
 
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint
@@ -324,9 +404,11 @@ class HostOverlay(QMainWindow):
         font = QFont()
         font.setPointSize(font_size)
         self.label = QLabel("http://" + host, self)
-        self.label.setGeometry(self.rect())
+        self.label.setGeometry(self.rect() - QMargins(0,0,0,self.rect().height()//2))
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setFont(font)
+
+        self.playerview = PlayerView( self.rect() - QMargins(0,self.rect().height()//2,0,0), self)
 
         self.show()
 
@@ -362,7 +444,8 @@ def main():
         r = app.exec()
     finally:
         print("terminate")
-        wel.song_player.stop()
+        if wel.song_player:
+            wel.song_player.stop()
         sys.exit(r)
 
 
