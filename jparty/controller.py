@@ -194,14 +194,18 @@ class BuzzerController:
 
     @classmethod
     def localip(self):
-        hostname = socket.gethostname()
-        try:
-            ip = socket.gethostbyname(hostname)
-            if ip.startswith("127."):
-                raise Exception()
-            return ip
-        except:
-            return hostname
+          s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+          s.connect(("8.8.8.8", 80))
+          return s.getsockname()[0]
+
+        # hostname = socket.gethostname()
+        # try:
+            # ip = socket.gethostbyname(hostname)
+            # if ip.startswith("127."):
+                # raise Exception()
+            # return ip
+        # except:
+            # return hostname
 
         # return [
             # l
