@@ -196,8 +196,6 @@ class ScoreWidget(QWidget):
     def stop_lights(self):
         self.__light_level = 0
 
-
-
 class BorderWidget(QWidget):
     def __init__(self, game, boardrect, parent=None):
         super().__init__(parent)
@@ -495,7 +493,7 @@ class BoardWidget(QWidget):
             self.game.load_question(q)
 
     def mousePressEvent(self, event):
-        if not self.game.paused and self.game.active_question is None:
+        if not self.game.paused and self.game.active_question is None and self.alex:
             self._identify_question(event)
 
 
