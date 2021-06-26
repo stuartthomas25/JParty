@@ -125,6 +125,7 @@ var updater = {
     start: function() {
         var url = "ws://" + location.host + "/buzzersocket";
         updater.socket = new WebSocket(url);
+        updater.socket.onclose = function(event) { location.reload(true); };
         updater.socket.onmessage = function(event) {
             //console.log("MSG RECIEVED: "+event.data);
             jsondata = JSON.parse(event.data);
