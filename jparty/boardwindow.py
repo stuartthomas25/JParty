@@ -157,6 +157,15 @@ class ScoreWidget(QWidget):
         margin = 50
         players = self.game.players
         sw = w // len(players)
+
+        if self.game.current_round.final:
+            highlighted_players = [p for p in players if p not in self.game.wagered]
+        else:
+            highlighted_players = []
+        ap = self.game.answering_player
+        if ap:
+            highlighted_players.append(ap)
+
         for i, p in enumerate(players):
             if p.score < 0:
                 qp.setPen(HOLEPEN)
@@ -173,7 +182,7 @@ class ScoreWidget(QWidget):
             namerect = QRectF(sw * i, h - NAMEHEIGHT, sw, NAMEHEIGHT)
             qp.setFont(NAMEFONT)
             qp.setPen(NAMEPEN)
-            if p == self.game.answering_player:
+            if p in highlighted_players:
                 qp.setBrush(HIGHLIGHTBRUSH)
                 qp.drawRect(namerect)
                 qp.setPen(HIGHLIGHTPEN)
@@ -231,6 +240,7 @@ class BorderWidget(QWidget):
     @updateUI
     def lit(self, val):
         self.__lit = val
+
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -481,11 +491,6 @@ class BoardWidget(QWidget):
     def _identify_question(self, event):
         dc = self.game.dc
 
-        if self.board.final:
-            if all(p.wager is not None for p in self.game.players):
-                self.game.open_final()
-            return
-
         coord = (event.position().x() // self.cellsize[0], event.position().y() // self.cellsize[1] - 1)
         q = self.board.get_question(*coord)
         if not q in self.game.completed_questions:
@@ -493,7 +498,11 @@ class BoardWidget(QWidget):
             self.game.load_question(q)
 
     def mousePressEvent(self, event):
-        if not self.game.paused and self.game.active_question is None and self.alex:
+        if not any([self.game.paused,
+                    self.game.active_question,
+                    not self.alex,
+                    self.board.final
+                ]):
             self._identify_question(event)
 
 
