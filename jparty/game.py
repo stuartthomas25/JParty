@@ -8,10 +8,11 @@ from dataclasses import dataclass
 import pickle
 import os
 import sys
+import simpleaudio as sa
 from collections.abc import Iterable
 
 from .constants import DEBUG
-from .utils import SongPlayer
+from .utils import SongPlayer, resource_path
 
 BUZZ_DELAY = 0 # ms
 
@@ -78,16 +79,20 @@ class KeystrokeManager(object):
         self.__events[ident] = KeystrokeEvent(key, func, hint_setter, active, persistent)
 
     def call(self, key):
+        ''' this is split in to two for loops so one execution doesnt cause another event to trigger '''
+        events_to_call = []
         for ident, event in self.__events.items():
             if event.active and event.key == key:
+                events_to_call.append(event)
                 if not event.persistent:
                     self._deactivate(ident)
-                event.func()
+
+        for event in events_to_call:
+            event.func()
 
     def _activate(self, ident):
         e = self.__events[ident]
         e.active = True
-        print('HS:', e.hint_setter)
         e.hint_setter(True)
         if e.hint_setter:
             e.hint_setter(True)
@@ -181,9 +186,9 @@ def updateUI(f):
 
 
 class Game(QObject):
-    # buzz_trigger = pyqtSignal(str)
+    buzz_trigger = pyqtSignal(int)
     # buzzer_disconnected = pyqtSignal(str)
-    wager_trigger = pyqtSignal(int)
+    wager_trigger = pyqtSignal(int,int)
 
     def __init__(self, rounds, date, comments):
         super().__init__()
@@ -198,6 +203,7 @@ class Game(QObject):
         self.dc = CompoundObject()
         self.alex_window = None
         self.main_window = None
+        self.welcome_window = None
         self.paused = False
         self.active_question = None
         self.accepting_responses = False
@@ -242,12 +248,15 @@ class Game(QObject):
         self.keystroke_manager.addEvent(
             "OPEN_FINAL", Qt.Key.Key_Space, self.open_final, self.set_spacehints
         )
+        self.keystroke_manager.addEvent(
+            "CLOSE_GAME", Qt.Key.Key_Space, self.close_game, self.set_spacehints
+        )
 
         if DEBUG:
             self.completed_questions = self.rounds[1].questions[:-1]
 
         self.wager_trigger.connect(self.wager)
-        # self.buzz_trigger.connect(self.buzz)
+        self.buzz_trigger.connect(self.buzz)
 
     @updateUI
     def set_arrowhints(self, val):
@@ -255,7 +264,6 @@ class Game(QObject):
 
     @updateUI
     def set_spacehints(self, val):
-        print("spacehints:",val)
         self.dc.borderwidget.spacehints = val
 
     def update(self):
@@ -281,9 +289,11 @@ class Game(QObject):
         self.dc.borderwidget.lit = True
         if self.current_round.final:
             self.buzzer_controller.prompt_answers()
-            # self.song.play()
             self.song_player.play()
-            self.timer = QuestionTimer(31, self.stumped)
+            FJTIME = 31
+            if DEBUG:
+                FJTIME = 1
+            self.timer = QuestionTimer(FJTIME, self.stumped)
         else:
             if BUZZ_DELAY > 0:
                 accept_timer = threading.Timer(BUZZ_DELAY/1000, self.__accept_responses)
@@ -303,7 +313,8 @@ class Game(QObject):
         self.dc.borderwidget.lit = True
 
     # Don't update UI every buzz
-    def buzz(self, player):
+    def buzz(self, i_player):
+        player = self.players[i_player]
         if self.accepting_responses and player is not self.previous_answerer:
             print(f"{player.name}: buzz ({time.time() - activation_time:.6f} s)")
             self.accepting_responses = False
@@ -353,8 +364,10 @@ class Game(QObject):
     def start_final(self):
         self.buzzer_controller.open_wagers()
 
+
     @updateUI
-    def wager(self,player,amount):
+    def wager(self,i_player,amount):
+        player = self.players[i_player]
         player.wager = amount
         self.wagered.add(player)
         print(f"{player.name} wagered {amount}")
@@ -396,6 +409,15 @@ class Game(QObject):
         self.dc.finalanswerwindow.winner = winner
         self.answering_player = winner
         self.keystroke_manager.deactivate("NEXT_SLIDE")
+        self.keystroke_manager.activate("CLOSE_GAME")
+
+
+    def close_game(self):
+        self.main_window.close()
+        self.alex_window.close()
+        self.buzzer_controller.restart()
+        self.welcome_window.restart()
+
 
     @updateUI
     def run_dd(self):
@@ -418,6 +440,8 @@ class Game(QObject):
         self.active_question = q
         if q.dd:
             print("Daily double!")
+            wo = sa.WaveObject.from_wave_file(resource_path('dd.wav'))
+            wo.play()
             self.run_dd()
         else:
             self.keystroke_manager.activate("OPEN_RESPONSES")
@@ -506,7 +530,7 @@ class Player(object):
         self.waiter = waiter
         self.wager = None
         self.finalanswer = ""
-        self.connected = True
+        self.page = "buzz"
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)

@@ -45,6 +45,8 @@ LABELFONTSIZE = 15
 # print('{}{}'.format(subindent, f))
 
 class Welcome(QMainWindow):
+    buzz_hint_trigger = pyqtSignal(int)
+
     def __init__(self, SC):
         super().__init__()
         self.socket_controller = SC
@@ -59,6 +61,8 @@ class Welcome(QMainWindow):
         self.game = None
         self.song_player = SongPlayer()
 
+
+        self.buzz_hint_trigger.connect(self.buzz_hint)
 
         # print(final_song.fileName())
         # final_song.play()
@@ -235,6 +239,7 @@ class Welcome(QMainWindow):
             return False
 
         self.game = get_game(game_id)
+        self.game.welcome_window = self
         self.game.players = self.socket_controller.connected_players
         self.run_game(self.game)
 
@@ -249,6 +254,13 @@ class Welcome(QMainWindow):
         self.game.alex_window = DisplayWindow(game, alex=True, monitor=0)
         self.game.main_window = DisplayWindow(game, alex=False, monitor=1)
 
+    def restart(self):
+        self.player_view.destroy()
+        self.player_view = PlayerView(self.rect() - QMargins(0, 210, 0, 0), self)
+        self.host_overlay.show()
+        self.host_overlay.restart()
+        self.startButton.setEnabled(False)
+
 
     @updateUI
     def new_player(self, player):
@@ -262,7 +274,8 @@ class Welcome(QMainWindow):
         # self.check_start()
 
     @updateUI
-    def buzz_hint(self, player):
+    def buzz_hint(self, i_player):
+        player = self.socket_controller.connected_players[i_player]
         PlayerView.buzz_hint(player)
         # for l in self.player_labels:
             # if player.name == l.text():
@@ -281,14 +294,13 @@ class Welcome(QMainWindow):
             os.remove(".bkup")
         QApplication.quit()
 
-    def buzzer_disconnected(self):
-        print("Buzzer disconnected!")
-        error_msg = QErrorMessage(self)
-        error_msg.showMessage(f"buzzer is disconnected!")
+    # def buzzer_disconnected(self):
+        # print("Buzzer disconnected!")
+        # error_msg = QErrorMessage(self)
+        # error_msg.showMessage(f"buzzer is disconnected!")
 
 class PlayerLabel(QLabel):
     loading_movie = None
-    trigger = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -308,14 +320,8 @@ class PlayerLabel(QLabel):
         self.setMovie(cls.loading_movie)
 
         self.blink_timer = None
-        self.trigger.connect(self._run_buzz_hint)
 
     def buzz_hint(self):
-        self.trigger.emit()
-
-
-
-    def _run_buzz_hint(self):
         self.setStyleSheet("QLabel { background-color : grey}")
         self.blink_timer = QTimer()
         # self.blink_timer.moveToThread(QApplication.instance().thread())
@@ -412,6 +418,11 @@ class HostOverlay(QWidget):
         self.playerview = PlayerView( self.rect() - QMargins(0,self.rect().height()//2,0,0), self)
 
         self.show()
+
+    def restart(self):
+        self.playerview.destroy()
+        self.playerview = PlayerView( self.rect() - QMargins(0,self.rect().height()//2,0,0), self)
+
 
 def find_gateway():
       Interfaces= netifaces.interfaces()
