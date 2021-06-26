@@ -100,6 +100,7 @@ class Welcome(QMainWindow):
         self.all_games = []
         if not DEBUG:
             self.all_games = get_all_games()
+
         print("got all games")
 
     @updateUI
@@ -131,6 +132,7 @@ class Welcome(QMainWindow):
 
     def show_summary(self, text=None):
         print("show sum")
+        self.summary_label.setText("Loading...")
         t = Thread(target=self._show_summary)
         t.start()
 
@@ -237,8 +239,7 @@ class Welcome(QMainWindow):
         self.run_game(self.game)
 
     def run_game(self, game):
-        # self.song.stop()
-        self.song_player.stop()
+        if self.song_player: self.song_player.stop()
         self.socket_controller.game = game
         game.buzzer_controller = self.socket_controller
         self.host_overlay.hide()
