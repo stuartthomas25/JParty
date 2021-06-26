@@ -88,7 +88,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
             self.player = p
             p.connected = True
             p.waiter = self
-            self.send("EXISTS")
+            self.send("EXISTS", p.page)
 
     def on_message(self, message):
         #do this first to kill latency
@@ -138,6 +138,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
 
     def wager(self, text):
         self.application.controller.wager(self.player, int(text))
+        self.player.page = "null"
 
     def send(self, msg, text=""):
         data = {"message": msg, "text": text}
@@ -148,7 +149,9 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
             logging.error(f"Error sending message {msg}", exc_info=True)
 
     def on_close(self):
-        self.application.controller.buzzer_disconnected(self.player)
+        pass
+        # self.application.controller.buzzer_disconnected(self.player)
+
 
 
 
@@ -160,7 +163,7 @@ class BuzzerController:
         tornado.options.parse_command_line()
         self.app = Application(self) # this is to remove sleep mode on Macbook network card
         self.port = options.port
-        self.connected_players = set()
+        self.connected_players = []
 
     def start(self, threaded=True):
         self.app.listen(self.port)
@@ -171,22 +174,32 @@ class BuzzerController:
         else:
             tornado.ioloop.IOLoop.current().start()
 
+    def restart(self):
+        for p in self.connected_players:
+            p.waiter.close()
+        self.connected_players = []
+        self.game = None
+
     def buzz(self, player):
         if self.game:
-            self.game.buzz(player)
+            i_player = self.game.players.index(player)
+            self.game.buzz_trigger.emit(i_player)
         else:
-            self.welcome_window.buzz_hint(player)
+            i_player = self.connected_players.index(player)
+            self.welcome_window.buzz_hint_trigger.emit(i_player)
 
     def wager(self, player, amount):
-        if self.game:
-            self.game.wager(player, amount)
+        # self.game.wager(player, amount)
+        i_player = self.game.players.index(player)
+        self.game.wager_trigger.emit(i_player, amount)
 
     def answer(self, player, guess):
         if self.game:
             self.game.answer(player, guess)
+            player.page = "null"
 
     def new_player(self, player):
-        self.connected_players.add(player)
+        self.connected_players.append(player)
         self.welcome_window.new_player(player)
 
     # def activate_buzzer(self, name):
@@ -246,17 +259,17 @@ class BuzzerController:
 
         for p in players:
             p.waiter.send("PROMPTWAGER", str(max(p.score, 0)))
+            p.page = "wager"
 
     def prompt_answers(self):
         for p in self.connected_players:
             p.waiter.send("PROMPTANSWER")
+            p.page = "answer"
 
     def toolate(self):
         for p in self.connected_players:
             p.waiter.send("TOOLATE")
 
-    def buzzer_disconnected(self, player):
-        player.connected = False
         # self.welcome_window.buzzer_disconnected(player.name)
         # QApplication.instance().thread().finished.connect(self.welcome_window.buzzer_disconnected)
         # self.welcome_window.signal.connect(self.welcomeb

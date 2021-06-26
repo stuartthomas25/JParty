@@ -441,7 +441,7 @@ class BoardWidget(QWidget):
                         qp.drawText(
                             text_rect,
                             Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
-                            format_text(self.board.categories[x]),
+                            self.board.categories[x],
                         )
                     else:
                         # Questions
@@ -472,7 +472,7 @@ class BoardWidget(QWidget):
             qp.drawText(
                 qurect,
                 Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
-                format_text(self.board.categories[0]),
+                self.board.categories[0],
             )
 
 
@@ -584,7 +584,7 @@ class FinalAnswerWidget(QWidget):
             )
 
 
-class DisplayWindow(QWidget):
+class DisplayWindow(QMainWindow):
     def __init__(self, game, alex=True, monitor=0):
         super().__init__()
         self.alex = alex
@@ -616,6 +616,7 @@ class DisplayWindow(QWidget):
         )
         self.borderwidget.stackUnder(self.boardwidget)
 
+        print("   ", self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True))
 
 
         self.game = game
@@ -632,12 +633,3 @@ class DisplayWindow(QWidget):
     def load_question(self, q):
         print("DC load_question")
         self.boardwidget.load_question(q)
-
-
-
-
-def format_text(s):
-    return s#.upper()
-    # return re.sub("</?i>", "", s).upper()
-
-
