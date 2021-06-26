@@ -27,7 +27,7 @@ async function buzz() {
 var current_page = "name";
 function load_page(pagename) {
     try {
-        if (pagename !== null) {
+        if (pagename !== null && pagename != "null") {
             $("."+pagename+"-page").show();
         }
     } catch {
@@ -56,7 +56,7 @@ function load_page(pagename) {
 /*}*/
 function setToken(token) {
   var d = new Date();
-  d.setTime(d.getTime() + (365*24*60*60*1000)); // lasts 24 hour
+  d.setTime(d.getTime() + (24*60*60*1000)); // lasts 24 hour
   var expires = "expires="+ d.toUTCString();
   document.cookie = "token=" + token + ";" + expires + ";path=/";
 }
@@ -143,7 +143,7 @@ var updater = {
                     break;
                 case "EXISTS":
                     console.log("Already exists");
-                    load_page("buzz");
+                    load_page(jsondata.text);
                     break;
                 case "PROMPTWAGER":
                     load_page("wager");
