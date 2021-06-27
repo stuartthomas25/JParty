@@ -30,12 +30,11 @@ The "Alex" player sees the answer on the laptop screen and can adjudicate with t
 - Final Jeopardy, Daily Doubles, Double Jeopardy
  
 ## Download:
-macOS arm64 (working on more platforms currently)
-- https://files.stuartthomas.us/JParty.zip
+See Releases page.
 
 ## Requirements:
 ### For running binary
-- macOS M1 machine (for now)
+- macOS (for now)
 - Two monitors
 - A device with web access for each player
 
@@ -51,6 +50,7 @@ macOS arm64 (working on more platforms currently)
 To debug, run 
 
 `
+pip install -r requirements.txt;
 cd jparty;
 python ../cli.py
 `
