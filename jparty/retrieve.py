@@ -8,8 +8,7 @@ import logging
 
 import pickle
 
-monies = [[200, 400, 600, 800, 1000],
-          [400, 800, 1200, 1600, 2000]]
+monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
 
 def get_game(game_id, soup=None):
@@ -54,7 +53,7 @@ def get_game(game_id, soup=None):
                 dd = False
             answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
             questions.append(Question(index, text, answer, value, dd))
-        boards.append(Board(categories, questions, final=final, dj=(i==1)))
+        boards.append(Board(categories, questions, final=final, dj=(i == 1)))
     print("Boards", len(boards))
 
     return Game(boards, date, comments)

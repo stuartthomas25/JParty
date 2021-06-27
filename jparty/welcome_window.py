@@ -1,7 +1,20 @@
 import sys
 import os
 from random import shuffle
-from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMovie, QPixmap, QPalette, QGuiApplication, QFontDatabase, QColor
+from PyQt6.QtGui import (
+    QPainter,
+    QPen,
+    QBrush,
+    QColor,
+    QFont,
+    QMovie,
+    QPixmap,
+    QPalette,
+    QGuiApplication,
+    QFontDatabase,
+    QColor,
+)
+
 # from PyQt6.QtMultimedia import QSound
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
@@ -23,6 +36,7 @@ from .game import Player
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
 
+
 def updateUI(f):
     def wrapper(self, *args):
         ret = f(self, *args)
@@ -30,6 +44,7 @@ def updateUI(f):
         return ret
 
     return wrapper
+
 
 MOVIEWIDTH = 64
 LABELWIDTH = 150
@@ -43,6 +58,7 @@ LABELFONTSIZE = 15
 # subindent = ' ' * 4 * (level + 1)
 # for f in files:
 # print('{}{}'.format(subindent, f))
+
 
 class Welcome(QMainWindow):
     buzz_hint_trigger = pyqtSignal(int)
@@ -61,13 +77,11 @@ class Welcome(QMainWindow):
         self.game = None
         self.song_player = SongPlayer()
 
-
         self.buzz_hint_trigger.connect(self.buzz_hint)
 
         # print(final_song.fileName())
         # final_song.play()
         # print("play")
-
 
         # self.song.setLoops(QSound.Infinite)
         # self.song.play()
@@ -94,7 +108,7 @@ class Welcome(QMainWindow):
         self.initUI()
 
         if os.path.exists(".bkup"):
-            print('backup')
+            print("backup")
             self.run_game(pickle.load(open(".bkup", "rb")))
         else:
             self.full_index_thread = Thread(target=self.full_index)
@@ -147,7 +161,9 @@ class Welcome(QMainWindow):
             self.windowHandle().setScreen(QApplication.instance().screens()[0])
 
             self.host_overlay = HostOverlay(self.socket_controller.host())
-            self.host_overlay.windowHandle().setScreen(QApplication.instance().screens()[1])
+            self.host_overlay.windowHandle().setScreen(
+                QApplication.instance().screens()[1]
+            )
             self.host_overlay.show()
 
         self.check_start()
@@ -164,7 +180,11 @@ class Welcome(QMainWindow):
 
         icon = QPixmap(resource_path("icon.png"))
         self.icon_label.setPixmap(
-            icon.scaled(icon_size, icon_size, transformMode=Qt.TransformationMode.SmoothTransformation)
+            icon.scaled(
+                icon_size,
+                icon_size,
+                transformMode=Qt.TransformationMode.SmoothTransformation,
+            )
         )
         self.icon_label.setGeometry(
             (self.rect().width() - icon_size) / 2, 10, icon_size, icon_size
@@ -210,10 +230,10 @@ class Welcome(QMainWindow):
         ### FOR TESTING
 
         # self.socket_controller.connected_players = [
-            # Player("Stuart", None),
+        # Player("Stuart", None),
         # ]
         # self.socket_controller.connected_players[0].token = bytes.fromhex(
-            # "6ab3a010ce36cc5c62e3e8f219c9be"
+        # "6ab3a010ce36cc5c62e3e8f219c9be"
         # )
         # self.init_game()
 
@@ -244,7 +264,8 @@ class Welcome(QMainWindow):
         self.run_game(self.game)
 
     def run_game(self, game):
-        if self.song_player: self.song_player.stop()
+        if self.song_player:
+            self.song_player.stop()
         self.socket_controller.game = game
         game.buzzer_controller = self.socket_controller
         self.host_overlay.hide()
@@ -260,7 +281,6 @@ class Welcome(QMainWindow):
         self.host_overlay.show()
         self.host_overlay.restart()
         self.startButton.setEnabled(False)
-
 
     @updateUI
     def new_player(self, player):
@@ -278,16 +298,16 @@ class Welcome(QMainWindow):
         player = self.socket_controller.connected_players[i_player]
         PlayerView.buzz_hint(player)
         # for l in self.player_labels:
-            # if player.name == l.text():
-                # l.setStyleSheet("QLabel { background-color : grey}")
-                # def return_to_default(label=l, widget=self):
-                    # l.setStyleSheet("QLabel { background-color : none}")
-                    # self.update()
+        # if player.name == l.text():
+        # l.setStyleSheet("QLabel { background-color : grey}")
+        # def return_to_default(label=l, widget=self):
+        # l.setStyleSheet("QLabel { background-color : none}")
+        # self.update()
 
-                # t = threading.Timer(0.1, return_to_default)
-                # t.start()
+        # t = threading.Timer(0.1, return_to_default)
+        # t.start()
 
-                # break
+        # break
 
     def closeEvent(self, event):
         if os.path.exists(".bkup"):
@@ -295,9 +315,10 @@ class Welcome(QMainWindow):
         QApplication.quit()
 
     # def buzzer_disconnected(self):
-        # print("Buzzer disconnected!")
-        # error_msg = QErrorMessage(self)
-        # error_msg.showMessage(f"buzzer is disconnected!")
+    # print("Buzzer disconnected!")
+    # error_msg = QErrorMessage(self)
+    # error_msg.showMessage(f"buzzer is disconnected!")
+
 
 class PlayerLabel(QLabel):
     loading_movie = None
@@ -334,19 +355,21 @@ class PlayerLabel(QLabel):
 
 class PlayerView(QWidget):
     instances = set()
+
     def __init__(self, rect, parent=None):
         super().__init__(parent)
         self.setGeometry(rect)
         self.num_players = 0
 
         self.labels = [PlayerLabel(self) for _ in range(3)]
-        for i,label in enumerate(self.labels):
+        for i, label in enumerate(self.labels):
             label_margin = (rect.width() - 3 * MOVIEWIDTH) // 4
-            label.setGeometry(label_margin * (i + 1) + MOVIEWIDTH * i, 10, MOVIEWIDTH, MOVIEWIDTH)
+            label.setGeometry(
+                label_margin * (i + 1) + MOVIEWIDTH * i, 10, MOVIEWIDTH, MOVIEWIDTH
+            )
 
         PlayerView.instances.add(self)
         self.show()
-
 
     @classmethod
     def new_player(cls, player):
@@ -364,7 +387,7 @@ class PlayerView(QWidget):
         self.num_players += 1
         label.setText(player.name)
         label.setFixedWidth(LABELWIDTH)
-        label.move(label.pos() + QPoint((MOVIEWIDTH - LABELWIDTH)/2,0))
+        label.move(label.pos() + QPoint((MOVIEWIDTH - LABELWIDTH) / 2, 0))
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     @updateUI
@@ -382,7 +405,8 @@ class PlayerView(QWidget):
 
     # @updateUI
     # def _buzz_hint_callback(self, l):
-        # l.setStyleSheet("QLabel { background-color : none}")
+    # l.setStyleSheet("QLabel { background-color : none}")
+
 
 class HostOverlay(QWidget):
     def __init__(self, host):
@@ -411,34 +435,41 @@ class HostOverlay(QWidget):
         font = QFont()
         font.setPointSize(font_size)
         self.label = QLabel("http://" + host, self)
-        self.label.setGeometry(self.rect() - QMargins(0,0,0,self.rect().height()//2))
+        self.label.setGeometry(
+            self.rect() - QMargins(0, 0, 0, self.rect().height() // 2)
+        )
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setFont(font)
 
-        self.playerview = PlayerView( self.rect() - QMargins(0,self.rect().height()//2,0,0), self)
+        self.playerview = PlayerView(
+            self.rect() - QMargins(0, self.rect().height() // 2, 0, 0), self
+        )
 
         self.show()
 
     def restart(self):
         self.playerview.destroy()
-        self.playerview = PlayerView( self.rect() - QMargins(0,self.rect().height()//2,0,0), self)
+        self.playerview = PlayerView(
+            self.rect() - QMargins(0, self.rect().height() // 2, 0, 0), self
+        )
 
 
 def find_gateway():
-      Interfaces= netifaces.interfaces()
-      for inter in Interfaces:
-           if inter == "wlan0":
-                temp_list = []
-                Addresses = netifaces.ifaddresses(inter)
-                gws = netifaces.gateways()
-                temp_list = list (gws['default'][netifaces.AF_INET])
-                count =0
-                for item in temp_list:
-                      count +=1
-                      if count ==1:
-                           return item
-                      else:
-                           pass
+    Interfaces = netifaces.interfaces()
+    for inter in Interfaces:
+        if inter == "wlan0":
+            temp_list = []
+            Addresses = netifaces.ifaddresses(inter)
+            gws = netifaces.gateways()
+            temp_list = list(gws["default"][netifaces.AF_INET])
+            count = 0
+            for item in temp_list:
+                count += 1
+                if count == 1:
+                    return item
+                else:
+                    pass
+
 
 def main():
     app = QApplication(sys.argv)
@@ -459,8 +490,3 @@ def main():
         if wel.song_player:
             wel.song_player.stop()
         sys.exit(r)
-
-
-
-
-
