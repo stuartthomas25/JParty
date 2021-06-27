@@ -1,6 +1,28 @@
-from PyQt6.QtGui import QPainter, QPen, QBrush, QImage, QColor, QFont, QPalette, QPixmap, QTextDocument, QTextOption, QGuiApplication
+from PyQt6.QtGui import (
+    QPainter,
+    QPen,
+    QBrush,
+    QImage,
+    QColor,
+    QFont,
+    QPalette,
+    QPixmap,
+    QTextDocument,
+    QTextOption,
+    QGuiApplication,
+)
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
-from PyQt6.QtCore import Qt, QRectF, QRect, QPoint, QPointF, QTimer, QRect, QSize, QSizeF
+from PyQt6.QtCore import (
+    Qt,
+    QRectF,
+    QRect,
+    QPoint,
+    QPointF,
+    QTimer,
+    QRect,
+    QSize,
+    QSizeF,
+)
 from PyQt6.sip import delete
 
 
@@ -73,6 +95,7 @@ ANSWERSECS = 5
 
 FINALANSWERHEIGHT = 0.6
 
+
 def updateUI(f):
     def wrapper(self, *args):
         ret = f(self, *args)
@@ -99,7 +122,6 @@ class ScoreWidget(QWidget):
 
         self.__light_level = 0
         self.__light_thread = None
-
 
         self.show()
 
@@ -187,8 +209,11 @@ class ScoreWidget(QWidget):
                 qp.drawRect(namerect)
                 qp.setPen(HIGHLIGHTPEN)
             qp.drawText(
-                namerect, Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter, p.name
+                namerect,
+                Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
+                p.name,
             )
+
     def __scorerect(self, i):
         w = self.geometry().width()
         h = self.geometry().height()
@@ -196,7 +221,7 @@ class ScoreWidget(QWidget):
         return QRectF(sw * i, DIVIDERWIDTH, sw, h - NAMEHEIGHT - DIVIDERWIDTH)
 
     def mousePressEvent(self, event):
-        for i,p in enumerate(self.game.players):
+        for i, p in enumerate(self.game.players):
             if self.__scorerect(i).contains(event.position()):
                 self.game.adjust_score(p)
                 break
@@ -204,6 +229,7 @@ class ScoreWidget(QWidget):
     @updateUI
     def stop_lights(self):
         self.__light_level = 0
+
 
 class BorderWidget(QWidget):
     def __init__(self, game, boardrect, parent=None):
@@ -241,7 +267,6 @@ class BorderWidget(QWidget):
     def lit(self, val):
         self.__lit = val
 
-
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
@@ -262,6 +287,7 @@ class BorderWidget(QWidget):
             qp.drawPixmap(self.__leftarrowrect, self.__spaceimage)
             qp.drawPixmap(self.__rightarrowrect, self.__spaceimage)
 
+
 class QuestionLabel(QLabel):
     def __init__(self, text, rect, parent=None):
         super().__init__(text, parent)
@@ -273,7 +299,7 @@ class QuestionLabel(QLabel):
 
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(40)
-        shadow.setColor(QColor('black'))
+        shadow.setColor(QColor("black"))
         shadow.setOffset(3)
         self.setGraphicsEffect(shadow)
 
@@ -290,9 +316,8 @@ class QuestionWidget(QWidget):
         # width = height / CELLRATIO
         self.resize(parent.size())
         # self.move(
-            # self.parent().geometry().width() / 2 - self.parent().boardwidget.geometry().width() / 2, 0
+        # self.parent().geometry().width() / 2 - self.parent().boardwidget.geometry().width() / 2, 0
         # )
-
 
         if self.parent().alex:
             anheight = ANSWERHEIGHT * self.size().height()
@@ -310,12 +335,11 @@ class QuestionWidget(QWidget):
             )
             self.answer_label = QuestionLabel(question.answer, self.anrect, self)
 
-
         else:
             self.qurect = self.rect().adjusted(
                 QUMARGIN, QUMARGIN, -2 * QUMARGIN, -2 * QUMARGIN
             )
-            self.anrect=None
+            self.anrect = None
             self.answer_label = None
 
         self.question_label = QuestionLabel(question.text.upper(), self.qurect, self)
@@ -323,26 +347,25 @@ class QuestionWidget(QWidget):
         self.show()
 
     # def displayHtml(self, painter, html, rect):
-        # textoption = QTextOption(Qt.AlignmentFlag.AlignCenter)
-        # textoption.setWrapMode(QTextOption.WrapMode.WordWrap)
+    # textoption = QTextOption(Qt.AlignmentFlag.AlignCenter)
+    # textoption.setWrapMode(QTextOption.WrapMode.WordWrap)
 
-        # td = QTextDocument()
-        # # td.setDefaultFont(QUFONT)
-        # # td.setDefaultStyleSheet("font-family: 'Arial'; font-size: 72pt; text-align: center;")
-        # style = "text-align: center;" \
-                # "font-family: Helvetica;" \
-                # "font-size: 72pt;" \
-                # "color: white;"
-        # td.setTextWidth(rect.width())
-        # # td.setUseDesignMetrics(True)
-        # td.setHtml(f"<table style='width:100%' width='100%' ><tr><td style='{style}'>{html}</td></tr></table>")
-        # top = rect.y() + rect.height()/2 - td.size().height()/2 # center the view
-        # left = rect.x() + rect.width()/2 - td.size().width()/2
+    # td = QTextDocument()
+    # # td.setDefaultFont(QUFONT)
+    # # td.setDefaultStyleSheet("font-family: 'Arial'; font-size: 72pt; text-align: center;")
+    # style = "text-align: center;" \
+    # "font-family: Helvetica;" \
+    # "font-size: 72pt;" \
+    # "color: white;"
+    # td.setTextWidth(rect.width())
+    # # td.setUseDesignMetrics(True)
+    # td.setHtml(f"<table style='width:100%' width='100%' ><tr><td style='{style}'>{html}</td></tr></table>")
+    # top = rect.y() + rect.height()/2 - td.size().height()/2 # center the view
+    # left = rect.x() + rect.width()/2 - td.size().width()/2
 
-        # painter.translate(QPointF(left, top))
-        # td.drawContents(painter)
-        # painter.translate(QPointF(-left, -top))
-
+    # painter.translate(QPointF(left, top))
+    # td.drawContents(painter)
+    # painter.translate(QPointF(-left, -top))
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -380,8 +403,6 @@ class DailyDoubleWidget(QuestionWidget):
         self.dd_label.setVisible(False)
 
 
-
-
 class BoardWidget(QWidget):
     def __init__(self, game, parent=None):
         super().__init__(parent)
@@ -402,7 +423,6 @@ class BoardWidget(QWidget):
 
         cellheight = self.size().height() // (self.board.size[1] + 1)
         self.cellsize = (cellheight / CELLRATIO, cellheight)
-
 
         self.show()
 
@@ -475,7 +495,6 @@ class BoardWidget(QWidget):
                 self.board.categories[0],
             )
 
-
     @updateUI
     def load_question(self, q):
         if q.dd:
@@ -491,22 +510,25 @@ class BoardWidget(QWidget):
     def _identify_question(self, event):
         dc = self.game.dc
 
-        coord = (event.position().x() // self.cellsize[0], event.position().y() // self.cellsize[1] - 1)
+        coord = (
+            event.position().x() // self.cellsize[0],
+            event.position().y() // self.cellsize[1] - 1,
+        )
         q = self.board.get_question(*coord)
         if not q in self.game.completed_questions:
             dc.load_question(q)
             self.game.load_question(q)
 
     def mousePressEvent(self, event):
-        if not any([self.game.paused,
-                    self.game.active_question,
-                    not self.alex,
-                    self.board.final
-                ]):
+        if not any(
+            [
+                self.game.paused,
+                self.game.active_question,
+                not self.alex,
+                self.board.final,
+            ]
+        ):
             self._identify_question(event)
-
-
-
 
 
 class FinalAnswerWidget(QWidget):
@@ -553,7 +575,7 @@ class FinalAnswerWidget(QWidget):
         qp.setFont(SCOREFONT)
 
         if self.winner:
-            winnerrect = QRectF(0, NAMEHEIGHT + 2*margin, w, 2*NAMEHEIGHT)
+            winnerrect = QRectF(0, NAMEHEIGHT + 2 * margin, w, 2 * NAMEHEIGHT)
             qp.drawText(
                 winnerrect,
                 Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
@@ -567,8 +589,12 @@ class FinalAnswerWidget(QWidget):
         )
 
         if self.info_level > 0:
-            answerrect = QRectF(0, NAMEHEIGHT + 2*margin, w, 2*NAMEHEIGHT)
-            finalanswer = p.finalanswer if len(p.finalanswer.replace(' ','')) > 0 else "_________"
+            answerrect = QRectF(0, NAMEHEIGHT + 2 * margin, w, 2 * NAMEHEIGHT)
+            finalanswer = (
+                p.finalanswer
+                if len(p.finalanswer.replace(" ", "")) > 0
+                else "_________"
+            )
             qp.drawText(
                 answerrect,
                 Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
@@ -618,11 +644,9 @@ class DisplayWindow(QMainWindow):
 
         print("   ", self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True))
 
-
         self.game = game
         self.game.dc += self
         self.show()
-
 
     def hide_question(self):
         self.boardwidget.hide_question()

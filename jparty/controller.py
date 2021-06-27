@@ -6,6 +6,7 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 import tornado.websocket
+
 # import tornado.speedups
 import os
 import uuid
@@ -21,6 +22,7 @@ from tornado.options import define, options
 
 define("port", default=80, help="run on the given port", type=int)
 
+
 class Application(tornado.web.Application):
     def __init__(self, controller):
         handlers = [
@@ -33,7 +35,7 @@ class Application(tornado.web.Application):
             template_path=os.path.join(os.path.join(root, "buzzer", "templates")),
             static_path=os.path.join(root, "buzzer", "static"),
             xsrf_cookies=False,
-            websocket_ping_interval = 0.19
+            websocket_ping_interval=0.19,
         )
         super(Application, self).__init__(handlers, **settings)
         self.controller = controller
@@ -80,7 +82,6 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         self.set_nodelay(True)
         # self.controller.connected_players.add(self)
 
-
     def check_if_exists(self, token):
         p = self.controller.player_with_token(token)
         if p is not None:
@@ -91,9 +92,9 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
             self.send("EXISTS", p.page)
 
     def on_message(self, message):
-        #do this first to kill latency
+        # do this first to kill latency
         if "BUZZ" in message:
-            logging.info('buzz')
+            logging.info("buzz")
             self.buzz()
             return
         parsed = tornado.escape.json_decode(message)
@@ -153,15 +154,15 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         # self.application.controller.buzzer_disconnected(self.player)
 
 
-
-
 class BuzzerController:
     def __init__(self):
         self.thread = None
         self.game = None
         self.welcome_window = None
         tornado.options.parse_command_line()
-        self.app = Application(self) # this is to remove sleep mode on Macbook network card
+        self.app = Application(
+            self
+        )  # this is to remove sleep mode on Macbook network card
         self.port = options.port
         self.connected_players = []
 
@@ -207,36 +208,36 @@ class BuzzerController:
 
     @classmethod
     def localip(self):
-          s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-          s.connect(("8.8.8.8", 80))
-          return s.getsockname()[0]
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
 
-        # hostname = socket.gethostname()
-        # try:
-            # ip = socket.gethostbyname(hostname)
-            # if ip.startswith("127."):
-                # raise Exception()
-            # return ip
-        # except:
-            # return hostname
+    # hostname = socket.gethostname()
+    # try:
+    # ip = socket.gethostbyname(hostname)
+    # if ip.startswith("127."):
+    # raise Exception()
+    # return ip
+    # except:
+    # return hostname
 
-        # return [
-            # l
-            # for l in (
-                # [
-                    # ip
-                    # for ip in socket.gethostbyname_ex(socket.gethostname())[2]
-                    # if not ip.startswith("127.")
-                # ][:1],
-                # [
-                    # [
-                        # (s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close())
-                        # for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]
-                    # ][0][1]
-                # ],
-            # )
-            # if l
-        # ][0][0]
+    # return [
+    # l
+    # for l in (
+    # [
+    # ip
+    # for ip in socket.gethostbyname_ex(socket.gethostname())[2]
+    # if not ip.startswith("127.")
+    # ][:1],
+    # [
+    # [
+    # (s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close())
+    # for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]
+    # ][0][1]
+    # ],
+    # )
+    # if l
+    # ][0][0]
 
     def host(self):
         localip = BuzzerController.localip()
@@ -273,6 +274,3 @@ class BuzzerController:
         # self.welcome_window.buzzer_disconnected(player.name)
         # QApplication.instance().thread().finished.connect(self.welcome_window.buzzer_disconnected)
         # self.welcome_window.signal.connect(self.welcomeb
-
-
-

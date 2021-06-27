@@ -4,10 +4,8 @@ import os
 import sys
 
 
-
-
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
+    """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
@@ -15,12 +13,13 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
 
-    return os.path.join(base_path, 'data', relative_path)
+    return os.path.join(base_path, "data", relative_path)
+
 
 class SongPlayer(object):
     def __init__(self):
         super().__init__()
-        self.__wave_obj = sa.WaveObject.from_wave_file(resource_path('song.wav'))
+        self.__wave_obj = sa.WaveObject.from_wave_file(resource_path("song.wav"))
         self.__play_obj = None
         self.__repeating = False
         self.__repeat_thread = None
@@ -33,7 +32,7 @@ class SongPlayer(object):
         self.__repeating = repeat
         self.__play_obj = self.__wave_obj.play()
         if repeat:
-            self.__repeat_thread = Thread(target = self.__repeat)
+            self.__repeat_thread = Thread(target=self.__repeat)
             self.__repeat_thread.start()
 
     def stop(self):
@@ -46,5 +45,3 @@ class SongPlayer(object):
             if not self.__repeating:
                 break
             self.__play_obj = self.__wave_obj.play()
-
-
