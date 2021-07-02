@@ -303,10 +303,12 @@ class Game(QObject):
         self.dc.borderwidget.lit = True
         if self.current_round.final:
             self.buzzer_controller.prompt_answers()
-            self.song_player.play()
-            FJTIME = 31
+
             if DEBUG:
                 FJTIME = 1
+            else:
+                FJTIME = 31
+                self.song_player.play()
             self.timer = QuestionTimer(FJTIME, self.stumped)
         else:
             if BUZZ_DELAY > 0:
