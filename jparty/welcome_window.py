@@ -478,6 +478,7 @@ def find_gateway():
 
 
 def main():
+    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     app = QApplication(sys.argv)
     # r = QFontDatabase.addApplicationFont("data:ITC_Korinna.ttf")
     # print("Loading font: ",r)

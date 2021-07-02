@@ -10,6 +10,7 @@ from PyQt6.QtGui import (
     QTextDocument,
     QTextOption,
     QGuiApplication,
+    QFontMetrics
 )
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt6.QtCore import (
@@ -51,24 +52,24 @@ BOARDSIZE = (6, 6)
 
 CATFONT = QFont()
 CATFONT.setBold(True)
-CATFONT.setPointSize(24)
+CATFONT.setPixelSize(24)
 CATPEN = QPen(WHITE)
 
 MONFONT = QFont(CATFONT)
-MONFONT.setPointSize(50)
+MONFONT.setPixelSize(50)
 MONPEN = QPen(YELLOW)
 TEXTPADDING = 20
 
 QUFONT = QFont()
-QUFONT.setPointSize(70)
+QUFONT.setPixelSize(70)
 QUMARGIN = 50
 
 NAMEHEIGHT = 50
 NAMEFONT = QFont()
-NAMEFONT.setPointSize(20)
+NAMEFONT.setPixelSize(20)
 NAMEPEN = QPen(WHITE)
 SCOREFONT = QFont()
-SCOREFONT.setPointSize(50)
+SCOREFONT.setPixelSize(50)
 SCOREPEN = QPen(WHITE)
 HOLEPEN = QPen(RED)
 HIGHLIGHTPEN = QPen(BLUE)
@@ -295,7 +296,9 @@ class QuestionLabel(QLabel):
         self.setGeometry(QRect(rect))
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setWordWrap(True)
-        self.setFont(QFont("Helvetica", 72))
+        self.font = QFont("Helvetica")
+        self.font.setPixelSize(72)
+        self.setFont(self.font)
 
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(40)
