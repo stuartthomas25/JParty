@@ -47,17 +47,8 @@ def updateUI(f):
 
 
 MOVIEWIDTH = 64
-LABELWIDTH = 150
 LABELFONTSIZE = 15
-
-# def list_files(startpath='.'):
-# for root, dirs, files in os.walk(startpath):
-# level = root.replace(startpath, '').count(os.sep)
-# indent = ' ' * 4 * (level)
-# print('{}{}/'.format(indent, os.path.basename(root)))
-# subindent = ' ' * 4 * (level + 1)
-# for f in files:
-# print('{}{}'.format(subindent, f))
+OVERLAYFONTSIZE = 40
 
 
 class Welcome(QMainWindow):
@@ -76,6 +67,7 @@ class Welcome(QMainWindow):
         self.valid_game = False
         self.game = None
         self.song_player = SongPlayer()
+        self.host_overlay = None
 
         self.buzz_hint_trigger.connect(self.buzz_hint)
 
@@ -113,6 +105,14 @@ class Welcome(QMainWindow):
         else:
             self.full_index_thread = Thread(target=self.full_index)
             self.full_index_thread.start()
+
+    def show_overlay(self):
+        self.host_overlay = HostOverlay(self.socket_controller.host())
+        self.windowHandle().setScreen(
+            QApplication.instance().screens()[1]
+        )
+        self.host_overlay.showNormal()
+
 
     def full_index(self):
         self.all_games = []
@@ -159,12 +159,7 @@ class Welcome(QMainWindow):
             print("hide monitor error")
             self.monitor_error.hide()
             self.windowHandle().setScreen(QApplication.instance().screens()[0])
-
-            self.host_overlay = HostOverlay(self.socket_controller.host())
-            self.host_overlay.windowHandle().setScreen(
-                QApplication.instance().screens()[1]
-            )
-            self.host_overlay.show()
+            self.show_overlay()
 
         self.check_start()
 
@@ -219,7 +214,7 @@ class Welcome(QMainWindow):
         f.setPointSize(30)  # sets the size to 27
         self.textbox.setFont(f)
 
-        self.player_view = PlayerView(self.rect() - QMargins(0, 210, 0, 0), self)
+        self.player_view = PlayerView(self.rect() - QMargins(0, 210, 0, 0), parent=self)
 
         if DEBUG:
             self.textbox.setText(str(2534))  # EDIT
@@ -268,7 +263,7 @@ class Welcome(QMainWindow):
             self.song_player.stop()
         self.socket_controller.game = game
         game.buzzer_controller = self.socket_controller
-        self.host_overlay.hide()
+        self.host_overlay.close()
         self.show_board(game)
 
     def show_board(self, game):
@@ -276,10 +271,11 @@ class Welcome(QMainWindow):
         self.game.main_window = DisplayWindow(game, alex=False, monitor=1)
 
     def restart(self):
-        self.player_view.destroy()
-        self.player_view = PlayerView(self.rect() - QMargins(0, 210, 0, 0), self)
-        self.host_overlay.show()
-        self.host_overlay.restart()
+        self.player_view.close()
+        self.player_view = PlayerView(self.rect() - QMargins(0, 210, 0, 0), parent=self)
+        # self.show_overlay()
+        QTimer.singleShot(500, self.show_overlay)
+
         self.startButton.setEnabled(False)
 
     @updateUI
@@ -314,17 +310,13 @@ class Welcome(QMainWindow):
             os.remove(".bkup")
         QApplication.quit()
 
-    # def buzzer_disconnected(self):
-    # print("Buzzer disconnected!")
-    # error_msg = QErrorMessage(self)
-    # error_msg.showMessage(f"buzzer is disconnected!")
-
 
 class PlayerLabel(QLabel):
     loading_movie = None
 
-    def __init__(self, parent=None):
+    def __init__(self, fontsize, parent=None):
         super().__init__(parent)
+        self.fontsize = fontsize
 
         cls = type(self)
         if not cls.loading_movie:
@@ -334,7 +326,7 @@ class PlayerLabel(QLabel):
         # self.player_heading.setGeometry(0, 140, self.rect().width(), 50)
         # self.player_heading.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         f = self.font()
-        f.setPointSize(LABELFONTSIZE)
+        f.setPointSize(self.fontsize)
         self.setFont(f)
         self.setAutoFillBackground(True)
 
@@ -356,12 +348,14 @@ class PlayerLabel(QLabel):
 class PlayerView(QWidget):
     instances = set()
 
-    def __init__(self, rect, parent=None):
+    def __init__(self, rect, fontsize=LABELFONTSIZE, parent=None):
         super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setGeometry(rect)
         self.num_players = 0
+        self.fontsize = fontsize
 
-        self.labels = [PlayerLabel(self) for _ in range(3)]
+        self.labels = [PlayerLabel(self.fontsize, self) for _ in range(3)]
         for i, label in enumerate(self.labels):
             label_margin = (rect.width() - 3 * MOVIEWIDTH) // 4
             label.setGeometry(
@@ -386,8 +380,10 @@ class PlayerView(QWidget):
         label = self.labels[self.num_players]
         self.num_players += 1
         label.setText(player.name)
-        label.setFixedWidth(LABELWIDTH)
-        label.move(label.pos() + QPoint((MOVIEWIDTH - LABELWIDTH) / 2, 0))
+        labelwidth = self.parent().size().width() // 3
+        label.setFixedWidth(labelwidth)
+        # label.move(label.pos() + QPoint((MOVIEWIDTH - labelwidth) / 2, 0))
+        label.move(QPoint(labelwidth*(self.num_players-1), 0))
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     @updateUI
@@ -403,14 +399,16 @@ class PlayerView(QWidget):
 
                 break
 
-    # @updateUI
-    # def _buzz_hint_callback(self, l):
-    # l.setStyleSheet("QLabel { background-color : none}")
+    def closeEvent(self, event):
+        PlayerView.instances.remove(self)
+        event.accept()
+
 
 
 class HostOverlay(QWidget):
     def __init__(self, host):
         QMainWindow.__init__(self)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         screen = QGuiApplication.screens()[1]
 
         screen_width = screen.size().width()
@@ -442,16 +440,24 @@ class HostOverlay(QWidget):
         self.label.setFont(font)
 
         self.playerview = PlayerView(
-            self.rect() - QMargins(0, self.rect().height() // 2, 0, 0), self
+            self.rect() - QMargins(0, self.rect().height() // 2, 0, 0),
+            fontsize = OVERLAYFONTSIZE,
+            parent = self
         )
 
         self.show()
 
-    def restart(self):
-        self.playerview.destroy()
-        self.playerview = PlayerView(
-            self.rect() - QMargins(0, self.rect().height() // 2, 0, 0), self
-        )
+    def closeEvent(self, event):
+        self.playerview.close()
+        event.accept()
+
+    # def restart(self):
+        # self.playerview.close()
+        # self.playerview = PlayerView(
+            # self.rect() - QMargins(0, self.rect().height() // 2, 0, 0),
+            # fontsize = OVERLAYFONTSIZE,
+            # parent = self
+        # )
 
 
 def find_gateway():
