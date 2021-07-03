@@ -52,24 +52,24 @@ BOARDSIZE = (6, 6)
 
 CATFONT = QFont()
 CATFONT.setBold(True)
-CATFONT.setPixelSize(24)
+CATFONT.setPointSize(24)
 CATPEN = QPen(WHITE)
 
 MONFONT = QFont(CATFONT)
-MONFONT.setPixelSize(50)
+MONFONT.setPointSize(50)
 MONPEN = QPen(YELLOW)
 TEXTPADDING = 20
 
 QUFONT = QFont()
-QUFONT.setPixelSize(70)
+QUFONT.setPointSize(70)
 QUMARGIN = 50
 
 NAMEHEIGHT = 50
 NAMEFONT = QFont()
-NAMEFONT.setPixelSize(20)
+NAMEFONT.setPointSize(20)
 NAMEPEN = QPen(WHITE)
 SCOREFONT = QFont()
-SCOREFONT.setPixelSize(50)
+SCOREFONT.setPointSize(50)
 SCOREPEN = QPen(WHITE)
 HOLEPEN = QPen(RED)
 HIGHLIGHTPEN = QPen(BLUE)
@@ -104,6 +104,31 @@ def updateUI(f):
         return ret
 
     return wrapper
+
+
+def autofitsize(text, font, rect, start=None, stepsize = 2):
+    if start:
+        font.setPointSize(start)
+
+    size = font.pointSize()
+    flags = Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter
+
+    def fullrect(font, text=text, flags=flags):
+        fm = QFontMetrics(font)
+        return fm.boundingRect(rect, flags, text)
+
+    if fullrect(font).height() > rect.height():
+        while size>0:
+            size -= stepsize
+            font.setPointSize(size)
+            newrect = fullrect(font)
+            if newrect.height() <= rect.height():
+                return font.pointSize()
+        raise Exception(f"Nothing fit! (text='{text}')")
+
+    print(f"'{text}' is good")
+    return size
+
 
 
 class ScoreWidget(QWidget):
@@ -297,7 +322,8 @@ class QuestionLabel(QLabel):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setWordWrap(True)
         self.font = QFont("Helvetica")
-        self.font.setPixelSize(72)
+        fontsize = autofitsize(text, self.font, rect, start=72)
+        self.font.setPointSize(fontsize)
         self.setFont(self.font)
 
         shadow = QGraphicsDropShadowEffect(self)
@@ -305,6 +331,8 @@ class QuestionLabel(QLabel):
         shadow.setColor(QColor("black"))
         shadow.setOffset(3)
         self.setGraphicsEffect(shadow)
+
+
 
 
 class QuestionWidget(QWidget):
@@ -321,8 +349,9 @@ class QuestionWidget(QWidget):
         # self.move(
         # self.parent().geometry().width() / 2 - self.parent().boardwidget.geometry().width() / 2, 0
         # )
+        alex = self.parent().alex
 
-        if self.parent().alex:
+        if alex:
             anheight = ANSWERHEIGHT * self.size().height()
             self.qurect = self.rect().adjusted(
                 QUMARGIN,
@@ -337,6 +366,7 @@ class QuestionWidget(QWidget):
                 ANSWERHEIGHT * self.size().height(),
             )
             self.answer_label = QuestionLabel(question.answer, self.anrect, self)
+            text = question.text
 
         else:
             self.qurect = self.rect().adjusted(
@@ -345,7 +375,9 @@ class QuestionWidget(QWidget):
             self.anrect = None
             self.answer_label = None
 
-        self.question_label = QuestionLabel(question.text.upper(), self.qurect, self)
+            text = question.text.upper()
+
+        self.question_label = QuestionLabel(text, self.qurect, self)
 
         self.show()
 
