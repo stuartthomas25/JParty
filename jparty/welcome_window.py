@@ -29,7 +29,7 @@ import threading
 from functools import partial
 
 # from .data_rc import *
-from .retrieve import get_game, get_all_games, get_game_sum
+from .retrieve import get_game, get_all_games, get_game_sum, get_random_game
 from .controller import BuzzerController
 from .boardwindow import DisplayWindow
 from .game import Player
@@ -102,9 +102,6 @@ class Welcome(QMainWindow):
         if os.path.exists(".bkup"):
             print("backup")
             self.run_game(pickle.load(open(".bkup", "rb")))
-        else:
-            self.full_index_thread = Thread(target=self.full_index)
-            self.full_index_thread.start()
 
     def show_overlay(self):
         self.host_overlay = HostOverlay(self.socket_controller.host())
@@ -113,21 +110,10 @@ class Welcome(QMainWindow):
         )
         self.host_overlay.showNormal()
 
-
-    def full_index(self):
-        self.all_games = []
-        if not DEBUG:
-            self.all_games = get_all_games()
-
-        print("got all games")
-
     @updateUI
     def random(self, checked):
-        self.full_index_thread.join()
-        game_id = choice(self.all_games)
-        # self.game = get_game(game_id)
-        # while not self.game.complete():
-        #    self.game = get_game(game_id)
+        game_id = get_random_game()
+        print("GAMEID",game_id)
 
         self.textbox.setText(str(game_id))
         self.textbox.show()
@@ -192,12 +178,12 @@ class Welcome(QMainWindow):
         self.check_second_monitor()
 
         self.startButton.setToolTip("Start Game")
-        self.startButton.move(280, 95)
+        self.startButton.move(290, 95)
         self.startButton.clicked.connect(self.init_game)
         self.startButton.setEnabled(False)
 
         self.randButton.setToolTip("Random Game")
-        self.randButton.move(280, 120)
+        self.randButton.move(290, 120)
         # self.randButton.setFocus(False)
         self.randButton.clicked.connect(self.random)
         summary_margin = 50
