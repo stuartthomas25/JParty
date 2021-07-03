@@ -117,6 +117,14 @@ def get_game_sum(soup):
 
     return date, comments
 
+def get_random_game():
+    r = requests.get("http://j-archive.com/")
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    link = soup.find_all(class_="splash_clue_footer")[1].find('a')['href']
+    return int(link[21:])
+
+
 
 # def getStatus(ourl):
 # try:
