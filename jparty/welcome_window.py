@@ -35,6 +35,7 @@ from .boardwindow import DisplayWindow
 from .game import Player
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
+from .version import version
 
 
 def updateUI(f):
@@ -58,7 +59,7 @@ class Welcome(QMainWindow):
         super().__init__()
         self.socket_controller = SC
         self.socket_controller.welcome_window = self
-        self.title = "JParty!"
+        self.title = f"JParty! (v {version})"
         self.left = 10
         self.top = 10
         self.width = 500
