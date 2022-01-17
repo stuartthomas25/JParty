@@ -30,7 +30,7 @@ The "Alex" player sees the answer on the laptop screen and can adjudicate with t
 - Final Jeopardy, Daily Doubles, Double Jeopardy
  
 ## Download:
-See Releases page.
+See <a href="https://github.com/stuartthomas25/JParty/releases">Releases</a> page.
 
 ## Requirements:
 ### For running binary
