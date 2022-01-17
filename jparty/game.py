@@ -345,7 +345,7 @@ class Game(QObject):
             self.dc.borderwidget.lit = False
             self.update()
         else:
-            print(f"{player.name}: buzz")
+            self.dc.scoreboard.buzz_hint(player)
 
     def answer_given(self):
         print("answer given")

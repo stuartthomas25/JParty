@@ -105,9 +105,10 @@ class Welcome(QMainWindow):
 
     def show_overlay(self):
         self.host_overlay = HostOverlay(self.socket_controller.host())
-        self.windowHandle().setScreen(
-            QApplication.instance().screens()[1]
-        )
+        if not DEBUG:
+            self.windowHandle().setScreen(
+                QApplication.instance().screens()[1]
+            )
         self.host_overlay.showNormal()
 
     @updateUI
@@ -141,7 +142,7 @@ class Welcome(QMainWindow):
         t.start()
 
     def check_second_monitor(self):
-        if len(QApplication.instance().screens()) > 1:
+        if len(QApplication.instance().screens()) > 1 or DEBUG:
             print("hide monitor error")
             self.monitor_error.hide()
             self.windowHandle().setScreen(QApplication.instance().screens()[0])
@@ -225,6 +226,8 @@ class Welcome(QMainWindow):
             self.startButton.setEnabled(False)
 
     def startable(self):
+        if DEBUG:
+            return True
         return (
             self.valid_game
             and len(self.socket_controller.connected_players) > 0
@@ -395,7 +398,10 @@ class HostOverlay(QWidget):
     def __init__(self, host):
         QMainWindow.__init__(self)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        screen = QGuiApplication.screens()[1]
+        if DEBUG:
+            screen = QGuiApplication.screens()[0]
+        else:
+            screen = QGuiApplication.screens()[1]
 
         screen_width = screen.size().width()
         display_width = int(0.7 * screen_width)
