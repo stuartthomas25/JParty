@@ -29,6 +29,7 @@ from PyQt6.sip import delete
 
 from .game import game_params as gp
 from .utils import resource_path
+from .constants import DEBUG
 import time
 import threading
 import re
@@ -41,6 +42,7 @@ CELLRATIO = 3 / 5
 FONTSIZE = 10
 
 BLUE = QColor("#031591")
+HINTBLUE = QColor("#041ec8")
 YELLOW = QColor("#ffcc00")
 RED = QColor("#ff0000")
 BLACK = QColor("#000000")
@@ -74,6 +76,7 @@ SCOREPEN = QPen(WHITE)
 HOLEPEN = QPen(RED)
 HIGHLIGHTPEN = QPen(BLUE)
 HIGHLIGHTBRUSH = QBrush(WHITE)
+HINTBRUSH = QBrush(HINTBLUE)
 
 CORRECTBRUSH = QBrush(GREEN)
 INCORRECTBRUSH = QBrush(RED)
@@ -148,6 +151,8 @@ class ScoreWidget(QWidget):
 
         self.__light_level = 0
         self.__light_thread = None
+        self.__buzz_hint_players = []
+        self.__buzz_hint_thread = []
 
         self.show()
 
@@ -161,6 +166,19 @@ class ScoreWidget(QWidget):
     def run_lights(self):
         self.__light_thread = threading.Thread(target=self.__lights, name="lights")
         self.__light_thread.start()
+
+    def __buzz_hint(self, p):
+        self.__buzz_hint_players.append(p)
+        self.update()
+        time.sleep(0.25)
+        self.__buzz_hint_players.remove(p)
+        self.update()
+
+
+    def buzz_hint(self, p):
+        self.__buzz_hint_thread = threading.Thread(target=self.__buzz_hint, args=(p,), name="buzz_hint")
+        self.__buzz_hint_thread.start()
+
 
     def paintEvent(self, event):
         h = self.geometry().height()
@@ -214,6 +232,8 @@ class ScoreWidget(QWidget):
         if ap:
             highlighted_players.append(ap)
 
+
+
         for i, p in enumerate(players):
             if p.score < 0:
                 qp.setPen(HOLEPEN)
@@ -234,6 +254,10 @@ class ScoreWidget(QWidget):
                 qp.setBrush(HIGHLIGHTBRUSH)
                 qp.drawRect(namerect)
                 qp.setPen(HIGHLIGHTPEN)
+            elif p in self.__buzz_hint_players:
+                qp.setBrush(HINTBRUSH)
+                qp.drawRect(namerect)
+
             qp.drawText(
                 namerect,
                 Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
@@ -656,6 +680,10 @@ class DisplayWindow(QMainWindow):
         self.setPalette(colorpal)
 
         # monitor = QDesktopWidget().screenGeometry(monitor)
+        if DEBUG:
+            if len(QGuiApplication.screens()) == 1:
+                monitor = 0
+
         monitor = QGuiApplication.screens()[monitor].geometry()
 
         self.move(monitor.left(), monitor.top())  # move to monitor 0
