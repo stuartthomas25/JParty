@@ -1,0 +1,6 @@
+	* 1.0
+	- Initial release
+	* 1.1
+	- Fix restart bug
+	- Add buzz hint to main screen
+	- Resize text automatically
