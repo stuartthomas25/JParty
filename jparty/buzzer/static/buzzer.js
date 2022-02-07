@@ -16,9 +16,9 @@ function lights_off(i) {
 var last_buzz = new Date().getTime();
 async function buzz() {
     var now = new Date().getTime();
-    if (now - last_buzz > 250) {
-        last_buzz = now;
-        //console.log("BUZZ");
+    if (now - window.last_buzz > 250) {
+        window.last_buzz = now;
+        console.log("BUZZ");
         send("BUZZ");
     };
 
