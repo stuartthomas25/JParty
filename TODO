@@ -1,2 +1,7 @@
-* Add Emoji support to names
-* Buzzer hint during game
+* TODO add tips and hints to the buzzer page.
+* TODO maybe add a tutorial feature? (maybe just one popup as the game starts)
+* TODO check internet connection
+* TODO check for updates
+* TODO save debug log, send to me
+* TODO add better text for communicating game id is found in URL
+* automatically skip games with blank questions
