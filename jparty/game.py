@@ -344,8 +344,10 @@ class Game(QObject):
             self.keystroke_manager.activate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
             self.dc.borderwidget.lit = False
             self.update()
-        else:
+        elif self.active_question is None:
             self.dc.scoreboard.buzz_hint(player)
+        else:
+            pass
 
     def answer_given(self):
         print("answer given")

@@ -94,7 +94,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         # do this first to kill latency
         if "BUZZ" in message:
-            logging.info("buzz")
+            # logging.info("buzz")
             self.buzz()
             return
         parsed = tornado.escape.json_decode(message)
