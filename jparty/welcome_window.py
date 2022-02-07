@@ -29,7 +29,7 @@ import threading
 from functools import partial
 
 # from .data_rc import *
-from .retrieve import get_game, get_all_games, get_game_sum, get_random_game
+from .retrieve import get_game, get_game_sum, get_random_game
 from .controller import BuzzerController
 from .boardwindow import DisplayWindow
 from .game import Player
@@ -112,13 +112,21 @@ class Welcome(QMainWindow):
             )
         self.host_overlay.showNormal()
 
-    @updateUI
-    def random(self, checked):
-        game_id = get_random_game()
-        print("GAMEID",game_id)
+    def _random(self):
+        complete = False
+        while not complete:
+            game_id = get_random_game()
+            print("GAMEID",game_id)
+            complete = get_game(game_id).complete()
 
         self.textbox.setText(str(game_id))
         self.textbox.show()
+
+
+    def random(self, checked):
+        self.summary_label.setText("Loading...")
+        t = Thread(target=self._random)
+        t.start()
 
     @updateUI
     def _show_summary(self):
