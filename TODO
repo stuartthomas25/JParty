@@ -1,7 +1,6 @@
-* TODO add tips and hints to the buzzer page.
 * TODO maybe add a tutorial feature? (maybe just one popup as the game starts)
-* TODO check internet connection
+* DONE check internet connection
 * TODO check for updates
 * TODO save debug log, send to me
-* TODO add better text for communicating game id is found in URL
-* automatically skip games with blank questions
+* DONE add better text for communicating game id is found in URL
+* DONE automatically skip games with blank questions
