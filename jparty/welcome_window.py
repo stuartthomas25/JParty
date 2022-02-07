@@ -15,6 +15,8 @@ from PyQt6.QtGui import (
     QColor,
 )
 
+import requests
+
 # from PyQt6.QtMultimedia import QSound
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
@@ -91,7 +93,8 @@ class Welcome(QMainWindow):
         self.summary_label.setWordWrap(True)
 
         self.textbox = QLineEdit(self)
-        self.gameid_label = QLabel("Game ID:", self)
+        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
+        self.gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         # self.player_heading = QLabel("Players:", self)
         # self.player_labels = [QLabel(self) for _ in range(3)]
 
@@ -121,7 +124,6 @@ class Welcome(QMainWindow):
 
         self.textbox.setText(str(game_id))
         self.textbox.show()
-
 
     def random(self, checked):
         self.summary_label.setText("Loading...")
@@ -202,7 +204,7 @@ class Welcome(QMainWindow):
         )
         self.summary_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.gameid_label.move(120, 105)
+        self.gameid_label.setGeometry(0, 105, 172, 50)
         self.textbox.move(180, 100)
         self.textbox.resize(100, 40)
         self.textbox.textChanged.connect(self.show_summary)
@@ -481,6 +483,20 @@ def find_gateway():
 def main():
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     app = QApplication(sys.argv)
+
+    # check internet connection
+    try:
+        r = requests.get(f"http://www.j-archive.com/")
+    except requests.exceptions.ConnectionError as e:    # This is the correct syntax
+        button = QMessageBox.critical(
+            None,
+            "Cannot connect!",
+            "JParty cannot connect to the J-Archive. Please check your internet connection.",
+            buttons=QMessageBox.StandardButton.Abort,
+            defaultButton=QMessageBox.StandardButton.Abort
+        )
+        quit()
+
     # r = QFontDatabase.addApplicationFont("data:ITC_Korinna.ttf")
     # print("Loading font: ",r)
     SC = BuzzerController()
