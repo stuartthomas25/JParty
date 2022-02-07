@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['gui.py'],
-             pathex=['/Users/stuart/Documents/Programming/JParty'],
+             pathex=['.'],
              binaries=[],
              datas=[
                  ("jparty/data/*", "data"),
