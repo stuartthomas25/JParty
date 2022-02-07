@@ -158,7 +158,7 @@ class ScoreWidget(QWidget):
 
     def __lights(self):
         self.__light_level = ANSWERSECS + 1
-        while self.__light_level > 0:
+        while self.__light_level > 0 and threading.current_thread() is self.__light_thread:
             self.__light_level -= 1
             self.update()
             time.sleep(1.0)
@@ -166,6 +166,11 @@ class ScoreWidget(QWidget):
     def run_lights(self):
         self.__light_thread = threading.Thread(target=self.__lights, name="lights")
         self.__light_thread.start()
+
+    @updateUI
+    def stop_lights(self):
+        self.__light_level = 0
+
 
     def __buzz_hint(self, p):
         self.__buzz_hint_players.append(p)
@@ -178,7 +183,6 @@ class ScoreWidget(QWidget):
     def buzz_hint(self, p):
         self.__buzz_hint_thread = threading.Thread(target=self.__buzz_hint, args=(p,), name="buzz_hint")
         self.__buzz_hint_thread.start()
-
 
     def paintEvent(self, event):
         h = self.geometry().height()
@@ -275,10 +279,6 @@ class ScoreWidget(QWidget):
             if self.__scorerect(i).contains(event.position()):
                 self.game.adjust_score(p)
                 break
-
-    @updateUI
-    def stop_lights(self):
-        self.__light_level = 0
 
 
 class BorderWidget(QWidget):
