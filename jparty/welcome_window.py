@@ -68,7 +68,7 @@ class Welcome(QMainWindow):
         self.left = 10
         self.top = 10
         self.width = 500
-        self.height = 300
+        self.height = 320
         self.all_games = None
         self.valid_game = False
         self.game = None
@@ -95,9 +95,14 @@ class Welcome(QMainWindow):
         self.summary_label = QLabel("", self)
         self.summary_label.setWordWrap(True)
 
+        self.help_checkbox = QCheckBox("Show help", self)
+
         self.textbox = QLineEdit(self)
         self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
         self.gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+
+
         # self.player_heading = QLabel("Players:", self)
         # self.player_labels = [QLabel(self) for _ in range(3)]
 
@@ -195,7 +200,6 @@ class Welcome(QMainWindow):
         self.startButton.setToolTip("Start Game")
         self.startButton.move(290, 95)
         self.startButton.clicked.connect(self.init_game)
-        self.startButton.setEnabled(False)
 
         self.randButton.setToolTip("Random Game")
         self.randButton.move(290, 120)
@@ -207,6 +211,9 @@ class Welcome(QMainWindow):
         )
         self.summary_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
+        self.help_checkbox.setGeometry(self.summary_label.geometry().translated(165,42))
+
+
         self.gameid_label.setGeometry(0, 105, 172, 50)
         self.textbox.move(180, 100)
         self.textbox.resize(100, 40)
@@ -215,7 +222,7 @@ class Welcome(QMainWindow):
         f.setPointSize(30)  # sets the size to 27
         self.textbox.setFont(f)
 
-        self.player_view = PlayerView(self.rect() - QMargins(0, 210, 0, 0), parent=self)
+        self.player_view = PlayerView(self.rect() - QMargins(0, 230, 0, 0), parent=self)
 
         if DEBUG:
             self.textbox.setText(str(2534))  # EDIT
@@ -267,12 +274,19 @@ class Welcome(QMainWindow):
             self.song_player.stop()
         self.socket_controller.game = game
         game.buzzer_controller = self.socket_controller
+
         self.host_overlay.close()
         self.show_board(game)
+
+
 
     def show_board(self, game):
         self.game.alex_window = DisplayWindow(game, alex=True, monitor=0)
         self.game.main_window = DisplayWindow(game, alex=False, monitor=1)
+        self.startButton.setEnabled(False)
+        if self.help_checkbox.isChecked():
+            QTimer.singleShot(200, self.game.show_help)
+
 
     def restart(self):
         self.player_view.close()
@@ -514,32 +528,34 @@ def main():
     # ip_addr = '192.168.1.1'
     # ping_command = ['ping','-i','0.19',ip_addr]
     # ping_process = subprocess.Popen(ping_command, stdout=open(os.devnull, 'wb'))
-    # song_player = None
+    song_player = None
     if DEBUG:
         logging.warn("RUNNING IN DEBUG MODE")
-    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-    app = QApplication(sys.argv)
-
-    SC = BuzzerController()
-    wel = Welcome(SC)
-    # song_player = wel.song_player
-    SC.start()
-    r = app.exec()
 
 
-    # try:
-    #     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-    #     app = QApplication(sys.argv)
+    # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+    # app = QApplication(sys.argv)
 
-    #     SC = BuzzerController()
-    #     wel = Welcome(SC)
-    #     song_player = wel.song_player
-    #     SC.start()
-    #     r = app.exec()
+    # SC = BuzzerController()
+    # wel = Welcome(SC)
+    # # song_player = wel.song_player
+    # SC.start()
+    # r = app.exec()
 
 
-    # finally:
-    #     logging.info("terminated")
-    #     if song_player:
-    #         song_player.stop()
-    #     sys.exit(r)
+    try:
+        os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+        app = QApplication(sys.argv)
+
+        SC = BuzzerController()
+        wel = Welcome(SC)
+        song_player = wel.song_player
+        SC.start()
+        r = app.exec()
+
+
+    finally:
+        logging.info("terminated")
+        if song_player:
+            song_player.stop()
+        sys.exit(r)

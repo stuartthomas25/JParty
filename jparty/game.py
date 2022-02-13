@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
-from PyQt6.QtWidgets import QInputDialog
+from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 # from PyQt6.QtMultimedia import QSound
 import threading
@@ -15,6 +15,7 @@ import logging
 
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
+from .helpmsg import helpmsg
 
 BUZZ_DELAY = 0  # ms
 
@@ -541,7 +542,6 @@ class Game(QObject):
     def __setstate__(self, state):
         self.new_game(*state[0])
         self.players = state[1]
-        logging.info(1, state[1])
         # self.completed_questions = state[2]
 
     @updateUI
@@ -554,6 +554,18 @@ class Game(QObject):
         )
         if answered:
             player.score = new_score
+
+    @updateUI
+    def show_help(self):
+        logging.info("Showing help")
+        msgbox = QMessageBox(QMessageBox.Icon.NoIcon,
+            "JParty Help",
+            helpmsg,
+            QMessageBox.StandardButton.Ok,
+            self.alex_window
+        )
+        msgbox.exec()
+
 
 
 class Player(object):
