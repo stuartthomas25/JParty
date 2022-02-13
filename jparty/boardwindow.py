@@ -708,10 +708,13 @@ class DisplayWindow(QMainWindow):
 
         self.game = game
         self.game.dc += self
+
+
         self.show()
 
     def hide_question(self):
         self.boardwidget.hide_question()
+
 
     def keyPressEvent(self, event):
         self.game.keystroke_manager.call(event.key())
