@@ -12,7 +12,7 @@ monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
 
 def get_game(game_id, soup=None):
-    print(f"getting game {game_id}")
+    logging.info(f"getting game {game_id}")
 
     # boards = pickle.load(open("board_download.dat",'rb'))
     # return Game(boards)
@@ -35,10 +35,10 @@ def get_game(game_id, soup=None):
         for clue in ro.find_all(class_="clue"):
             text_obj = clue.find(class_="clue_text")
             if text_obj is None:
-                # print("this game is incomplete")
+                # logging.info("this game is incomplete")
                 continue
             # else:
-            # print("complete")
+            # logging.info("complete")
             text = text_obj.text
             index_key = text_obj["id"]
             if not final:
@@ -54,7 +54,7 @@ def get_game(game_id, soup=None):
             answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
             questions.append(Question(index, text, answer, value, dd))
         boards.append(Board(categories, questions, final=final, dj=(i == 1)))
-    print("Boards", len(boards))
+    logging.info(f"Boards {len(boards)}")
 
     return Game(boards, date, comments)
 
