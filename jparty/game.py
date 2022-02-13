@@ -11,6 +11,7 @@ import os
 import sys
 import simpleaudio as sa
 from collections.abc import Iterable
+import logging
 
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
@@ -160,7 +161,7 @@ class Question(object):
 
 class Board(object):
     def __init__(self, categories, questions, final=False, dj=False):
-        print(len(questions), "questions in round")
+        logging.info(f"{len(questions)} questions in round")
         self.complete = len(questions) == 30 if not final else len(questions) == 1
         if final:
             self.size = (1, 1)
@@ -292,14 +293,14 @@ class Game(QObject):
         return self.rounds[self.__current_round]
 
     def __accept_responses(self):
-        print("accepting responses")
+        logging.info("accepting responses")
         self.accepting_responses = True
         # global activation_time
         # activation_time = time.time()
 
     @updateUI
     def open_responses(self):
-        print("open responses")
+        logging.info("open responses")
         self.dc.borderwidget.lit = True
         if self.current_round.final:
             self.buzzer_controller.prompt_answers()
@@ -325,7 +326,7 @@ class Game(QObject):
 
     @updateUI
     def close_responses(self):
-        print("close responses")
+        logging.info("close responses")
         self.timer.pause()
         self.accepting_responses = False
         self.dc.borderwidget.lit = True
@@ -334,7 +335,7 @@ class Game(QObject):
     def buzz(self, i_player):
         player = self.players[i_player]
         if self.accepting_responses and player is not self.previous_answerer:
-            print(f"{player.name}: buzz ({time.time() - activation_time:.6f} s)")
+            logging.info(f"{player.name}: buzz ({time.time() - activation_time:.6f} s)")
             self.accepting_responses = False
             self.timer.pause()
             self.previous_answerer = player
@@ -350,7 +351,7 @@ class Game(QObject):
             pass
 
     def answer_given(self):
-        print("answer given")
+        logging.info("answer given")
         if self.current_round.final:
             self.final_next_slide()
             self.keystroke_manager.activate("NEXT_SLIDE")
@@ -362,7 +363,7 @@ class Game(QObject):
 
     @updateUI
     def back_to_board(self):
-        print("back_to_board")
+        logging.info("back_to_board")
         self.dc.hide_question()
         self.timer = None
         self.completed_questions.append(self.active_question)
@@ -374,7 +375,7 @@ class Game(QObject):
 
     @updateUI
     def next_round(self):
-        print("next round")
+        logging.info("next round")
         self.completed_questions = []
         self.__current_round += 1
         # self.completed_questions = self.rounds[self.__current_round].questions[:-1]  # EDIT
@@ -389,17 +390,17 @@ class Game(QObject):
         player = self.players[i_player]
         player.wager = amount
         self.wagered.add(player)
-        print(f"{player.name} wagered {amount}")
+        logging.info(f"{player.name} wagered {amount}")
         if len(self.wagered) == len(self.players):
             self.keystroke_manager.activate("OPEN_FINAL")
 
     def answer(self, player, guess):
         player.finalanswer = guess
-        print(f"{player.name} guessed {guess}")
+        logging.info(f"{player.name} guessed {guess}")
 
     @updateUI
     def final_next_slide(self):
-        print("NEXT SLIDE")
+        logging.info("NEXT SLIDE")
         if self.__judgement_round == -1:
             self.dc.finalanswerwindow.setVisible(True)
             self.__sorted_players = sorted(self.players, key=lambda x: x.score)
@@ -466,7 +467,7 @@ class Game(QObject):
     def load_question(self, q):
         self.active_question = q
         if q.dd:
-            print("Daily double!")
+            logging.info("Daily double!")
             wo = sa.WaveObject.from_wave_file(resource_path("dd.wav"))
             wo.play()
             self.run_dd()
@@ -484,7 +485,7 @@ class Game(QObject):
 
     @updateUI
     def correct_answer(self):
-        print("correct")
+        logging.info("correct")
         if self.current_round.final:
             self.answering_player.score += self.answering_player.wager
             self.answer_given()
@@ -500,7 +501,7 @@ class Game(QObject):
 
     @updateUI
     def incorrect_answer(self):
-        print("incorrect")
+        logging.info("incorrect")
         if self.current_round.final:
             self.answering_player.score -= self.answering_player.wager
             self.answer_given()
@@ -516,7 +517,7 @@ class Game(QObject):
 
     @updateUI
     def stumped(self):
-        print("stumped")
+        logging.info("stumped")
         self.accepting_responses = False
 
         # flash
@@ -540,7 +541,7 @@ class Game(QObject):
     def __setstate__(self, state):
         self.new_game(*state[0])
         self.players = state[1]
-        print(1, state[1])
+        logging.info(1, state[1])
         # self.completed_questions = state[2]
 
     @updateUI

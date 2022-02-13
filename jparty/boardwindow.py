@@ -129,7 +129,7 @@ def autofitsize(text, font, rect, start=None, stepsize = 2):
                 return font.pointSize()
         raise Exception(f"Nothing fit! (text='{text}')")
 
-    print(f"'{text}' is good")
+    logging.info(f"'{text}' is good")
     return size
 
 
@@ -559,7 +559,7 @@ class BoardWidget(QWidget):
         if q.dd:
             self.questionwidget = DailyDoubleWidget(q, self)
         else:
-            print("Question widget!")
+            logging.info("Question widget!")
             self.questionwidget = QuestionWidget(q, self)
 
     @updateUI
@@ -705,7 +705,6 @@ class DisplayWindow(QMainWindow):
         )
         self.borderwidget.stackUnder(self.boardwidget)
 
-        print("   ", self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True))
 
         self.game = game
         self.game.dc += self
@@ -718,5 +717,5 @@ class DisplayWindow(QMainWindow):
         self.game.keystroke_manager.call(event.key())
 
     def load_question(self, q):
-        print("DC load_question")
+        logging.info("DC load_question")
         self.boardwidget.load_question(q)

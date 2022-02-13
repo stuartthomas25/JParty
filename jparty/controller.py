@@ -52,9 +52,9 @@ class BuzzerHandler(tornado.web.RequestHandler):
         playername = self.get_body_argument("playername")
         if not self.get_cookie("test"):
             self.set_cookie("test", "test_val")
-            print("set cookie")
+            logging.info("set cookie")
         else:
-            print("cookie:", self.get_cookie("test"))
+            logging.info(f"cookie: {self.get_cookie('test')}")
         # global playernames
         # playernames[self.request.remote_ip] = playername
         self.render("play.html", messages=BuzzerSocketHandler.cache)
@@ -85,7 +85,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
     def check_if_exists(self, token):
         p = self.controller.player_with_token(token)
         if p is not None:
-            print(f"Reconnected as {p.name}")
+            logging.info(f"Reconnected as {p.name}")
             self.player = p
             p.connected = True
             p.waiter = self
@@ -103,7 +103,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         if msg == "NAME":
             self.init_player(text)
         elif msg == "CHECK_IF_EXISTS":
-            print(f"Checking if {parsed['text']} exists")
+            logging.info(f"Checking if {parsed['text']} exists")
             self.check_if_exists(text)
         elif msg == "WAGER":
             self.wager(text)
@@ -116,13 +116,13 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
     def init_player(self, name):
 
         if len(self.controller.connected_players) >= 3:
-            print("Game full!")
+            logging.info("Game full!")
             self.send("GAMEFULL")
             return
 
         for p in self.controller.connected_players:
             if p.name == name:
-                print("Name taken!")
+                logging.info("Name taken!")
                 self.send("NAMETAKEN")
                 return
             elif name == "":
@@ -130,7 +130,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
 
         self.player = Player(name, self)
         self.application.controller.new_player(self.player)
-        print("New Player:", name, self.request.remote_ip, self.player.token.hex())
+        logging.info(f"New Player: {name} {self.request.remote_ip} {self.player.token.hex()}")
         self.send("TOKEN", self.player.token.hex())
         # self.send("PROMPTWAGER", 69)
 
@@ -145,7 +145,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         data = {"message": msg, "text": text}
         try:
             self.write_message(data)
-            print(f"Sent {data} to {self.player.name}")
+            logging.info(f"Sent {data} to {self.player.name}")
         except:
             logging.error(f"Error sending message {msg}", exc_info=True)
 
@@ -248,9 +248,9 @@ class BuzzerController:
 
     def player_with_token(self, token):
         for p in self.connected_players:
-            print(p.token, token)
+            logging.info(f"{p.token}, {token}")
             if p.token.hex() == token:
-                print("MATCH")
+                logging.info("MATCH")
                 return p
         return None
 

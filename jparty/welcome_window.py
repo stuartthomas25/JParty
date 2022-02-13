@@ -17,10 +17,13 @@ from PyQt6.QtGui import (
 
 import requests
 
+
+
 # from PyQt6.QtMultimedia import QSound
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
 import logging
+
 import pickle
 from threading import Thread, active_count
 from random import choice
@@ -38,7 +41,7 @@ from .game import Player
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
 from .version import version
-
+from .logger import qt_exception_hook
 
 def updateUI(f):
     def wrapper(self, *args):
@@ -74,9 +77,9 @@ class Welcome(QMainWindow):
 
         self.buzz_hint_trigger.connect(self.buzz_hint)
 
-        # print(final_song.fileName())
+        # logging.info(final_song.fileName())
         # final_song.play()
-        # print("play")
+        # logging.info("play")
 
         # self.song.setLoops(QSound.Infinite)
         # self.song.play()
@@ -104,7 +107,7 @@ class Welcome(QMainWindow):
         self.initUI()
 
         if os.path.exists(".bkup"):
-            print("backup")
+            logging.info("backup")
             self.run_game(pickle.load(open(".bkup", "rb")))
 
     def show_overlay(self):
@@ -119,7 +122,7 @@ class Welcome(QMainWindow):
         complete = False
         while not complete:
             game_id = get_random_game()
-            print("GAMEID",game_id)
+            logging.info(f"GAMEID {game_id}")
             complete = get_game(game_id).complete()
 
         self.textbox.setText(str(game_id))
@@ -147,14 +150,14 @@ class Welcome(QMainWindow):
         self.check_start()
 
     def show_summary(self, text=None):
-        print("show sum")
+        logging.info("show sum")
         self.summary_label.setText("Loading...")
         t = Thread(target=self._show_summary)
         t.start()
 
     def check_second_monitor(self):
         if len(QApplication.instance().screens()) > 1 or DEBUG:
-            print("hide monitor error")
+            logging.info("hide monitor error")
             self.monitor_error.hide()
             self.windowHandle().setScreen(QApplication.instance().screens()[0])
             self.show_overlay()
@@ -217,8 +220,9 @@ class Welcome(QMainWindow):
         if DEBUG:
             self.textbox.setText(str(2534))  # EDIT
 
+
         self.show()
-        print("Number of screens:", len(QApplication.instance().screens()))
+        logging.info(f"Number of screens: {len(QApplication.instance().screens())}")
 
         ### FOR TESTING
 
@@ -480,10 +484,14 @@ def find_gateway():
                     pass
 
 
-def main():
-    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-    app = QApplication(sys.argv)
 
+def get_logs():
+    return sys.stdout.read() + "\n\n\n" + sys.stderr.read()
+
+def get_sysinfo():
+    return version
+
+def check_internet():
     # check internet connection
     try:
         r = requests.get(f"http://www.j-archive.com/")
@@ -495,22 +503,43 @@ def main():
             buttons=QMessageBox.StandardButton.Abort,
             defaultButton=QMessageBox.StandardButton.Abort
         )
-        quit()
+        exit(1)
+
+def main():
+
 
     # r = QFontDatabase.addApplicationFont("data:ITC_Korinna.ttf")
-    # print("Loading font: ",r)
-    SC = BuzzerController()
-    wel = Welcome(SC)
-    SC.start()
+    # logging.info("Loading font: ",r)
 
     # ip_addr = '192.168.1.1'
     # ping_command = ['ping','-i','0.19',ip_addr]
     # ping_process = subprocess.Popen(ping_command, stdout=open(os.devnull, 'wb'))
+    # song_player = None
+    if DEBUG:
+        logging.warn("RUNNING IN DEBUG MODE")
+    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+    app = QApplication(sys.argv)
 
-    try:
-        r = app.exec()
-    finally:
-        print("terminate")
-        if wel.song_player:
-            wel.song_player.stop()
-        sys.exit(r)
+    SC = BuzzerController()
+    wel = Welcome(SC)
+    # song_player = wel.song_player
+    SC.start()
+    r = app.exec()
+
+
+    # try:
+    #     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+    #     app = QApplication(sys.argv)
+
+    #     SC = BuzzerController()
+    #     wel = Welcome(SC)
+    #     song_player = wel.song_player
+    #     SC.start()
+    #     r = app.exec()
+
+
+    # finally:
+    #     logging.info("terminated")
+    #     if song_player:
+    #         song_player.stop()
+    #     sys.exit(r)
