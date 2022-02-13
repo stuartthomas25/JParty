@@ -132,3 +132,11 @@ body {
     background-repeat: no-repeat;
     background-position: right;
 }
+
+.hints {
+    text-align:center;
+    color:white;
+    margin-top:10pt;
+
+
+}
