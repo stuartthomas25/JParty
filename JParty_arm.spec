@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
+DISTPATH = "./dist_arm"
 
 
 a = Analysis(['gui.py'],

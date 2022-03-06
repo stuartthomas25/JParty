@@ -1,8 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
-global DISTPATH
-DISTPATH = "./dist_x86"
 
 
 a = Analysis(['gui.py'],
