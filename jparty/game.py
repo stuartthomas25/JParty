@@ -520,6 +520,9 @@ class Game(QObject):
     def stumped(self):
         logging.info("stumped")
         self.accepting_responses = False
+        if not self.current_round.final:
+            wo = sa.WaveObject.from_wave_file(resource_path("stumped.wav"))
+            wo.play()
 
         # flash
         self.dc.borderwidget.lit = False

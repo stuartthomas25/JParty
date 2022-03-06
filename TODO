@@ -1,6 +1,7 @@
-* TODO maybe add a tutorial feature? (maybe just one popup as the game starts)
+* DONE maybe add a tutorial feature? (maybe just one popup as the game starts)
 * DONE check internet connection
 * TODO check for updates
-* TODO save debug log, send to me
+* DONE save debug log, send to me
 * DONE add better text for communicating game id is found in URL
 * DONE automatically skip games with blank questions
+* DONE add timeout sound effects
