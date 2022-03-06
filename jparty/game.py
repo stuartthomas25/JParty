@@ -561,14 +561,14 @@ class Game(QObject):
     @updateUI
     def show_help(self):
         logging.info("Showing help")
-        msgbox = QMessageBox(QMessageBox.Icon.NoIcon,
+        msgbox = QMessageBox(
+            QMessageBox.Icon.NoIcon,
             "JParty Help",
             helpmsg,
             QMessageBox.StandardButton.Ok,
-            self.alex_window
+            self.alex_window,
         )
         msgbox.exec()
-
 
 
 class Player(object):
