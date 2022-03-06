@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-helpmsg = \
-    """
+helpmsg = """
 Welcome to JParty!
 
 - Click on the game board to display each question.

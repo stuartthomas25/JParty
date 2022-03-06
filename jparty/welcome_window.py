@@ -18,7 +18,6 @@ from PyQt6.QtGui import (
 import requests
 
 
-
 # from PyQt6.QtMultimedia import QSound
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
@@ -42,6 +41,7 @@ from .constants import DEBUG
 from .utils import SongPlayer, resource_path
 from .version import version
 from .logger import qt_exception_hook
+
 
 def updateUI(f):
     def wrapper(self, *args):
@@ -101,8 +101,6 @@ class Welcome(QMainWindow):
         self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
         self.gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-
-
         # self.player_heading = QLabel("Players:", self)
         # self.player_labels = [QLabel(self) for _ in range(3)]
 
@@ -118,9 +116,7 @@ class Welcome(QMainWindow):
     def show_overlay(self):
         self.host_overlay = HostOverlay(self.socket_controller.host())
         if not DEBUG:
-            self.windowHandle().setScreen(
-                QApplication.instance().screens()[1]
-            )
+            self.windowHandle().setScreen(QApplication.instance().screens()[1])
         self.host_overlay.showNormal()
 
     def _random(self):
@@ -211,8 +207,9 @@ class Welcome(QMainWindow):
         )
         self.summary_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.help_checkbox.setGeometry(self.summary_label.geometry().translated(165,42))
-
+        self.help_checkbox.setGeometry(
+            self.summary_label.geometry().translated(165, 42)
+        )
 
         self.gameid_label.setGeometry(0, 105, 172, 50)
         self.textbox.move(180, 100)
@@ -226,7 +223,6 @@ class Welcome(QMainWindow):
 
         if DEBUG:
             self.textbox.setText(str(2534))  # EDIT
-
 
         self.show()
         logging.info(f"Number of screens: {len(QApplication.instance().screens())}")
@@ -278,15 +274,12 @@ class Welcome(QMainWindow):
         self.host_overlay.close()
         self.show_board(game)
 
-
-
     def show_board(self, game):
         self.game.alex_window = DisplayWindow(game, alex=True, monitor=0)
         self.game.main_window = DisplayWindow(game, alex=False, monitor=1)
         self.startButton.setEnabled(False)
         if self.help_checkbox.isChecked():
             QTimer.singleShot(200, self.game.show_help)
-
 
     def restart(self):
         self.player_view.close()
@@ -401,7 +394,7 @@ class PlayerView(QWidget):
         labelwidth = self.parent().size().width() // 3
         label.setFixedWidth(labelwidth)
         # label.move(label.pos() + QPoint((MOVIEWIDTH - labelwidth) / 2, 0))
-        label.move(QPoint(labelwidth*(self.num_players-1), 0))
+        label.move(QPoint(labelwidth * (self.num_players - 1), 0))
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     @updateUI
@@ -420,7 +413,6 @@ class PlayerView(QWidget):
     def closeEvent(self, event):
         PlayerView.instances.remove(self)
         event.accept()
-
 
 
 class HostOverlay(QWidget):
@@ -462,8 +454,8 @@ class HostOverlay(QWidget):
 
         self.playerview = PlayerView(
             self.rect() - QMargins(0, self.rect().height() // 2, 0, 0),
-            fontsize = OVERLAYFONTSIZE,
-            parent = self
+            fontsize=OVERLAYFONTSIZE,
+            parent=self,
         )
 
         self.show()
@@ -473,12 +465,12 @@ class HostOverlay(QWidget):
         event.accept()
 
     # def restart(self):
-        # self.playerview.close()
-        # self.playerview = PlayerView(
-            # self.rect() - QMargins(0, self.rect().height() // 2, 0, 0),
-            # fontsize = OVERLAYFONTSIZE,
-            # parent = self
-        # )
+    # self.playerview.close()
+    # self.playerview = PlayerView(
+    # self.rect() - QMargins(0, self.rect().height() // 2, 0, 0),
+    # fontsize = OVERLAYFONTSIZE,
+    # parent = self
+    # )
 
 
 def find_gateway():
@@ -498,29 +490,30 @@ def find_gateway():
                     pass
 
 
-
 def get_logs():
     return sys.stdout.read() + "\n\n\n" + sys.stderr.read()
 
+
 def get_sysinfo():
     return version
+
 
 def check_internet():
     # check internet connection
     try:
         r = requests.get(f"http://www.j-archive.com/")
-    except requests.exceptions.ConnectionError as e:    # This is the correct syntax
+    except requests.exceptions.ConnectionError as e:  # This is the correct syntax
         button = QMessageBox.critical(
             None,
             "Cannot connect!",
             "JParty cannot connect to the J-Archive. Please check your internet connection.",
             buttons=QMessageBox.StandardButton.Abort,
-            defaultButton=QMessageBox.StandardButton.Abort
+            defaultButton=QMessageBox.StandardButton.Abort,
         )
         exit(1)
 
-def main():
 
+def main():
 
     # r = QFontDatabase.addApplicationFont("data:ITC_Korinna.ttf")
     # logging.info("Loading font: ",r)
@@ -532,7 +525,6 @@ def main():
     if DEBUG:
         logging.warn("RUNNING IN DEBUG MODE")
 
-
     # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     # app = QApplication(sys.argv)
 
@@ -541,7 +533,6 @@ def main():
     # # song_player = wel.song_player
     # SC.start()
     # r = app.exec()
-
 
     try:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
@@ -552,7 +543,6 @@ def main():
         song_player = wel.song_player
         SC.start()
         r = app.exec()
-
 
     finally:
         logging.info("terminated")

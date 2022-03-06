@@ -58,38 +58,37 @@ def get_game(game_id, soup=None):
 
     return Game(boards, date, comments)
 
+    # def get_all_games():
+    #     r = requests.get("http://j-archive.com/listseasons.php")
+    #     soup = BeautifulSoup(r.text, "html.parser")
+    #     seasons = soup.find_all("tr")
 
-# def get_all_games():
-#     r = requests.get("http://j-archive.com/listseasons.php")
-#     soup = BeautifulSoup(r.text, "html.parser")
-#     seasons = soup.find_all("tr")
+    #     # Using Queue
+    #     concurrent = 40
+    #     game_ids = []
 
-#     # Using Queue
-#     concurrent = 40
-#     game_ids = []
+    #     def send_requests():
+    #         while True:
+    #             url = q.get()
+    #             season_r = requests.get("http://j-archive.com/" + url)
+    #             season_soup = BeautifulSoup(season_r.text, "html.parser")
+    #             for game in season_soup.find_all("tr"):
+    #                 if game:
+    #                     game_id = int(
+    #                         re.search(r"(\d+)\s*$", game.find("a")["href"]).groups()[0]
+    #                     )
+    #                     game_ids.append(game_id)
+    #             q.task_done()
 
-#     def send_requests():
-#         while True:
-#             url = q.get()
-#             season_r = requests.get("http://j-archive.com/" + url)
-#             season_soup = BeautifulSoup(season_r.text, "html.parser")
-#             for game in season_soup.find_all("tr"):
-#                 if game:
-#                     game_id = int(
-#                         re.search(r"(\d+)\s*$", game.find("a")["href"]).groups()[0]
-#                     )
-#                     game_ids.append(game_id)
-#             q.task_done()
-
-#     q = Queue(concurrent * 2)
-#     for _ in range(concurrent):
-#         t = Thread(target=send_requests)
-#         t.daemon = True
-#         t.start()
-#     for season in seasons:
-#         link = season.find("a")["href"]
-#         q.put(link)
-#     q.join()
+    #     q = Queue(concurrent * 2)
+    #     for _ in range(concurrent):
+    #         t = Thread(target=send_requests)
+    #         t.daemon = True
+    #         t.start()
+    #     for season in seasons:
+    #         link = season.find("a")["href"]
+    #         q.put(link)
+    #     q.join()
     #     games_info = {}
     # game_ids = []
     # for season in seasons:
@@ -117,13 +116,13 @@ def get_game_sum(soup):
 
     return date, comments
 
+
 def get_random_game():
     r = requests.get("http://j-archive.com/")
     soup = BeautifulSoup(r.text, "html.parser")
 
-    link = soup.find_all(class_="splash_clue_footer")[1].find('a')['href']
+    link = soup.find_all(class_="splash_clue_footer")[1].find("a")["href"]
     return int(link[21:])
-
 
 
 # def getStatus(ourl):

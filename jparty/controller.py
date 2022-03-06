@@ -130,7 +130,9 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
 
         self.player = Player(name, self)
         self.application.controller.new_player(self.player)
-        logging.info(f"New Player: {name} {self.request.remote_ip} {self.player.token.hex()}")
+        logging.info(
+            f"New Player: {name} {self.request.remote_ip} {self.player.token.hex()}"
+        )
         self.send("TOKEN", self.player.token.hex())
         # self.send("PROMPTWAGER", 69)
 

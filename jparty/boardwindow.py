@@ -10,7 +10,7 @@ from PyQt6.QtGui import (
     QTextDocument,
     QTextOption,
     QGuiApplication,
-    QFontMetrics
+    QFontMetrics,
 )
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
 from PyQt6.QtCore import (
@@ -109,7 +109,7 @@ def updateUI(f):
     return wrapper
 
 
-def autofitsize(text, font, rect, start=None, stepsize = 2):
+def autofitsize(text, font, rect, start=None, stepsize=2):
     if start:
         font.setPointSize(start)
 
@@ -121,7 +121,7 @@ def autofitsize(text, font, rect, start=None, stepsize = 2):
         return fm.boundingRect(rect, flags, text)
 
     if fullrect(font).height() > rect.height():
-        while size>0:
+        while size > 0:
             size -= stepsize
             font.setPointSize(size)
             newrect = fullrect(font)
@@ -131,7 +131,6 @@ def autofitsize(text, font, rect, start=None, stepsize = 2):
 
     logging.info(f"'{text}' is good")
     return size
-
 
 
 class ScoreWidget(QWidget):
@@ -158,7 +157,9 @@ class ScoreWidget(QWidget):
 
     def __lights(self):
         self.__light_level = ANSWERSECS + 1
-        while self.__light_level > 0 and threading.current_thread() is self.__light_thread:
+        while (
+            self.__light_level > 0 and threading.current_thread() is self.__light_thread
+        ):
             self.__light_level -= 1
             self.update()
             time.sleep(1.0)
@@ -171,7 +172,6 @@ class ScoreWidget(QWidget):
     def stop_lights(self):
         self.__light_level = 0
 
-
     def __buzz_hint(self, p):
         self.__buzz_hint_players.append(p)
         self.update()
@@ -179,9 +179,10 @@ class ScoreWidget(QWidget):
         self.__buzz_hint_players.remove(p)
         self.update()
 
-
     def buzz_hint(self, p):
-        self.__buzz_hint_thread = threading.Thread(target=self.__buzz_hint, args=(p,), name="buzz_hint")
+        self.__buzz_hint_thread = threading.Thread(
+            target=self.__buzz_hint, args=(p,), name="buzz_hint"
+        )
         self.__buzz_hint_thread.start()
 
     def paintEvent(self, event):
@@ -235,8 +236,6 @@ class ScoreWidget(QWidget):
         ap = self.game.answering_player
         if ap:
             highlighted_players.append(ap)
-
-
 
         for i, p in enumerate(players):
             if p.score < 0:
@@ -357,8 +356,6 @@ class QuestionLabel(QLabel):
         self.setGraphicsEffect(shadow)
 
 
-
-
 class QuestionWidget(QWidget):
     def __init__(self, question, parent=None):
         super().__init__(parent)
@@ -378,10 +375,7 @@ class QuestionWidget(QWidget):
         if alex:
             anheight = ANSWERHEIGHT * self.size().height()
             self.qurect = self.rect().adjusted(
-                QUMARGIN,
-                QUMARGIN,
-                -2 * QUMARGIN,
-                -ANSWERHEIGHT * self.size().height(),
+                QUMARGIN, QUMARGIN, -2 * QUMARGIN, -ANSWERHEIGHT * self.size().height(),
             )
             self.anrect = QRect(
                 QUMARGIN,
@@ -607,10 +601,7 @@ class FinalAnswerWidget(QWidget):
 
         else:
             self.setGeometry(
-                0,
-                self.__margin,
-                parent.width(),
-                parent.height() * FINALANSWERHEIGHT,
+                0, self.__margin, parent.width(), parent.height() * FINALANSWERHEIGHT,
             )
         self.info_level = 0
 
@@ -705,16 +696,13 @@ class DisplayWindow(QMainWindow):
         )
         self.borderwidget.stackUnder(self.boardwidget)
 
-
         self.game = game
         self.game.dc += self
-
 
         self.show()
 
     def hide_question(self):
         self.boardwidget.hide_question()
-
 
     def keyPressEvent(self, event):
         self.game.keystroke_manager.call(event.key())

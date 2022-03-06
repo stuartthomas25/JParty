@@ -10,8 +10,8 @@ from .version import version
 
 from .environ import root
 
-log_filename = os.path.join(root,'latest.log')
-logging.basicConfig(filename=log_filename, encoding='utf-8', level=logging.DEBUG)
+log_filename = os.path.join(root, "latest.log")
+logging.basicConfig(filename=log_filename, encoding="utf-8", level=logging.DEBUG)
 
 # basic logger functionality
 log = logging.getLogger(__name__)
@@ -21,7 +21,10 @@ log = logging.getLogger(__name__)
 
 def mailto(recipients, subject, body):
     "recipients: string with comma-separated emails (no spaces!)"
-    webbrowser.open("mailto:{}?subject={}&body={}".format(recipients, quote(subject), quote(body)))
+    webbrowser.open(
+        "mailto:{}?subject={}&body={}".format(recipients, quote(subject), quote(body))
+    )
+
 
 def show_exception_box(log_msg):
     """Checks if a QApplication instance is available and shows a messagebox with the exception message.
@@ -33,13 +36,12 @@ def show_exception_box(log_msg):
             "Crashed!",
             "It looks like JParty ran into a problem. Do you want to send a report? (I would really appreciate it!)",
             buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            defaultButton=QMessageBox.StandardButton.Yes
+            defaultButton=QMessageBox.StandardButton.Yes,
         )
         if button is QMessageBox.StandardButton.Yes:
-            with open(log_filename,'r') as f:
+            with open(log_filename, "r") as f:
                 logdata = f.read()
-            message = \
-f"""JPARTY ERROR REPORT:
+            message = f"""JPARTY ERROR REPORT:
 
 Version: {version}
 Platform: {os.uname()}
@@ -53,6 +55,7 @@ Platform: {os.uname()}
             mailto("me@stuartthomas.us", f"JParty Error Report", message)
     else:
         log.debug("No QApplication instance available.")
+
 
 class UncaughtHook(QObject):
     _exception_caught = pyqtSignal(object)
@@ -75,12 +78,17 @@ class UncaughtHook(QObject):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
         else:
             exc_info = (exc_type, exc_value, exc_traceback)
-            log_msg = '\n'.join([''.join(traceback.format_tb(exc_traceback)),
-                                 '{0}: {1}'.format(exc_type.__name__, exc_value)])
+            log_msg = "\n".join(
+                [
+                    "".join(traceback.format_tb(exc_traceback)),
+                    "{0}: {1}".format(exc_type.__name__, exc_value),
+                ]
+            )
             log.critical("Uncaught exception:\n {0}".format(log_msg), exc_info=exc_info)
 
             # trigger message box show
             self._exception_caught.emit(log_msg)
+
 
 # create a global instance of our class to register the hook
 qt_exception_hook = UncaughtHook()
