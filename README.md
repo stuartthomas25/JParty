@@ -7,6 +7,9 @@ Homepage: https://www.stuartthomas.us/jparty/
 
 Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full _Jeopardy!_ simulator complete with real questions from actual games. This game is perfect for parties and takes 3-4 players. For ideal usage, plug a TV into to a laptop, setting the laptop as the main monitor, instruct contestants to navigate to the local IP address on the screen. The person with the laptop is "Alex" and runs the game.
 
+## Download
+See <a href="https://github.com/stuartthomas25/JParty/releases">Releases</a> page.
+
 ## How does it work?
 JParty scrapes the J-Archive (https://j-archive.com) to download a previously-played game and then simulates that on the screen. JParty then uses PyQt6 to produce a GUI that simuates the motions of a full _Jeopardy!_ game. A `tornado` web server uses WebSockets to connect to the contestants' smartphones.
 
@@ -28,9 +31,7 @@ The "Alex" player sees the answer on the laptop screen and can adjudicate with t
 - WebSocket buzzer for use on mobile devices
 - Complete access to all games on J-Archive
 - Final Jeopardy, Daily Doubles, Double Jeopardy
- 
-## Download:
-See <a href="https://github.com/stuartthomas25/JParty/releases">Releases</a> page.
+
 
 ## Requirements:
 ### For running binary
