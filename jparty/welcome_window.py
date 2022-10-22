@@ -91,6 +91,8 @@ class Welcome(QMainWindow):
         self.icon_label = QLabel(self)
         self.startButton = QPushButton("Start!", self)
 
+        self.customGame = QPushButton("Custom Game", self)
+
         self.randButton = QPushButton("Random", self)
         self.summary_label = QLabel("", self)
         self.summary_label.setWordWrap(True)
@@ -196,6 +198,9 @@ class Welcome(QMainWindow):
         self.startButton.setToolTip("Start Game")
         self.startButton.move(290, 95)
         self.startButton.clicked.connect(self.init_game)
+
+        self.customGame.setToolTip("Custom Game")
+        self.customGame.move(290, 145)
 
         self.randButton.setToolTip("Random Game")
         self.randButton.move(290, 120)
@@ -366,7 +371,7 @@ class PlayerView(QWidget):
         self.num_players = 0
         self.fontsize = fontsize
 
-        self.labels = [PlayerLabel(self.fontsize, self) for _ in range(3)]
+        self.labels = [PlayerLabel(self.fontsize, self) for _ in range(8)]
         for i, label in enumerate(self.labels):
             label_margin = (rect.width() - 3 * MOVIEWIDTH) // 4
             label.setGeometry(
@@ -391,7 +396,7 @@ class PlayerView(QWidget):
         label = self.labels[self.num_players]
         self.num_players += 1
         label.setText(player.name)
-        labelwidth = self.parent().size().width() // 3
+        labelwidth = self.parent().size().width() // 8
         label.setFixedWidth(labelwidth)
         # label.move(label.pos() + QPoint((MOVIEWIDTH - labelwidth) / 2, 0))
         label.move(QPoint(labelwidth * (self.num_players - 1), 0))
