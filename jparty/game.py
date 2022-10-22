@@ -13,14 +13,13 @@ import simpleaudio as sa
 from collections.abc import Iterable
 import logging
 
-from .constants import DEBUG
-from .utils import SongPlayer, resource_path
-from .helpmsg import helpmsg
+from jparty.constants import DEBUG
+from jparty.utils import SongPlayer, resource_path
+from jparty.helpmsg import helpmsg
 
 BUZZ_DELAY = 0  # ms
 
 activation_time = 0
-
 
 def rasync(f, *args, **kwargs):
     t = threading.Thread(target=f, args=args, kwargs=kwargs)

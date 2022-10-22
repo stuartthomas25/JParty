@@ -3,13 +3,48 @@ from bs4 import BeautifulSoup
 import re
 from threading import Thread
 from queue import Queue
-from .game import Question, Board, Game
+from jparty.game import Question, Board, Game
 import logging
+from jparty.sample import s
 
 import pickle
 
 monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
+
+def custom_game(j):
+    categories = []
+    questions = []
+    boards = []
+    sj = j['jeopardy']
+    c = 0
+    for cat in sj:
+        categories.append(cat['name'])
+        qs = cat['questions']
+        for e in range(len(qs)):
+            q = qs[e]
+            dd = 'daily-double' in q and q['daily-double'] == "true"
+            questions.append(Question((c, e), q['question'], q['answer'], int(q['value']), dd))
+        c += 1
+    boards.append(Board(categories, questions, False, False))
+    categories = []
+    questions = []
+    c = 0
+    for cat in j['double-jeopardy']:
+        categories.append(cat['name'])
+        qs = cat['questions']
+        for e in range(len(qs)):
+            print(boards[0].questions[e].text)
+            q = qs[e]
+            dd = 'daily-double' in q and q['daily-double'] == "true"
+            questions.append(Question((c, e), q['question'], q['answer'], int(q['value']), dd))
+        c += 1
+    boards.append(Board(categories, questions, False, True))
+    fj = j['final-jeopardy']
+    questions = [Question((0, 0), fj['question'], fj['answer'], None, False)]
+    boards.append(Board([fj['category']], questions, True, False))
+    print(boards[0].questions[e])
+    return Game(boards, "", "")
 
 def get_game(game_id, soup=None):
     logging.info(f"getting game {game_id}")
@@ -35,10 +70,10 @@ def get_game(game_id, soup=None):
         for clue in ro.find_all(class_="clue"):
             text_obj = clue.find(class_="clue_text")
             if text_obj is None:
-                # logging.info("this game is incomplete")
+                logging.info("this game is incomplete")
                 continue
-            # else:
-            # logging.info("complete")
+            else:
+                logging.info("complete")
             text = text_obj.text
             index_key = text_obj["id"]
             if not final:
@@ -52,60 +87,59 @@ def get_game(game_id, soup=None):
                 value = None
                 dd = False
             answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
+            # index: (3,4) is the 4th column 5th clue; value: number of $ for the round; dd is bool for daily double
             questions.append(Question(index, text, answer, value, dd))
         boards.append(Board(categories, questions, final=final, dj=(i == 1)))
-    logging.info(f"Boards {len(boards)}")
-
     return Game(boards, date, comments)
+    # return custom_game(s)
 
-    # def get_all_games():
-    #     r = requests.get("http://j-archive.com/listseasons.php")
-    #     soup = BeautifulSoup(r.text, "html.parser")
-    #     seasons = soup.find_all("tr")
+# def get_all_games():
+#     r = requests.get("http://j-archive.com/listseasons.php")
+#     soup = BeautifulSoup(r.text, "html.parser")
+#     seasons = soup.find_all("tr")
 
-    #     # Using Queue
-    #     concurrent = 40
-    #     game_ids = []
+#     # Using Queue
+#     concurrent = 40
+#     game_ids = []
 
-    #     def send_requests():
-    #         while True:
-    #             url = q.get()
-    #             season_r = requests.get("http://j-archive.com/" + url)
-    #             season_soup = BeautifulSoup(season_r.text, "html.parser")
-    #             for game in season_soup.find_all("tr"):
-    #                 if game:
-    #                     game_id = int(
-    #                         re.search(r"(\d+)\s*$", game.find("a")["href"]).groups()[0]
-    #                     )
-    #                     game_ids.append(game_id)
-    #             q.task_done()
+#     def send_requests():
+#         while True:
+#             url = q.get()
+#             season_r = requests.get("http://j-archive.com/" + url)
+#             season_soup = BeautifulSoup(season_r.text, "html.parser")
+#             for game in season_soup.find_all("tr"):
+#                 if game:
+#                     game_id = int(
+#                         re.search(r"(\d+)\s*$", game.find("a")["href"]).groups()[0]
+#                     )
+#                     game_ids.append(game_id)
+#             q.task_done()
 
-    #     q = Queue(concurrent * 2)
-    #     for _ in range(concurrent):
-    #         t = Thread(target=send_requests)
-    #         t.daemon = True
-    #         t.start()
-    #     for season in seasons:
-    #         link = season.find("a")["href"]
-    #         q.put(link)
-    #     q.join()
-    #     games_info = {}
-    # game_ids = []
-    # for season in seasons:
-    # link = season.find('a')['href']
-    # print(link)
-    # season_r = requests.get("http://j-archive.com/"+link)
-    # season_soup = BeautifulSoup(season_r.text, 'html.parser')
-    # for game in season_soup.find_all("tr"):
-    # if game:
-    # game_id = int(re.search(r'(\d+)\s*$', game.find('a')['href']).groups()[0])
-    # game_ids.append(game_id)
-    # #                 game_date = re.search(r'([\-\d]*)$', str(game.find('a').contents[0])).groups()[0]
-    # # summary = re.search(r'^\s+(.*)\s+$', game.find_all('td')[-1].contents[0])
-    # # stripped_summary = '' if summary is None else summary.groups()[0]
-    # # games_info[game_id] = game_date + ': ' + stripped_summary
-
-    return game_ids
+#     q = Queue(concurrent * 2)
+#     for _ in range(concurrent):
+#         t = Thread(target=send_requests)
+#         t.daemon = True
+#         t.start()
+#     for season in seasons:
+#         link = season.find("a")["href"]
+#         q.put(link)
+#     q.join()
+#     games_info = {}
+# game_ids = []
+# for season in seasons:
+# link = season.find('a')['href']
+# print(link)
+# season_r = requests.get("http://j-archive.com/"+link)
+# season_soup = BeautifulSoup(season_r.text, 'html.parser')
+# for game in season_soup.find_all("tr"):
+# if game:
+# game_id = int(re.search(r'(\d+)\s*$', game.find('a')['href']).groups()[0])
+# game_ids.append(game_id)
+# #                 game_date = re.search(r'([\-\d]*)$', str(game.find('a').contents[0])).groups()[0]
+# # summary = re.search(r'^\s+(.*)\s+$', game.find_all('td')[-1].contents[0])
+# # stripped_summary = '' if summary is None else summary.groups()[0]
+# # games_info[game_id] = game_date + ': ' + stripped_summary
+# return game_ids
 
 
 def get_game_sum(soup):
