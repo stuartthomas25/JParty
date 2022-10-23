@@ -1,3 +1,3 @@
 build/**
-dist/**
+dist_arm/**
 .idea/**
