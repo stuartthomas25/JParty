@@ -143,14 +143,20 @@ class Welcome(QMainWindow):
     @updateUI
     def _show_summary(self):
         game_id = self.textbox.text()
+        if len(game_id) > 5:
+            f = self.textbox.font()
+            f.setPointSize(12)  # sets the size to 27
+            self.textbox.setFont(f)
         try:
             self.game = get_game(game_id)
-            if self.game.complete():
-                self.summary_label.setText(self.game.date + "\n" + self.game.comments)
-                self.valid_game = True
-            else:
-                self.summary_label.setText("Game has blank questions")
-                self.valid_game = False
+            self.summary_label.setText(self.game.date + "\n" + self.game.comments)
+            self.valid_game = True
+            # if self.game.complete():
+              # self.summary_label.setText(self.game.date + "\n" + self.game.comments)
+              # self.valid_game = True
+            # else:
+              # self.summary_label.setText("Game has blank questions")
+               # self.valid_game = False
         except ValueError as e:
             self.summary_label.setText("invalid game id")
             self.valid_game = False
@@ -254,7 +260,7 @@ class Welcome(QMainWindow):
             self.startButton.setEnabled(False)
 
     def startable(self):
-        if DEBUG or self.custom:
+        if DEBUG:
             return True
         return (
             self.valid_game
@@ -264,13 +270,12 @@ class Welcome(QMainWindow):
 
     def init_game(self):
         try:
-            game_id = int(self.textbox.text())
+            game_id = self.textbox.text()
         except ValueError as e:
             error_dialog = QErrorMessage()
             error_dialog.showMessage("Invalid game ID")
             return False
 
-        self.game = get_game(game_id)
         self.game.welcome_window = self
         self.game.players = self.socket_controller.connected_players
         self.run_game(self.game)

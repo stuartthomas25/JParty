@@ -6,6 +6,7 @@ def csv_to_game(s):
     # Template link: https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing
     alpha = "BCDEFG"
     boards = []
+    print(s)
     # gets single and double jeopardy rounds
     for n in [1, 14]:
         categories = s[n][1:6]
@@ -30,6 +31,6 @@ def csv_to_game(s):
     questions = [Question(index, text, answer, None, False)]
     categories = [fj[1]]
     boards.append(Board(categories, questions, final=True, dj=False))
-    date = fj[-4]
-    comments = fj[-2]
+    date = fj[5]
+    comments = fj[8]
     return Game(boards, date, comments, custom=True)

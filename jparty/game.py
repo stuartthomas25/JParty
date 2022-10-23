@@ -21,6 +21,7 @@ BUZZ_DELAY = 0  # ms
 
 activation_time = 0
 
+
 def rasync(f, *args, **kwargs):
     t = threading.Thread(target=f, args=args, kwargs=kwargs)
     t.start()
@@ -78,7 +79,7 @@ class KeystrokeManager(object):
         self.__events = {}
 
     def addEvent(
-        self, ident, key, func, hint_setter=None, active=False, persistent=False
+            self, ident, key, func, hint_setter=None, active=False, persistent=False
     ):
         self.__events[ident] = KeystrokeEvent(
             key, func, hint_setter, active, persistent
@@ -286,7 +287,7 @@ class Game(QObject):
     def update(self):
         self.dc.update()
 
-    def complete(self):
+    def complete(self, custom=False):
         if not self.custom:
             return all(b.complete for b in self.rounds)
         else:
