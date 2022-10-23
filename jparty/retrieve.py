@@ -67,16 +67,15 @@ def get_Gsheet_game(file_id):
     r1 = r.split("\r")
     r2 = []
     for each in r1:
-        print(each)
         r2.append(each.split(","))
     return csv_to_game(r2)
 
 
 def get_game(game_id):
-    if len(game_id) > 5:
-        get_Gsheet_game(game_id)
+    if len(str(game_id)) > 5:
+        return get_Gsheet_game(game_id)
     else:
-        get_from_jArchive(game_id)
+        return get_from_jArchive(game_id)
 
 
 # def get_all_games():
