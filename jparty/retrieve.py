@@ -11,7 +11,7 @@ from jparty.custom import csv_to_game
 monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
 
-def get_game(game_id, soup=None):
+def get_from_jArchive(game_id, soup=None):
     logging.info(f"getting game {game_id}")
 
     # boards = pickle.load(open("board_download.dat",'rb'))
@@ -57,6 +57,26 @@ def get_game(game_id, soup=None):
         boards.append(Board(categories, questions, final=final, dj=(i == 1)))
     return Game(boards, date, comments)
     # return custom_game(s)
+
+
+def get_Gsheet_game(file_id):
+    print("getting google file")
+    csv_url = f'https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv'
+    res = requests.get(url=csv_url)
+    r = res.text.replace("\n", "")
+    r1 = r.split("\r")
+    r2 = []
+    for each in r1:
+        print(each)
+        r2.append(each.split(","))
+    return csv_to_game(r2)
+
+
+def get_game(game_id):
+    if len(game_id) > 5:
+        get_Gsheet_game(game_id)
+    else:
+        get_from_jArchive(game_id)
 
 
 # def get_all_games():

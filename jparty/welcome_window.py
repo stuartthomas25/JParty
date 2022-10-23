@@ -142,21 +142,19 @@ class Welcome(QMainWindow):
 
     @updateUI
     def _show_summary(self):
-        self.change_title()
-        if not self.custom:
-            game_id = self.textbox.text()
-            try:
-                self.game = get_game(game_id)
-                if self.game.complete():
-                    self.summary_label.setText(self.game.date + "\n" + self.game.comments)
-                    self.valid_game = True
-                else:
-                    self.summary_label.setText("Game has blank questions")
-                    self.valid_game = False
-            except ValueError as e:
-                self.summary_label.setText("invalid game id")
+        game_id = self.textbox.text()
+        try:
+            self.game = get_game(game_id)
+            if self.game.complete():
+                self.summary_label.setText(self.game.date + "\n" + self.game.comments)
+                self.valid_game = True
+            else:
+                self.summary_label.setText("Game has blank questions")
                 self.valid_game = False
-            self.check_start()
+        except ValueError as e:
+            self.summary_label.setText("invalid game id")
+            self.valid_game = False
+        self.check_start()
 
     def show_summary(self, text=None):
         logging.info("show sum")
@@ -264,35 +262,18 @@ class Welcome(QMainWindow):
             and len(QApplication.instance().screens()) > 1
         )
 
-    def getFile(self):
-        logging.info("Getting Google File")
-        file_id = str(self.textbox.text())
-        csv_url = f'https://docs.google.com/spreadsheets/d/{file_id}/export?format=csv&id={file_id}&gid=0'
-        res = requests.get(url=csv_url)
-        with open(res) as f:
-            reader = csv.reader(f)
-            s = list(reader)
-        f.close()
-        self.game = csv_to_game(s)
+    def init_game(self):
+        try:
+            game_id = int(self.textbox.text())
+        except ValueError as e:
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage("Invalid game ID")
+            return False
+
+        self.game = get_game(game_id)
         self.game.welcome_window = self
         self.game.players = self.socket_controller.connected_players
         self.run_game(self.game)
-
-    def init_game(self):
-        if len(str(self.textbox.text())) <= 5:
-            try:
-                game_id = int(self.textbox.text())
-            except ValueError as e:
-                error_dialog = QErrorMessage()
-                error_dialog.showMessage("Invalid game ID")
-                return False
-
-            self.game = get_game(game_id)
-            self.game.welcome_window = self
-            self.game.players = self.socket_controller.connected_players
-            self.run_game(self.game)
-        else:
-            self.getFile()
 
     def run_game(self, game):
         if self.song_player:

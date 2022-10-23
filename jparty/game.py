@@ -196,7 +196,7 @@ class Game(QObject):
     # buzzer_disconnected = pyqtSignal(str)
     wager_trigger = pyqtSignal(int, int)
 
-    def __init__(self, rounds, date, comments):
+    def __init__(self, rounds, date, comments, custom=False):
         super().__init__()
         self.new_game(rounds, date, comments)
 
@@ -286,7 +286,10 @@ class Game(QObject):
         self.dc.update()
 
     def complete(self):
-        return all(b.complete for b in self.rounds)
+        if not self.custom:
+            return all(b.complete for b in self.rounds)
+        else:
+            return True
 
     @property
     def current_round(self):
