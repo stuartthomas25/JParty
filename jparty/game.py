@@ -198,9 +198,10 @@ class Game(QObject):
 
     def __init__(self, rounds, date, comments, custom=False):
         super().__init__()
-        self.new_game(rounds, date, comments)
+        self.new_game(rounds, date, comments, custom)
 
-    def new_game(self, rounds, date, comments):
+    def new_game(self, rounds, date, comments, custom):
+        self.custom = custom
         self.date = date
         self.comments = comments
         self.rounds = rounds
