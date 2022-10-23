@@ -2,14 +2,10 @@ from jparty.game import Question, Board, Game
 import csv
 
 
-def csv_to_game(spreadsheet):
+def csv_to_game(s):
     # Template link: https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing
     alpha = "BCDEFG"
     boards = []
-    with open(spreadsheet) as f:
-        reader = csv.reader(f)
-        s = list(reader)
-    print(s)
     # gets single and double jeopardy rounds
     for n in [1, 14]:
         categories = s[n][1:6]
@@ -37,6 +33,3 @@ def csv_to_game(spreadsheet):
     date = fj[-4]
     comments = fj[-2]
     return Game(boards, date, comments)
-
-
-csv_to_game("sample.csv")

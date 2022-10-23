@@ -19,7 +19,9 @@ def get_game(game_id, soup=None):
 
     r = requests.get(f"http://www.j-archive.com/showgame.php?game_id={game_id}")
     soup = BeautifulSoup(r.text, "html.parser")
-    date = re.search(r"- \w+, (.*?)$", soup.select("#game_title > h1")[0].contents[0]).groups()[0]
+    date = re.search(
+        r"- \w+, (.*?)$", soup.select("#game_title > h1")[0].contents[0]
+    ).groups()[0]
     comments = soup.select("#game_comments")[0].contents
     comments = comments[0] if len(comments) > 0 else ""
 
