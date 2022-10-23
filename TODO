@@ -1,6 +1,18 @@
+TODO Soon Features
+* TODO add support for up to 8 players & update UI accordingly
+* TODO custom games load in via CSV
+* TODO Randomize daily double for custom
+* TODO remove players in welcome screen
+* TODO end round before round is finished
+* TODO handwrite answer/wager on final jeopardy
+
+Other Feature Ideas
+* TODO auto-host mode - players select next question on their device & tap whether they answered correctly (with voice reader?)
+
+DONE:
 * DONE maybe add a tutorial feature? (maybe just one popup as the game starts)
 * DONE check internet connection
-* TODO check for updates
+* DONE check for updates
 * DONE save debug log, send to me
 * DONE add better text for communicating game id is found in URL
 * DONE automatically skip games with blank questions

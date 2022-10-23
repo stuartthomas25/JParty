@@ -5,46 +5,11 @@ from threading import Thread
 from queue import Queue
 from jparty.game import Question, Board, Game
 import logging
-from jparty.sample import s
-
 import pickle
+from jparty.custom import csv_to_game
 
 monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
-
-def custom_game(j):
-    categories = []
-    questions = []
-    boards = []
-    sj = j['jeopardy']
-    c = 0
-    for cat in sj:
-        categories.append(cat['name'])
-        qs = cat['questions']
-        for e in range(len(qs)):
-            q = qs[e]
-            dd = 'daily-double' in q and q['daily-double'] == "true"
-            questions.append(Question((c, e), q['question'], q['answer'], int(q['value']), dd))
-        c += 1
-    boards.append(Board(categories, questions, False, False))
-    categories = []
-    questions = []
-    c = 0
-    for cat in j['double-jeopardy']:
-        categories.append(cat['name'])
-        qs = cat['questions']
-        for e in range(len(qs)):
-            print(boards[0].questions[e].text)
-            q = qs[e]
-            dd = 'daily-double' in q and q['daily-double'] == "true"
-            questions.append(Question((c, e), q['question'], q['answer'], int(q['value']), dd))
-        c += 1
-    boards.append(Board(categories, questions, False, True))
-    fj = j['final-jeopardy']
-    questions = [Question((0, 0), fj['question'], fj['answer'], None, False)]
-    boards.append(Board([fj['category']], questions, True, False))
-    print(boards[0].questions[e])
-    return Game(boards, "", "")
 
 def get_game(game_id, soup=None):
     logging.info(f"getting game {game_id}")
@@ -54,9 +19,7 @@ def get_game(game_id, soup=None):
 
     r = requests.get(f"http://www.j-archive.com/showgame.php?game_id={game_id}")
     soup = BeautifulSoup(r.text, "html.parser")
-    date = re.search(
-        r"- \w+, (.*?)$", soup.select("#game_title > h1")[0].contents[0]
-    ).groups()[0]
+    date = re.search(r"- \w+, (.*?)$", soup.select("#game_title > h1")[0].contents[0]).groups()[0]
     comments = soup.select("#game_comments")[0].contents
     comments = comments[0] if len(comments) > 0 else ""
 
@@ -92,6 +55,7 @@ def get_game(game_id, soup=None):
         boards.append(Board(categories, questions, final=final, dj=(i == 1)))
     return Game(boards, date, comments)
     # return custom_game(s)
+
 
 # def get_all_games():
 #     r = requests.get("http://j-archive.com/listseasons.php")
@@ -157,7 +121,6 @@ def get_random_game():
 
     link = soup.find_all(class_="splash_clue_footer")[1].find("a")["href"]
     return int(link[21:])
-
 
 # def getStatus(ourl):
 # try:
