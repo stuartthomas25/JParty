@@ -1,6 +1,6 @@
 from jparty.game import Question, Board, Game
 import csv
-
+import requests
 
 def csv_to_game(s):
     # Template link: https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing
@@ -32,4 +32,4 @@ def csv_to_game(s):
     boards.append(Board(categories, questions, final=True, dj=False))
     date = fj[-4]
     comments = fj[-2]
-    return Game(boards, date, comments)
+    return Game(boards, date, comments, custom=True)
