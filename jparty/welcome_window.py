@@ -103,8 +103,6 @@ class Welcome(QMainWindow):
 
         self.help_checkbox = QCheckBox("Show help", self)
 
-        self.cb = QCheckBox('Custom Game', self)
-
         self.textbox = QLineEdit(self)
         self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
         self.gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -225,10 +223,6 @@ class Welcome(QMainWindow):
             self.summary_label.geometry().translated(165, 42)
         )
 
-        self.cb.setGeometry(
-            self.summary_label.geometry().translated(100, 84)
-        )
-
         self.gameid_label.setGeometry(0, 105, 172, 50)
         self.textbox.move(180, 100)
         self.textbox.resize(100, 40)
@@ -285,7 +279,7 @@ class Welcome(QMainWindow):
         self.run_game(self.game)
 
     def init_game(self):
-        if not self.custom:
+        if len(str(self.textbox.text())) <= 5:
             try:
                 game_id = int(self.textbox.text())
             except ValueError as e:
@@ -299,20 +293,6 @@ class Welcome(QMainWindow):
             self.run_game(self.game)
         else:
             self.getFile()
-
-    def change_title(self):
-        if self.cb.isChecked():
-            self.gameid_label = QLabel("Google Sheet ID:\n(from Google Sheet URL)", self)
-            self.custom = True
-            f = self.textbox.font()
-            f.setPointSize(12)  # sets the size to 12
-            self.textbox.setFont(f)
-        else:
-            self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
-            f = self.textbox.font()
-            f.setPointSize(30)  # sets the size to 30
-            self.textbox.setFont(f)
-            self.custom = False
 
     def run_game(self, game):
         if self.song_player:
