@@ -12,9 +12,10 @@ from PyQt6.QtGui import (
     QPalette,
     QGuiApplication,
     QFontDatabase,
-    QColor,
+    QColor
 )
 
+import webbrowser
 import requests
 
 
@@ -40,7 +41,9 @@ from .game import Player
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
 from .version import version
+import csv
 from .logger import qt_exception_hook
+from .custom import csv_to_game
 
 
 def updateUI(f):
@@ -62,6 +65,7 @@ class Welcome(QMainWindow):
 
     def __init__(self, SC):
         super().__init__()
+        self.custom = False
         self.socket_controller = SC
         self.socket_controller.welcome_window = self
         self.title = f"JParty! (v {version})"
@@ -91,13 +95,15 @@ class Welcome(QMainWindow):
         self.icon_label = QLabel(self)
         self.startButton = QPushButton("Start!", self)
 
-        self.customGame = QPushButton("Custom Game", self)
+        self.customBtn = QPushButton("Custom Game Template", self)
 
         self.randButton = QPushButton("Random", self)
         self.summary_label = QLabel("", self)
         self.summary_label.setWordWrap(True)
 
         self.help_checkbox = QCheckBox("Show help", self)
+
+        self.cb = QCheckBox('Custom Game', self)
 
         self.textbox = QLineEdit(self)
         self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
@@ -138,19 +144,21 @@ class Welcome(QMainWindow):
 
     @updateUI
     def _show_summary(self):
-        game_id = self.textbox.text()
-        try:
-            self.game = get_game(game_id)
-            if self.game.complete():
-                self.summary_label.setText(self.game.date + "\n" + self.game.comments)
-                self.valid_game = True
-            else:
-                self.summary_label.setText("Game has blank questions")
+        self.change_title()
+        if not self.custom:
+            game_id = self.textbox.text()
+            try:
+                self.game = get_game(game_id)
+                if self.game.complete():
+                    self.summary_label.setText(self.game.date + "\n" + self.game.comments)
+                    self.valid_game = True
+                else:
+                    self.summary_label.setText("Game has blank questions")
+                    self.valid_game = False
+            except ValueError as e:
+                self.summary_label.setText("invalid game id")
                 self.valid_game = False
-        except ValueError as e:
-            self.summary_label.setText("invalid game id")
-            self.valid_game = False
-        self.check_start()
+            self.check_start()
 
     def show_summary(self, text=None):
         logging.info("show sum")
@@ -199,8 +207,9 @@ class Welcome(QMainWindow):
         self.startButton.move(290, 95)
         self.startButton.clicked.connect(self.init_game)
 
-        self.customGame.setToolTip("Custom Game")
-        self.customGame.move(290, 145)
+        self.customBtn.setToolTip("Custom Game Template")
+        self.customBtn.move(290, 145)
+        #self.customBtn.clicked.connect(webbrowser.open("https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing"))
 
         self.randButton.setToolTip("Random Game")
         self.randButton.move(290, 120)
@@ -214,6 +223,10 @@ class Welcome(QMainWindow):
 
         self.help_checkbox.setGeometry(
             self.summary_label.geometry().translated(165, 42)
+        )
+
+        self.cb.setGeometry(
+            self.summary_label.geometry().translated(100, 84)
         )
 
         self.gameid_label.setGeometry(0, 105, 172, 50)
@@ -249,7 +262,7 @@ class Welcome(QMainWindow):
             self.startButton.setEnabled(False)
 
     def startable(self):
-        if DEBUG:
+        if DEBUG or self.custom:
             return True
         return (
             self.valid_game
@@ -257,18 +270,49 @@ class Welcome(QMainWindow):
             and len(QApplication.instance().screens()) > 1
         )
 
-    def init_game(self):
-        try:
-            game_id = int(self.textbox.text())
-        except ValueError as e:
-            error_dialog = QErrorMessage()
-            error_dialog.showMessage("Invalid game ID")
-            return False
-
-        self.game = get_game(game_id)
+    def getFile(self):
+        logging.info("Getting Google File")
+        file_id = str(self.textbox.text())
+        csv_url = f'https://docs.google.com/spreadsheets/d/{file_id}/export?format=csv&id={file_id}&gid=0'
+        res = requests.get(url=csv_url)
+        with open(res) as f:
+            reader = csv.reader(f)
+            s = list(reader)
+        f.close()
+        self.game = csv_to_game(s)
         self.game.welcome_window = self
         self.game.players = self.socket_controller.connected_players
         self.run_game(self.game)
+
+    def init_game(self):
+        if not self.custom:
+            try:
+                game_id = int(self.textbox.text())
+            except ValueError as e:
+                error_dialog = QErrorMessage()
+                error_dialog.showMessage("Invalid game ID")
+                return False
+
+            self.game = get_game(game_id)
+            self.game.welcome_window = self
+            self.game.players = self.socket_controller.connected_players
+            self.run_game(self.game)
+        else:
+            self.getFile()
+
+    def change_title(self):
+        if self.cb.isChecked():
+            self.gameid_label = QLabel("Google Sheet ID:\n(from Google Sheet URL)", self)
+            self.custom = True
+            f = self.textbox.font()
+            f.setPointSize(12)  # sets the size to 12
+            self.textbox.setFont(f)
+        else:
+            self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
+            f = self.textbox.font()
+            f.setPointSize(30)  # sets the size to 30
+            self.textbox.setFont(f)
+            self.custom = False
 
     def run_game(self, game):
         if self.song_player:
@@ -325,7 +369,6 @@ class Welcome(QMainWindow):
         if os.path.exists(".bkup"):
             os.remove(".bkup")
         QApplication.quit()
-
 
 class PlayerLabel(QLabel):
     loading_movie = None
