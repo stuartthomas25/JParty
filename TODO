@@ -1,6 +1,6 @@
 TODO Soon Features
 * TODO add support for up to 8 players & update UI accordingly
-* TODO custom games load in via CSV
+* TODO custom games load in via CSV & Google Sheets
 * TODO Randomize daily double for custom
 * TODO remove players in welcome screen
 * TODO end round before round is finished
