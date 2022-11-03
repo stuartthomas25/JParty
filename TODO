@@ -1,10 +1,11 @@
 TODO Soon Features
 * TODO add support for up to 8 players & update UI accordingly
-* TODO custom games load in via CSV & Google Sheets
+* TODO custom games - load in via CSV & Google Sheets
 * TODO Randomize daily double for custom
 * TODO remove players in welcome screen
 * TODO end round before round is finished
 * TODO handwrite answer/wager on final jeopardy
+* TODO allow for non-tradtional game formats (celebrity jeopardy)/games with blank questions
 
 Other Feature Ideas
 * TODO auto-host mode - players select next question on their device & tap whether they answered correctly (with voice reader?)
