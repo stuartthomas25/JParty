@@ -4,5 +4,5 @@
 if [ $(arch) = 'arm64' ]; then 
     pyinstaller -y JParty_arm.spec --distpath ./dist_arm
 else
-    pyinstaller -y JParty_intel.spec --distpath ./dist_x86
+    pyinstaller -y JParty_x86.spec --distpath ./dist_x86
 fi

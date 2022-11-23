@@ -5,13 +5,62 @@ from threading import Thread
 from queue import Queue
 from jparty.game import Question, Board, Game
 import logging
+import csv
+import pandas as pd
+
 import pickle
-from jparty.custom import csv_to_game
 
 monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
+def list_to_game(s):
+    # Template link: https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing
+    alpha = "BCDEFG"
+    boards = []
+    # gets single and double jeopardy rounds
+    for n1 in [1, 14]:
+        categories = s[n1-1][1:7]
+        questions = []
+        for row in range(5):
+            for col in range(6):
+                address = alpha[col] + str(row + n1 + 1)
+                index = (col, row)
+                text = s[row + n1][col + 1]
+                answer = s[row + n1 + 6][col + 1]
+                value = int(s[row + n1][0])
+                dd = address in s[n1 - 1][-1]
+                questions.append(Question(index, text, answer, value, dd))
+                print(index, text, answer, value, dd)
+        boards.append(Board(categories, questions, final=False, dj=(n1 == 14)))
+    # gets final jeopardy round
+    fj = s[-1]
+    index = (0, 0)
+    text = fj[2]
+    answer = fj[3]
+    questions = [Question(index, text, answer, None, False)]
+    categories = [fj[1]]
+    boards.append(Board(categories, questions, final=True, dj=False))
+    date = fj[5]
+    comments = fj[7]
+    return Game(boards, date, comments)
 
-def get_from_jArchive(game_id, soup=None):
+
+def get_Gsheet_game(file_id):
+    csv_url = f'https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv'
+    with requests.get(csv_url, stream=True) as r:
+        lines = (line.decode('utf-8') for line in r.iter_lines())
+        r3 = csv.reader(lines)
+        return list_to_game(list(r3))
+
+
+def get_game(game_id):
+    print("getting game")
+    if len(str(game_id)) < 7:
+        return get_JArchive_Game(game_id)
+    else:
+        return get_Gsheet_game(str(game_id))
+
+
+def get_JArchive_Game(game_id, soup=None):
     logging.info(f"getting game {game_id}")
 
     # boards = pickle.load(open("board_download.dat",'rb'))
@@ -35,10 +84,10 @@ def get_from_jArchive(game_id, soup=None):
         for clue in ro.find_all(class_="clue"):
             text_obj = clue.find(class_="clue_text")
             if text_obj is None:
-                logging.info("this game is incomplete")
+                # logging.info("this game is incomplete")
                 continue
-            else:
-                logging.info("complete")
+            # else:
+            # logging.info("complete")
             text = text_obj.text
             index_key = text_obj["id"]
             if not final:
@@ -52,79 +101,60 @@ def get_from_jArchive(game_id, soup=None):
                 value = None
                 dd = False
             answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
-            # index: (3,4) is the 4th column 5th clue; value: number of $ for the round; dd is bool for daily double
             questions.append(Question(index, text, answer, value, dd))
         boards.append(Board(categories, questions, final=final, dj=(i == 1)))
+    logging.info(f"Boards {len(boards)}")
+
     return Game(boards, date, comments)
-    # return custom_game(s)
 
+    # def get_all_games():
+    #     r = requests.get("http://j-archive.com/listseasons.php")
+    #     soup = BeautifulSoup(r.text, "html.parser")
+    #     seasons = soup.find_all("tr")
 
-def get_Gsheet_game(file_id):
-    print("getting google file")
-    csv_url = f'https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv'
-    res = requests.get(url=csv_url)
-    r = res.text.replace("\n", "")
-    r1 = r.split("\r")
-    r2 = []
-    for each in r1:
-        r2.append(each.split(","))
-    return csv_to_game(r2)
+    #     # Using Queue
+    #     concurrent = 40
+    #     game_ids = []
 
+    #     def send_requests():
+    #         while True:
+    #             url = q.get()
+    #             season_r = requests.get("http://j-archive.com/" + url)
+    #             season_soup = BeautifulSoup(season_r.text, "html.parser")
+    #             for game in season_soup.find_all("tr"):
+    #                 if game:
+    #                     game_id = int(
+    #                         re.search(r"(\d+)\s*$", game.find("a")["href"]).groups()[0]
+    #                     )
+    #                     game_ids.append(game_id)
+    #             q.task_done()
 
-def get_game(game_id):
-    if len(str(game_id)) > 5:
-        return get_Gsheet_game(game_id)
-    else:
-        return get_from_jArchive(game_id)
+    #     q = Queue(concurrent * 2)
+    #     for _ in range(concurrent):
+    #         t = Thread(target=send_requests)
+    #         t.daemon = True
+    #         t.start()
+    #     for season in seasons:
+    #         link = season.find("a")["href"]
+    #         q.put(link)
+    #     q.join()
+    #     games_info = {}
+    # game_ids = []
+    # for season in seasons:
+    # link = season.find('a')['href']
+    # print(link)
+    # season_r = requests.get("http://j-archive.com/"+link)
+    # season_soup = BeautifulSoup(season_r.text, 'html.parser')
+    # for game in season_soup.find_all("tr"):
+    # if game:
+    # game_id = int(re.search(r'(\d+)\s*$', game.find('a')['href']).groups()[0])
+    # game_ids.append(game_id)
+    # #                 game_date = re.search(r'([\-\d]*)$', str(game.find('a').contents[0])).groups()[0]
+    # # summary = re.search(r'^\s+(.*)\s+$', game.find_all('td')[-1].contents[0])
+    # # stripped_summary = '' if summary is None else summary.groups()[0]
+    # # games_info[game_id] = game_date + ': ' + stripped_summary
 
-
-# def get_all_games():
-#     r = requests.get("http://j-archive.com/listseasons.php")
-#     soup = BeautifulSoup(r.text, "html.parser")
-#     seasons = soup.find_all("tr")
-
-#     # Using Queue
-#     concurrent = 40
-#     game_ids = []
-
-#     def send_requests():
-#         while True:
-#             url = q.get()
-#             season_r = requests.get("http://j-archive.com/" + url)
-#             season_soup = BeautifulSoup(season_r.text, "html.parser")
-#             for game in season_soup.find_all("tr"):
-#                 if game:
-#                     game_id = int(
-#                         re.search(r"(\d+)\s*$", game.find("a")["href"]).groups()[0]
-#                     )
-#                     game_ids.append(game_id)
-#             q.task_done()
-
-#     q = Queue(concurrent * 2)
-#     for _ in range(concurrent):
-#         t = Thread(target=send_requests)
-#         t.daemon = True
-#         t.start()
-#     for season in seasons:
-#         link = season.find("a")["href"]
-#         q.put(link)
-#     q.join()
-#     games_info = {}
-# game_ids = []
-# for season in seasons:
-# link = season.find('a')['href']
-# print(link)
-# season_r = requests.get("http://j-archive.com/"+link)
-# season_soup = BeautifulSoup(season_r.text, 'html.parser')
-# for game in season_soup.find_all("tr"):
-# if game:
-# game_id = int(re.search(r'(\d+)\s*$', game.find('a')['href']).groups()[0])
-# game_ids.append(game_id)
-# #                 game_date = re.search(r'([\-\d]*)$', str(game.find('a').contents[0])).groups()[0]
-# # summary = re.search(r'^\s+(.*)\s+$', game.find_all('td')[-1].contents[0])
-# # stripped_summary = '' if summary is None else summary.groups()[0]
-# # games_info[game_id] = game_date + ': ' + stripped_summary
-# return game_ids
+    # return game_ids
 
 
 def get_game_sum(soup):
