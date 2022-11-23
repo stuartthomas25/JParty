@@ -12,10 +12,9 @@ from PyQt6.QtGui import (
     QPalette,
     QGuiApplication,
     QFontDatabase,
-    QColor
+    QColor,
 )
 
-import webbrowser
 import requests
 
 
@@ -41,9 +40,7 @@ from .game import Player
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
 from .version import version
-import csv
 from .logger import qt_exception_hook
-from .custom import csv_to_game
 
 
 def updateUI(f):
@@ -65,7 +62,6 @@ class Welcome(QMainWindow):
 
     def __init__(self, SC):
         super().__init__()
-        self.custom = False
         self.socket_controller = SC
         self.socket_controller.welcome_window = self
         self.title = f"JParty! (v {version})"
@@ -94,8 +90,6 @@ class Welcome(QMainWindow):
 
         self.icon_label = QLabel(self)
         self.startButton = QPushButton("Start!", self)
-
-        self.customBtn = QPushButton("Custom Game Template", self)
 
         self.randButton = QPushButton("Random", self)
         self.summary_label = QLabel("", self)
@@ -143,20 +137,14 @@ class Welcome(QMainWindow):
     @updateUI
     def _show_summary(self):
         game_id = self.textbox.text()
-        if len(game_id) > 5:
-            f = self.textbox.font()
-            f.setPointSize(12)  # sets the size to 27
-            self.textbox.setFont(f)
         try:
             self.game = get_game(game_id)
-            self.summary_label.setText(self.game.date + "\n" + self.game.comments)
-            self.valid_game = True
-            # if self.game.complete():
-              # self.summary_label.setText(self.game.date + "\n" + self.game.comments)
-              # self.valid_game = True
-            # else:
-              # self.summary_label.setText("Game has blank questions")
-               # self.valid_game = False
+            if self.game.complete():
+                self.summary_label.setText(self.game.date + "\n" + self.game.comments)
+                self.valid_game = True
+            else:
+                self.summary_label.setText("Game has blank questions")
+                self.valid_game = False
         except ValueError as e:
             self.summary_label.setText("invalid game id")
             self.valid_game = False
@@ -208,10 +196,6 @@ class Welcome(QMainWindow):
         self.startButton.setToolTip("Start Game")
         self.startButton.move(290, 95)
         self.startButton.clicked.connect(self.init_game)
-
-        self.customBtn.setToolTip("Custom Game Template")
-        self.customBtn.move(290, 145)
-        #self.customBtn.clicked.connect(webbrowser.open("https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing"))
 
         self.randButton.setToolTip("Random Game")
         self.randButton.move(290, 120)
@@ -276,6 +260,7 @@ class Welcome(QMainWindow):
             error_dialog.showMessage("Invalid game ID")
             return False
 
+        self.game = get_game(game_id)
         self.game.welcome_window = self
         self.game.players = self.socket_controller.connected_players
         self.run_game(self.game)
@@ -336,6 +321,7 @@ class Welcome(QMainWindow):
             os.remove(".bkup")
         QApplication.quit()
 
+
 class PlayerLabel(QLabel):
     loading_movie = None
 
@@ -382,7 +368,7 @@ class PlayerView(QWidget):
 
         self.labels = [PlayerLabel(self.fontsize, self) for _ in range(8)]
         for i, label in enumerate(self.labels):
-            label_margin = (rect.width() - 3 * MOVIEWIDTH) // 4
+            label_margin = (rect.width() - 8 * MOVIEWIDTH) // 4
             label.setGeometry(
                 label_margin * (i + 1) + MOVIEWIDTH * i, 10, MOVIEWIDTH, MOVIEWIDTH
             )

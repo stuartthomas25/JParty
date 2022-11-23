@@ -13,9 +13,9 @@ import simpleaudio as sa
 from collections.abc import Iterable
 import logging
 
-from jparty.constants import DEBUG
-from jparty.utils import SongPlayer, resource_path
-from jparty.helpmsg import helpmsg
+from .constants import DEBUG
+from .utils import SongPlayer, resource_path
+from .helpmsg import helpmsg
 
 BUZZ_DELAY = 0  # ms
 
@@ -79,7 +79,7 @@ class KeystrokeManager(object):
         self.__events = {}
 
     def addEvent(
-            self, ident, key, func, hint_setter=None, active=False, persistent=False
+        self, ident, key, func, hint_setter=None, active=False, persistent=False
     ):
         self.__events[ident] = KeystrokeEvent(
             key, func, hint_setter, active, persistent
@@ -197,12 +197,11 @@ class Game(QObject):
     # buzzer_disconnected = pyqtSignal(str)
     wager_trigger = pyqtSignal(int, int)
 
-    def __init__(self, rounds, date, comments, custom=False):
+    def __init__(self, rounds, date, comments):
         super().__init__()
-        self.new_game(rounds, date, comments, custom)
+        self.new_game(rounds, date, comments)
 
-    def new_game(self, rounds, date, comments, custom):
-        self.custom = custom
+    def new_game(self, rounds, date, comments):
         self.date = date
         self.comments = comments
         self.rounds = rounds
@@ -287,11 +286,8 @@ class Game(QObject):
     def update(self):
         self.dc.update()
 
-    def complete(self, custom=False):
-        if not self.custom:
-            return all(b.complete for b in self.rounds)
-        else:
-            return True
+    def complete(self):
+        return all(b.complete for b in self.rounds)
 
     @property
     def current_round(self):

@@ -60,7 +60,7 @@ class BuzzerHandler(tornado.web.RequestHandler):
         self.render("play.html", messages=BuzzerSocketHandler.cache)
 
 
-max_waiters = 3
+max_waiters = 8
 
 
 class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
@@ -115,7 +115,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
 
     def init_player(self, name):
 
-        if len(self.controller.connected_players) >= 3:
+        if len(self.controller.connected_players) >= 8:
             logging.info("Game full!")
             self.send("GAMEFULL")
             return
