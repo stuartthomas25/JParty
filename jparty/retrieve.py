@@ -6,7 +6,6 @@ from queue import Queue
 from jparty.game import Question, Board, Game
 import logging
 import csv
-import pandas as pd
 
 import pickle
 
