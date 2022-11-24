@@ -5,13 +5,13 @@ _A Jeopardy! simulator_
 
 Homepage: https://www.stuartthomas.us/jparty/
 
-Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full _Jeopardy!_ simulator complete with real questions from actual games. This game is perfect for parties and supports 3-8 players plus a host. Typically, _Jeopardy!_ has three contestants; JParty supports up to 8 players for larger groups (warning: may cause many complaints about buzzer races). For ideal usage, plug a laptop into to a TV (or AirPlay/screen mirror), setting the laptop as the main monitor, then instruct contestants to navigate to the local IP address on the screen. The person with the laptop is the host and runs the game by reading the questions and running the buzzers.
+Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full _Jeopardy!_ simulator complete with real questions from actual games. This game is perfect for parties and supports 3-8 players plus a host. Typically, _Jeopardy!_ has three contestants which is reccomended for the best expirience; JParty supports up to 8 players for larger groups (warning: may cause many complaints about buzzer races). For ideal usage, plug a laptop into to a TV (or AirPlay/screen mirror) setting the laptop as the main monitor, and instruct contestants to navigate to the local IP address on the screen. The person with the laptop is the host and runs the game by reading the questions and running the buzzers.
 
 ## Download
 See <a href="https://github.com/stuartthomas25/JParty/releases">Releases</a> page.
 
 ## How does it work? (techincal details)
-JParty scrapes the J-Archive (https://j-archive.com) to download a previously-played game and then simulates that on the screen. JParty then uses PyQt6 to produce a GUI that simuates the motions of a full _Jeopardy!_ game. A `tornado` web server uses WebSockets to connect to the contestants' smartphones. If that's all gibberish to you, don't worry, you can still play without any techincal knowledge.
+JParty scrapes the J-Archive (https://j-archive.com) to download a previously-played game and then simulates that on the screen. JParty then uses PyQt6 to produce a GUI that simuates the motions of a full _Jeopardy!_ game. A `tornado` web server uses WebSockets to connect to the contestants' smartphones. If that's all gibberish to you, don't worry! You can still play without any techincal knowledge.
 
 ## Can I çreate my own custom game?
 Yes! JParty supports playing your own custom game via <a href="https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing">this simple Google Sheets template</a>. First, make a copy of the template and change the sharing permissions to "Anyone With the Link Can View". Then, copy the Google Sheet file ID and paste it into the "Game ID" box. There are more detailed instructions on the template page. Limitations: there is no way to add pictures (yet!) and you are limited to the traditional 6 categories x 5 dollar values board. 
@@ -24,7 +24,7 @@ To use the extension:
 3. Click the extension icon.
 4. The questions will download as a csv (spreadsheet) in the style of the template. 
 5. Copy the questions into your Google Sheet template
-6. Paste the Google Sheet ID file into the "Game ID" box in JParty.
+6. Paste the Google Sheet file ID into the "Game ID" box in JParty.
 
 ## Screenshots:
 
