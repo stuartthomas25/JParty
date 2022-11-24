@@ -7,6 +7,7 @@ from jparty.game import Question, Board, Game
 import logging
 import csv
 
+
 import pickle
 
 monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
