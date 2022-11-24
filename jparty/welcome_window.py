@@ -9,6 +9,7 @@ from PyQt6.QtGui import (
     QFont,
     QMovie,
     QPixmap,
+    QDesktopServices,
     QPalette,
     QGuiApplication,
     QFontDatabase,
@@ -20,7 +21,7 @@ import requests
 
 # from PyQt6.QtMultimedia import QSound
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
-from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
+from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal, QUrl
 import logging
 
 import pickle
@@ -98,7 +99,7 @@ class Welcome(QMainWindow):
         self.help_checkbox = QCheckBox("Show help", self)
 
         self.textbox = QLineEdit(self)
-        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
+        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL) \n or a Google Sheet ID from the template", self)
         self.gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         # self.player_heading = QLabel("Players:", self)
@@ -368,7 +369,7 @@ class PlayerView(QWidget):
 
         self.labels = [PlayerLabel(self.fontsize, self) for _ in range(8)]
         for i, label in enumerate(self.labels):
-            label_margin = (rect.width() - 8 * MOVIEWIDTH) // 4
+            label_margin = (rect.width() - 8 * MOVIEWIDTH) // 9
             label.setGeometry(
                 label_margin * (i + 1) + MOVIEWIDTH * i, 10, MOVIEWIDTH, MOVIEWIDTH
             )
