@@ -5,7 +5,7 @@ _A Jeopardy! simulator_
 
 Homepage: https://www.stuartthomas.us/jparty/
 
-Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full _Jeopardy!_ simulator complete with real questions from actual games. This game is perfect for parties and supports 3-8 players plus a host. Typically, _Jeopardy!_ has three contestants; JParty supports up to 8 players for larger groups (warning: may cause many complaints about buzzer races). For ideal usage, plug a TV into to a laptop (or AirPlay/screen mirror), setting the laptop as the main monitor, instruct contestants to navigate to the local IP address on the screen. The person with the laptop is the host and runs the game by reading the questions and running the buzzers.
+Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full _Jeopardy!_ simulator complete with real questions from actual games. This game is perfect for parties and supports 3-8 players plus a host. Typically, _Jeopardy!_ has three contestants; JParty supports up to 8 players for larger groups (warning: may cause many complaints about buzzer races). For ideal usage, plug a laptop into to a TV (or AirPlay/screen mirror), setting the laptop as the main monitor, then instruct contestants to navigate to the local IP address on the screen. The person with the laptop is the host and runs the game by reading the questions and running the buzzers.
 
 ## Download
 See <a href="https://github.com/stuartthomas25/JParty/releases">Releases</a> page.
@@ -50,7 +50,7 @@ The "Alex" player sees the answer on the laptop screen and can adjudicate with t
 
 
 ## Requirements:
-### For running binary
+### For running the app (binary)
 - macOS (for now)
 - Two monitors
 - A device with web access for each player
