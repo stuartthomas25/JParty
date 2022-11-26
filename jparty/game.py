@@ -310,7 +310,7 @@ class Game(QObject):
                 FJTIME = 1
             else:
                 FJTIME = 31
-                self.song_player.play()
+                self.song_player.final()
             self.timer = QuestionTimer(FJTIME, self.stumped)
         else:
             if BUZZ_DELAY > 0:

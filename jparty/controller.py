@@ -66,7 +66,7 @@ max_waiters = 8
 class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
     # waiters = set()
     cache = []
-    cache_size = 200
+    cache_size = 400
     # player_names = {}
 
     def initialize(self):
