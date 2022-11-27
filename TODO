@@ -5,3 +5,10 @@
 * DONE add better text for communicating game id is found in URL
 * DONE automatically skip games with blank questions
 * DONE add timeout sound effects
+
+* TODO make sure HostOverlay doesn't crash (see Nayib's email)
+
+* DONE QR Code
+* TODO Scaling issue on TV
+* DONE put quarter-second buzzer timeout in JS code
+* TODO Bug fix: leaving buzzer and returning during wager period sets maximum to 100
