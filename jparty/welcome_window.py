@@ -2,6 +2,7 @@ import sys
 import os
 from random import shuffle
 from PyQt6.QtGui import (
+    QImage,
     QPainter,
     QPen,
     QBrush,
@@ -20,7 +21,7 @@ import requests
 
 # from PyQt6.QtMultimedia import QSound
 from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
-from PyQt6.QtCore import Qt, QRectF, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
+from PyQt6.QtCore import Qt, QRectF, QRect, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
 import logging
 
 import pickle
@@ -28,6 +29,7 @@ from threading import Thread, active_count
 from random import choice
 import time
 import subprocess
+import qrcode
 
 import threading
 from functools import partial
@@ -55,6 +57,34 @@ def updateUI(f):
 MOVIEWIDTH = 64
 LABELFONTSIZE = 15
 OVERLAYFONTSIZE = 40
+
+
+
+class Image(qrcode.image.base.BaseImage):
+    def __init__(self, border, width, box_size):
+        self.border = border
+        self.width = width
+        self.box_size = box_size
+        size = (width + border * 2) * box_size
+        self._image = QImage(
+            size, size, QImage.Format.Format_RGB16)
+        self._image.fill(Qt.GlobalColor.white)
+
+    def pixmap(self):
+        return QPixmap.fromImage(self._image)
+
+    def drawrect(self, row, col):
+        painter = QPainter(self._image)
+        painter.fillRect(
+            (col + self.border) * self.box_size,
+            (row + self.border) * self.box_size,
+            self.box_size, self.box_size,
+            Qt.GlobalColor.black)
+
+    def save(self, stream, kind=None):
+        pass
+
+
 
 
 class Welcome(QMainWindow):
@@ -445,12 +475,31 @@ class HostOverlay(QWidget):
 
         font = QFont()
         font.setPointSize(font_size)
-        self.label = QLabel("http://" + host, self)
+
+
+        url = "http://" + host
+
+        self.label = QLabel(url, self)
         self.label.setGeometry(
             self.rect() - QMargins(0, 0, 0, self.rect().height() // 2)
         )
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setFont(font)
+
+        self.qrlabel = QLabel(self)
+        self.qrlabel.setPixmap(
+            qrcode.make(url,
+                        image_factory=Image,
+                        box_size=self.label.rect().height()//30).pixmap())
+
+        self.qrlabel.setGeometry( self.label.rect())
+        self.qrlabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+        #     self.label.geometry().right(),
+        #     self.label.geometry().y(),
+        #     self.label.geometry().height(),
+        #     self.label.geometry().height()
+        # ))
+
 
         self.playerview = PlayerView(
             self.rect() - QMargins(0, self.rect().height() // 2, 0, 0),
