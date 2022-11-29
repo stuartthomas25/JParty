@@ -1,0 +1,31 @@
+INFO:root:terminated
+CRITICAL:jparty.logger:Uncaught exception:
+   File "/Users/benfinch/PycharmProjects/JParty1/gui.py", line 5, in <module>
+    main()
+  File "/Users/benfinch/PycharmProjects/JParty1/jparty/welcome_window.py", line 601, in main
+    sys.exit(r)
+
+UnboundLocalError: local variable 'r' referenced before assignment
+Traceback (most recent call last):
+  File "/Users/benfinch/PycharmProjects/JParty1/jparty/welcome_window.py", line 592, in main
+    wel = Welcome(SC)
+  File "/Users/benfinch/PycharmProjects/JParty1/jparty/welcome_window.py", line 106, in __init__
+    self.song_player = SongPlayer()
+  File "/Users/benfinch/PycharmProjects/JParty1/jparty/utils.py", line 22, in __init__
+    self.__wave_obj = sa.WaveObject.from_wave_file(resource_path("intro.wav"))
+  File "/Users/benfinch/PycharmProjects/JParty1/venv/lib/python3.9/site-packages/simpleaudio/shiny.py", line 24, in from_wave_file
+    wave_read = wave.open(wave_file, 'rb')
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/wave.py", line 509, in open
+    return Wave_read(f)
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/wave.py", line 159, in __init__
+    f = builtins.open(f, 'rb')
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/benfinch/PycharmProjects/JParty1/data/intro.wav'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/benfinch/PycharmProjects/JParty1/gui.py", line 5, in <module>
+    main()
+  File "/Users/benfinch/PycharmProjects/JParty1/jparty/welcome_window.py", line 601, in main
+    sys.exit(r)
+UnboundLocalError: local variable 'r' referenced before assignment
