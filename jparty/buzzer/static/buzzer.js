@@ -16,11 +16,16 @@ function lights_off(i) {
 var last_buzz = new Date().getTime();
 async function buzz() {
     var now = new Date().getTime();
-    if (now - window.last_buzz > 250) {
-        window.last_buzz = now;
+    // if (now - window.last_buzz > 250) {
+        // window.last_buzz = now;
         console.log("BUZZ");
         send("BUZZ");
-    };
+
+        $("#buzzer").prop("disabled", true);
+        setTimeout(function () {
+            $("#buzzer").prop("disabled", false);
+        }, 250)
+    // };
 
 }
 
