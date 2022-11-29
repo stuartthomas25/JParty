@@ -129,7 +129,7 @@ class Welcome(QMainWindow):
         self.help_checkbox = QCheckBox("Show help", self)
 
         self.textbox = QLineEdit(self)
-        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL) \n or a Google Sheet ID from the template", self)
+        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL) or \n GSheet ID for custom game", self)
         self.gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         # self.player_heading = QLabel("Players:", self)
