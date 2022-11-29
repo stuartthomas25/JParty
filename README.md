@@ -19,7 +19,7 @@ Yes! JParty supports playing your own custom game via <a target=_blank href="htt
 If you don't want to write your own questions but want to play a topical _Jeopardy!_ game, use this handy <a target=_blank href="https://chrome.google.com/webstore/detail/jeopardy-labs-to-csv/biijijhfghhckhlkjbonjedmgnkmenlk?hl=en&authuser=0">Google Chrome extension to scrape Jeopardy Labs questions</a> (<a href=https://github.com/benf2004/JeopardyLabsToCSV>source code</a>). There are millions of games avaliable on https://jeopardylabs.com that are free to play on a variety of topics. While Jeopardy Labs is a great repository for many topical games & worked great 20 years ago, it lacks in features such as daily doubles, final jeopardy, music/sound effects, and buzzers. 
 
 To use the extension:
-1. Make a copy of the aforementioned <a target=_blank href="https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing">Jparty Google Sheets template</a>
+1. Make a copy of the <a target=_blank href="https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing">Jparty Google Sheets custom game template</a>
 2. Find a game on https://jeopardylabs.com. 
 3. Click the extension icon.
 4. The questions will download as a csv (spreadsheet) in the style of the template. 
@@ -62,6 +62,7 @@ The "Alex" player sees the answer on the laptop screen and can adjudicate with t
 - simpleaudio
 - tornado
 - BeautifulSoup4
+- qrcode
 - pyinstaller [>=5.0] (this is currently in development but is required for PyQt6)
 
 To debug, run 
