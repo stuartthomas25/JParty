@@ -4,3 +4,4 @@ simpleaudio
 tornado
 BeautifulSoup4
 pyinstaller
+qrcode
