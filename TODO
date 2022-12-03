@@ -1,10 +1,10 @@
-* TODO add URL for template
 * TODO make sure HostOverlay doesn't crash (see Nayib's email)
 * TODO Bug fix: leaving buzzer and returning during wager period sets maximum to 100
 * TODO Scaling issue on TV
-* TODO team mode - multiple buzzers same score
+* TODO team - multiple buzzers same score
+* TODO self-hosting mode (players pick next category on their screen and select if they got the question right/wrong)
 
-
+* DONE add URL for template
 * DONE QR Code
 * DONE put quarter-second buzzer timeout in JS code
 * DONE maybe add a tutorial feature? (maybe just one popup as the game starts)
