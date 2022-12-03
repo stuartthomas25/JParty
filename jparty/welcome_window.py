@@ -251,6 +251,10 @@ class Welcome(QMainWindow):
             self.summary_label.geometry().translated(165, 42)
         )
 
+        # adds a checkbox labeled "team mode" above the "show help" checkbox
+        # self.team_checkbox = QCheckBox("Team Mode", self)
+
+
         self.gameid_label.setGeometry(0, 97, 172, 50)
         self.custom_label.setGeometry(0, 127, 172, 50)
         self.textbox.move(180, 100)
@@ -296,11 +300,11 @@ class Welcome(QMainWindow):
     def init_game(self):
         try:
             game_id = self.textbox.text()
-            if len(str(game_id)) > 8:
-                self.textbox.font().setPointSize(12)
+            if type(game_id) == str:
+                get_game(game_id)
         except ValueError as e:
             error_dialog = QErrorMessage()
-            error_dialog.showMessage("Invalid game ID")
+            error_dialog.showMessage("Invalid game ID - change sharing permissions & try again")
             return False
 
         self.game = get_game(game_id)
