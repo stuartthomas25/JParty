@@ -36,7 +36,7 @@ The main game board:
 
 <img src="screenshots/main_board.png" height="300"/>
 
-The "Alex" player sees the answer on the laptop screen and can adjudicate with the arrow keys:
+The host sees the answer on the laptop screen and can adjudicate with the arrow keys:
 
 <img src="screenshots/alex_view.png" height="300"/>
 
