@@ -129,8 +129,17 @@ class Welcome(QMainWindow):
         self.help_checkbox = QCheckBox("Show help", self)
 
         self.textbox = QLineEdit(self)
-        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL) or \n GSheet ID for custom game", self)
+        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL) or", self)
         self.gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+        self.custom_label = QLabel("GSheet ID for custom game", self)
+        self.custom_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+        # makes self.custom_label a link going to template
+        self.linkTemplate = '<a href={0}>{1}</a>'
+        self.custom_label.setOpenExternalLinks(True)
+        self.template_URL = "https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit#gid=0"
+        self.custom_label.setText(self.linkTemplate.format(self.template_URL, "GSheet ID for custom game"))
 
         # self.player_heading = QLabel("Players:", self)
         # self.player_labels = [QLabel(self) for _ in range(3)]
@@ -242,7 +251,8 @@ class Welcome(QMainWindow):
             self.summary_label.geometry().translated(165, 42)
         )
 
-        self.gameid_label.setGeometry(0, 105, 172, 50)
+        self.gameid_label.setGeometry(0, 97, 172, 50)
+        self.custom_label.setGeometry(0, 127, 172, 50)
         self.textbox.move(180, 100)
         self.textbox.resize(100, 40)
         self.textbox.textChanged.connect(self.show_summary)
@@ -286,6 +296,8 @@ class Welcome(QMainWindow):
     def init_game(self):
         try:
             game_id = self.textbox.text()
+            if len(str(game_id)) > 8:
+                self.textbox.font().setPointSize(12)
         except ValueError as e:
             error_dialog = QErrorMessage()
             error_dialog.showMessage("Invalid game ID")
