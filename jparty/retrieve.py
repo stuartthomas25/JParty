@@ -3,15 +3,64 @@ from bs4 import BeautifulSoup
 import re
 from threading import Thread
 from queue import Queue
-from .game import Question, Board, Game
+from jparty.game import Question, Board, Game
 import logging
+import csv
+
 
 import pickle
 
 monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
+def list_to_game(s):
+    # Template link: https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing
+    alpha = "BCDEFG"
+    boards = []
+    # gets single and double jeopardy rounds
+    for n1 in [1, 14]:
+        categories = s[n1-1][1:7]
+        questions = []
+        for row in range(5):
+            for col in range(6):
+                address = alpha[col] + str(row + n1 + 1)
+                index = (col, row)
+                text = s[row + n1][col + 1]
+                answer = s[row + n1 + 6][col + 1]
+                value = int(s[row + n1][0])
+                dd = address in s[n1 - 1][-1]
+                questions.append(Question(index, text, answer, value, dd))
+                print(index, text, answer, value, dd)
+        boards.append(Board(categories, questions, final=False, dj=(n1 == 14)))
+    # gets final jeopardy round
+    fj = s[-1]
+    index = (0, 0)
+    text = fj[2]
+    answer = fj[3]
+    questions = [Question(index, text, answer, None, False)]
+    categories = [fj[1]]
+    boards.append(Board(categories, questions, final=True, dj=False))
+    date = fj[5]
+    comments = fj[7]
+    return Game(boards, date, comments)
 
-def get_game(game_id, soup=None):
+
+def get_Gsheet_game(file_id):
+    csv_url = f'https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv'
+    with requests.get(csv_url, stream=True) as r:
+        lines = (line.decode('utf-8') for line in r.iter_lines())
+        r3 = csv.reader(lines)
+        return list_to_game(list(r3))
+
+
+def get_game(game_id):
+    print("getting game")
+    if len(str(game_id)) < 7:
+        return get_JArchive_Game(game_id)
+    else:
+        return get_Gsheet_game(str(game_id))
+
+
+def get_JArchive_Game(game_id, soup=None):
     logging.info(f"getting game {game_id}")
 
     # boards = pickle.load(open("board_download.dat",'rb'))
@@ -105,7 +154,7 @@ def get_game(game_id, soup=None):
     # # stripped_summary = '' if summary is None else summary.groups()[0]
     # # games_info[game_id] = game_date + ': ' + stripped_summary
 
-    return game_ids
+    # return game_ids
 
 
 def get_game_sum(soup):
@@ -123,7 +172,6 @@ def get_random_game():
 
     link = soup.find_all(class_="splash_clue_footer")[1].find("a")["href"]
     return int(link[21:])
-
 
 # def getStatus(ourl):
 # try:
