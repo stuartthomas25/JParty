@@ -546,6 +546,14 @@ def get_logs():
 def get_sysinfo():
     return version
 
+def permission_error():
+    button = QMessageBox.critical(
+        None,
+        "Permission Error",
+        "JParty encountered a permissions error when trying to listen on port 80.",
+        buttons=QMessageBox.StandardButton.Abort,
+        defaultButton=QMessageBox.StandardButton.Abort,
+    )
 
 def check_internet():
     # check internet connection
@@ -559,7 +567,7 @@ def check_internet():
             buttons=QMessageBox.StandardButton.Abort,
             defaultButton=QMessageBox.StandardButton.Abort,
         )
-        exit(1)
+        raise e
 
 
 def main():
@@ -590,11 +598,20 @@ def main():
         SC = BuzzerController()
         wel = Welcome(SC)
         song_player = wel.song_player
-        SC.start()
+        try:
+            SC.start()
+        except PermissionError as e:
+            permission_error()
+            raise e
+
         r = app.exec()
 
     finally:
         logging.info("terminated")
         if song_player:
             song_player.stop()
-        sys.exit(r)
+        if not DEBUG:
+            try:
+                sys.exit(r)
+            except NameError:
+                sys.exit(1)

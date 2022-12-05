@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QMessageBox, QApplication
 import webbrowser
 from urllib.parse import quote
 from .version import version
+from .constants import DEBUG
 
 from .environ import root
 
@@ -91,4 +92,7 @@ class UncaughtHook(QObject):
 
 
 # create a global instance of our class to register the hook
-qt_exception_hook = UncaughtHook()
+if DEBUG:
+    qt_exception_hook = None
+else:
+    qt_exception_hook = UncaughtHook()
