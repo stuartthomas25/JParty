@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import QApplication
 
 from tornado.options import define, options
 
-define("port", default=80, help="run on the given port", type=int)
+define("port", default=8080, help="run on the given port", type=int)
 
 
 class Application(tornado.web.Application):
@@ -211,7 +211,7 @@ class BuzzerController:
     @classmethod
     def localip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
+        s.connect(("8.8.8.8", options.port))
         return s.getsockname()[0]
 
     # hostname = socket.gethostname()
