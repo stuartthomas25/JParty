@@ -1,0 +1,7 @@
+PyQt6
+requests
+simpleaudio
+tornado
+BeautifulSoup4
+pyinstaller
+qrcode

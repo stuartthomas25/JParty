@@ -10,5 +10,5 @@ Welcome to JParty!
 
 Some general Jeopardy rules:
 - Answering correctly gives you control of the board.
-- Contestants must answer in the form of a question.
+- Contestants must answer in the form of a question ("who is?" or "what is?").
     """

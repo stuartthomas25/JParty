@@ -10,6 +10,7 @@ from PyQt6.QtGui import (
     QFont,
     QMovie,
     QPixmap,
+    QDesktopServices,
     QPalette,
     QGuiApplication,
     QFontDatabase,
@@ -128,8 +129,17 @@ class Welcome(QMainWindow):
         self.help_checkbox = QCheckBox("Show help", self)
 
         self.textbox = QLineEdit(self)
-        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL)", self)
+        self.gameid_label = QLabel("Game ID:\n(from J-Archive URL) or", self)
         self.gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+        self.custom_label = QLabel("GSheet ID for custom game", self)
+        self.custom_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+        # makes self.custom_label a link going to template
+        self.linkTemplate = '<a href={0}>{1}</a>'
+        self.custom_label.setOpenExternalLinks(True)
+        self.template_URL = "https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit#gid=0"
+        self.custom_label.setText(self.linkTemplate.format(self.template_URL, "GSheet ID for custom game"))
 
         # self.player_heading = QLabel("Players:", self)
         # self.player_labels = [QLabel(self) for _ in range(3)]
@@ -241,7 +251,12 @@ class Welcome(QMainWindow):
             self.summary_label.geometry().translated(165, 42)
         )
 
-        self.gameid_label.setGeometry(0, 105, 172, 50)
+        # adds a checkbox labeled "team mode" above the "show help" checkbox
+        # self.team_checkbox = QCheckBox("Team Mode", self)
+
+
+        self.gameid_label.setGeometry(0, 97, 172, 50)
+        self.custom_label.setGeometry(0, 127, 172, 50)
         self.textbox.move(180, 100)
         self.textbox.resize(100, 40)
         self.textbox.textChanged.connect(self.show_summary)
@@ -284,10 +299,12 @@ class Welcome(QMainWindow):
 
     def init_game(self):
         try:
-            game_id = int(self.textbox.text())
+            game_id = self.textbox.text()
+            if type(game_id) == str:
+                get_game(game_id)
         except ValueError as e:
             error_dialog = QErrorMessage()
-            error_dialog.showMessage("Invalid game ID")
+            error_dialog.showMessage("Invalid game ID - change sharing permissions & try again")
             return False
 
         self.game = get_game(game_id)
@@ -396,9 +413,9 @@ class PlayerView(QWidget):
         self.num_players = 0
         self.fontsize = fontsize
 
-        self.labels = [PlayerLabel(self.fontsize, self) for _ in range(3)]
+        self.labels = [PlayerLabel(self.fontsize, self) for _ in range(8)]
         for i, label in enumerate(self.labels):
-            label_margin = (rect.width() - 3 * MOVIEWIDTH) // 4
+            label_margin = (rect.width() - 8 * MOVIEWIDTH) // 9
             label.setGeometry(
                 label_margin * (i + 1) + MOVIEWIDTH * i, 10, MOVIEWIDTH, MOVIEWIDTH
             )
@@ -421,7 +438,7 @@ class PlayerView(QWidget):
         label = self.labels[self.num_players]
         self.num_players += 1
         label.setText(player.name)
-        labelwidth = self.parent().size().width() // 3
+        labelwidth = self.parent().size().width() // 8
         label.setFixedWidth(labelwidth)
         # label.move(label.pos() + QPoint((MOVIEWIDTH - labelwidth) / 2, 0))
         label.move(QPoint(labelwidth * (self.num_players - 1), 0))
