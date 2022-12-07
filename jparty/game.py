@@ -158,6 +158,7 @@ class Question(object):
         self.answer = answer
         self.value = value
         self.dd = dd
+        self.complete = False
 
 
 class Board(object):
@@ -215,7 +216,6 @@ class Game(QObject):
         self.active_question = None
         self.accepting_responses = False
         self.answering_player = None
-        self.completed_questions = []
         self.previous_answerer = None
         self.timer = None
 
@@ -269,8 +269,8 @@ class Game(QObject):
             "CLOSE_GAME", Qt.Key.Key_Space, self.close_game, self.set_spacehints
         )
 
-        if DEBUG:
-            self.completed_questions = self.rounds[1].questions[:-1]
+        # if DEBUG:
+        #     self.completed_questions = self.rounds[1].questions[:-1]
 
         self.wager_trigger.connect(self.wager)
         self.buzz_trigger.connect(self.buzz)
@@ -367,17 +367,16 @@ class Game(QObject):
         logging.info("back_to_board")
         self.dc.hide_question()
         self.timer = None
-        self.completed_questions.append(self.active_question)
+        self.active_question.complete = True
         self.active_question = None
         self.previous_answerer = None
         rasync(self.save)
-        if len(self.completed_questions) == len(self.current_round.questions):
+        if all(q.complete for q in self.current_round.questions):
             self.keystroke_manager.activate("NEXT_ROUND")
 
     @updateUI
     def next_round(self):
         logging.info("next round")
-        self.completed_questions = []
         self.__current_round += 1
         # self.completed_questions = self.rounds[self.__current_round].questions[:-1]  # EDIT
         if self.__current_round == 2:
@@ -474,6 +473,7 @@ class Game(QObject):
             self.run_dd()
         else:
             self.keystroke_manager.activate("OPEN_RESPONSES")
+        self.dc.load_question(q)
 
     @updateUI
     def open_final(self):
@@ -538,8 +538,8 @@ class Game(QObject):
     def __getstate__(self):
         return (
             (self.rounds, self.date, self.comments),
-            self.players,
-            self.completed_questions,
+            self.players
+            # TODO: include completed questions
         )
 
     def __setstate__(self, state):

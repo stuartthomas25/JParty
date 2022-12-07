@@ -268,6 +268,7 @@ class Welcome(QMainWindow):
 
         if DEBUG:
             self.textbox.setText(str(2534))  # EDIT
+            self.init_game()
 
         self.show()
         logging.info(f"Number of screens: {len(QApplication.instance().screens())}")
@@ -310,6 +311,8 @@ class Welcome(QMainWindow):
         self.game = get_game(game_id)
         self.game.welcome_window = self
         self.game.players = self.socket_controller.connected_players
+        if DEBUG:
+            self.game.players = [Player("stu", None), Player("jim", None), Player("mad", None)]
         self.run_game(self.game)
 
     def run_game(self, game):
@@ -609,7 +612,7 @@ def main():
     # r = app.exec()
 
     try:
-        os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+        # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         app = QApplication(sys.argv)
 
         SC = BuzzerController()
