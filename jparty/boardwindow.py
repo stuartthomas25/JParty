@@ -124,16 +124,15 @@ def autofitsize(text, font, rect, start=None, stepsize=2):
         fm = QFontMetrics(font)
         return fm.boundingRect(rect, flags, text)
 
-    if fullrect(font).height() > rect.height():
+    if fullrect(font).height() > rect.height() or fullrect(font).width() > rect.width():
         while size > 0:
             size -= stepsize
             font.setPointSize(size)
             newrect = fullrect(font)
             if newrect.height() <= rect.height():
                 return font.pointSize()
-        raise Exception(f"Nothing fit! (text='{text}')")
+        logging.warn(f"Nothing fit! (text='{text}')")
 
-    logging.info(f"'{text}' is good")
     return size
 
 
@@ -160,7 +159,7 @@ class PlayerWidget(QWidget):
         self.setAutoFillBackground(True)
         self.setPalette(CARDPAL)
 
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
 
         self.setLayout(layout)
         self.show()
@@ -188,8 +187,8 @@ class PlayerWidget(QWidget):
 
 
 class LightsWidget(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.__light_level = 0
         self.__light_thread = None
@@ -199,8 +198,8 @@ class LightsWidget(QWidget):
         palette.setColor(QPalette.ColorRole.Window, WHITE)
         self.setPalette(palette)
 
-    def sizeHint(self):
-        return QSize(self.geometry().width(), DIVIDERWIDTH)
+    # def sizeHint(self):
+    #     return QSize(self.geometry().width(), DIVIDERWIDTH)
 
     def paintEvent(self, event):
         w = self.geometry().width()
@@ -263,18 +262,18 @@ class ScoreWidget(QWidget):
         player_layout.setSpacing(0)
 
         self.setLayout(player_layout)
+
         self.setPalette(CARDPAL)
 
         self.__buzz_hint_players = []
         self.__buzz_hint_thread = []
 
 
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.show()
 
-
-    def maximumSizeHint(self):
-        return QSize(self.geometry().width(), 100)
+    # def maximumSizeHint(self):
+    #     return QSize(self.geometry().width(), 100)
 
     # def paintEvent(self, event):
     #     return None
@@ -523,17 +522,16 @@ class DailyDoubleWidget(QuestionWidget):
 class CardLabel(QLabel):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
+
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setWordWrap(True)
         self.setFont( QFont("Helvetica") )
         self.setAutoFillBackground(True)
 
-
-        font = self.font()
-        fontsize = autofitsize(self.text(), font, self.rect(), start=self.geometry().height() / 10 )
-        font.setPointSize(fontsize)
-        self.setFont(font)
-
+        # font = self.font()
+        # fontsize = autofitsize(self.text, font, self.geometry(), start=self.geometry().height() / 10 )
+        # font.setPointSize(fontsize)
+        # self.label.setFont(font)
 
         palette = QPalette()
         palette.setColor(QPalette.ColorRole.Window, BLUE)
@@ -546,20 +544,28 @@ class CardLabel(QLabel):
         shadow.setOffset(3)
         self.setGraphicsEffect(shadow)
 
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
-    def sizeHint(self):
-        # parent_height = self.parent().geometry().height()
-        # height = parent_height * (1-SCOREHEIGHT)
-        # width = height / CELLRATIO
-        return QSize(50, 30)
+
+    # def minimumSizeHint(self):
+    #     # parent_height = self.parent().geometry().height()
+    #     # height = parent_height * (1-SCOREHEIGHT)
+    #     # width = height / CELLRATIO
+    #     return QSize(50, 30)
 
     def resizeEvent(self, event):
-        pass
-        # font = self.font()
-        # fontsize = autofitsize(self.text(), font, self.rect(), start=self.geometry().height()*0.1 )
-        # font.setPointSize(fontsize)
-        # self.setFont(font)
+        if self.size().height() > 0:
+            font = self.font()
+            margin = 100 #int(self.width() * 0.1) + 1
+            smallerrect = self.rect().adjusted(margin, 0, -margin, 0)
+
+            print("")
+            print(margin, self.size(), smallerrect.size())
+
+            fontsize = autofitsize(self.text(), font, smallerrect, start=self.geometry().height()*0.3 )
+            print(self.geometry().height()*0.3, font.pointSize(), fontsize)
+            font.setPointSize(fontsize)
+            self.setFont(font)
 
 
 class QuestionCard(CardLabel):
@@ -580,7 +586,7 @@ class QuestionCard(CardLabel):
     def mousePressEvent(self, event):
         if not self.question.complete:
             self.game.load_question(self.question)
-            self.setText("")
+            self.label.setText("")
 
 
 
@@ -598,7 +604,7 @@ class BoardWidget(QWidget):
         self.cellsize = (cellheight / CELLRATIO, cellheight)
 
         self.grid_layout = QGridLayout()
-        self.grid_layout.setSpacing(5)
+        self.grid_layout.setSpacing(10)
 
 
         for x in range(self.board.size[0]):
@@ -627,8 +633,17 @@ class BoardWidget(QWidget):
 
         self.show()
 
-    def minimumSizeHint(self):
-        return QSize(self.geometry().width(), 900)
+    def paintEvent(self, event):
+        h = self.geometry().height()
+        w = self.geometry().width()
+        qp = QPainter()
+        qp.begin(self)
+        qp.setBrush(FILLBRUSH)
+        print(self.rect())
+        qp.drawRect(self.rect())
+
+    # def minimumSizeHint(self):
+    #     return QSize(self.geometry().width(), 900)
 
     # @updateUI
     # def resizeEvent(self, event):
@@ -842,15 +857,11 @@ class DisplayWindow(QMainWindow):
         monitor = QGuiApplication.screens()[monitor].geometry()
 
         self.move(monitor.left(), monitor.top())  # move to monitor 0
-        self.showFullScreen()
+        # self.showFullScreen()
 
-        self.lights_widget = LightsWidget()
+        # self.lights_widget = LightsWidget(self)
 
         self.boardwidget = BoardWidget(game, alex, self)
-        self.boardwidget.move(
-            self.geometry().width() / 2 - self.boardwidget.geometry().width() / 2, 0
-        )
-        self.boardwidget.update()
 
         self.scoreboard = ScoreWidget(game, self)
         # self.finalanswerwindow = FinalAnswerWidget(game)
@@ -869,8 +880,9 @@ class DisplayWindow(QMainWindow):
         self.main_layout.setSpacing(0.)
         self.main_layout.setContentsMargins(0., 0., 0., 0.)
         self.main_layout.addWidget( self.boardwidget, 0 )
-        self.main_layout.addWidget( self.lights_widget, 1 )
+        # self.main_layout.addWidget( self.lights_widget, 1 )
         self.main_layout.addWidget( self.scoreboard, 2 )
+        self.main_layout.setStretchFactor( self.scoreboard, 0.2 )
 
         self.newWidget = QWidget()
         self.newWidget.setLayout(self.main_layout)
