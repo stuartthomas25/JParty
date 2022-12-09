@@ -1,6 +1,11 @@
 <img src="resources/icon.png" align="right" height="100"/>
 
 # JParty
+![](https://img.shields.io/github/v/release/stuartthomas25/JParty)
+![](https://img.shields.io/codefactor/grade/github/stuartthomas25/JParty)
+![](https://img.shields.io/github/downloads/stuartthomas25/JParty/total)
+![](https://img.shields.io/github/stars/stuartthomas25/JParty?style=social)
+
 _A Jeopardy! simulator_
 
 Homepage: https://www.stuartthomas.us/jparty/
