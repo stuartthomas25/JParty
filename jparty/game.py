@@ -277,11 +277,11 @@ class Game(QObject):
 
     @updateUI
     def set_arrowhints(self, val):
-        self.dc.borderwidget.arrowhints = val
+        self.dc.borders.arrowhints = val
 
     @updateUI
     def set_spacehints(self, val):
-        self.dc.borderwidget.spacehints = val
+        self.dc.borders.spacehints = val
 
     def update(self):
         self.dc.update()
@@ -302,7 +302,7 @@ class Game(QObject):
     @updateUI
     def open_responses(self):
         logging.info("open responses")
-        self.dc.borderwidget.lit = True
+        self.dc.borders.lit = True
         if self.current_round.final:
             self.buzzer_controller.prompt_answers()
 
@@ -330,7 +330,7 @@ class Game(QObject):
         logging.info("close responses")
         self.timer.pause()
         self.accepting_responses = False
-        self.dc.borderwidget.lit = True
+        self.dc.borders.lit = True
 
     # Don't update UI every buzz
     def buzz(self, i_player):
@@ -344,7 +344,7 @@ class Game(QObject):
 
             self.answering_player = player
             self.keystroke_manager.activate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
-            self.dc.borderwidget.lit = False
+            self.dc.borders.lit = False
             self.update()
         elif self.active_question is None:
             self.dc.scoreboard.buzz_hint(player)
@@ -496,7 +496,7 @@ class Game(QObject):
             self.timer.cancel()
         self.answering_player.score += self.active_question.value
         self.back_to_board()
-        self.dc.borderwidget.lit = False
+        self.dc.borders.lit = False
 
         self.answer_given()
 
@@ -525,11 +525,11 @@ class Game(QObject):
             wo.play()
 
         # flash
-        self.dc.borderwidget.lit = False
+        self.dc.borders.lit = False
         time.sleep(0.2)
-        self.dc.borderwidget.lit = True
+        self.dc.borders.lit = True
         time.sleep(0.2)
-        self.dc.borderwidget.lit = False
+        self.dc.borders.lit = False
         if self.current_round.final:
             self.keystroke_manager.activate("NEXT_SLIDE")
         else:
