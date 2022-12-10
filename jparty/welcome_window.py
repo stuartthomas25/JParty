@@ -312,7 +312,7 @@ class Welcome(QMainWindow):
         self.game.welcome_window = self
         self.game.players = self.socket_controller.connected_players
         if DEBUG:
-            self.game.players = [Player("stu", None), Player("jim", None), Player("mad", None)]
+            self.game.players = [Player("Stuart", None), Player("Maddie", None), Player("Telvin", None)]
         self.run_game(self.game)
 
     def run_game(self, game):

@@ -157,14 +157,17 @@ class PlayerWidget(QWidget):
         self.score_label.setFont(self.__score_font)
         self.score_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        self.resizeEvent(None)
         self.update_score()
 
         self.highlighted = False
 
         layout = QVBoxLayout()
-        layout.addWidget(self.score_label)
-        layout.addWidget(self.name_label)
-        layout.setStretchFactor(self.name_label, 0.3)
+        layout.addStretch(1)
+        layout.addWidget(self.score_label, 12)
+        layout.addStretch(7)
+        layout.addWidget(self.name_label, 28)
+        layout.addStretch(17)
 
         # self.setAutoFillBackground(True)
 
@@ -178,22 +181,24 @@ class PlayerWidget(QWidget):
         self.show()
 
     def startNameFont(self):
-        return self.height()*0.2
+        return self.height()*0.15
 
     def startScoreFont(self):
-        return self.height()*0.6
+        return self.height()*0.12
 
     def resizeEvent(self, event):
-        if self.size().height() > 0:
+
+        if self.size().height() == 0:
             return None
 
+        namefontsize = autofitsize(self.name_label.text(), self.__name_font, self.name_label.rect(), start=self.startNameFont())
+        scorefontsize = autofitsize(self.score_label.text(), self.__score_font, self.score_label.rect(), start=self.startScoreFont())
 
-        namefontsize = self.startNameFont() #autofitsize(self.text, self.__font, labelrect, start=self.startFont())
-        scorefontsize = self.startScoreFont() #autofitsize(self.text, self.__font, labelrect, start=self.startFont())
-
-        self.__name_font.setPointSize(fontsize)
-        self.__score_font.setPointSize(fontsize)
+        self.__name_font.setPointSize(namefontsize)
+        self.__score_font.setPointSize(scorefontsize)
         self.name_label.setFont(self.__name_font)
+        self.score_label.setFont(self.__score_font)
+        self.update()
 
     def __buzz_hint(self, p):
         self.__buzz_hint_players.append(p)
@@ -209,68 +214,23 @@ class PlayerWidget(QWidget):
         self.__buzz_hint_thread.start()
 
     def update_score(self):
-        self.score_label.setText( f"{self.player.score}" )
+        self.score_label.setText( f"${self.player.score}" )
 
     def mousePressEvent(self, event):
         self.game.adjust_score(self.player)
         self.update_score()
 
 
-class BorderWidget(QWidget):
-    def __init__(self, game, boardrect, parent=None):
-        super().__init__(parent)
-        self.game = game
-        self.boardrect = boardrect
-        margin_size = self.boardrect.x()
-        self.__answerbarrect = boardrect.adjusted(-ANSWERBARS, 0, ANSWERBARS, 0)
-
-        self.__correctrect = QRect(0, 0, margin_size, self.boardrect.height())
-        self.__incorrectrect = QRect(
-            self.boardrect.right(), 0, margin_size, self.boardrect.height()
-        )
-        arrow_size = QSize(int(margin_size * 0.7), int(margin_size * 0.7))
-        self.__leftarrowrect = QRect(QPoint(0, 0), arrow_size)
-        self.__leftarrowrect.moveCenter(self.__correctrect.center())
-        self.__rightarrowrect = QRect(QPoint(0, 0), arrow_size)
-        self.__rightarrowrect.moveCenter(self.__incorrectrect.center())
-
-        self.__leftarrowimage = QPixmap(resource_path("left-arrow.png"))
-        self.__rightarrowimage = QPixmap(resource_path("right-arrow.png"))
-        self.__spaceimage = QPixmap(resource_path("space.png"))
-
-        self.show()
-        self.__lit = False
-        self.arrowhints = False
-        self.spacehints = False
-
-    @property
-    def lit(self):
-        return self.__lit
-
-    @lit.setter
-    @updateUI
-    def lit(self, val):
-        self.__lit = val
-
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
-        if self.lit:
-            qp.setBrush(HIGHLIGHTBRUSH)
-            qp.drawRect(self.__answerbarrect)
-        if self.arrowhints and self.parent().alex:
-            qp.setBrush(CORRECTBRUSH)
-            qp.drawRect(self.__correctrect)
-            qp.setBrush(INCORRECTBRUSH)
-            qp.drawRect(self.__incorrectrect)
-            qp.setBrush(HIGHLIGHTBRUSH)
-            qp.drawPixmap(self.__leftarrowrect, self.__leftarrowimage)
-            qp.drawPixmap(self.__rightarrowrect, self.__rightarrowimage)
+        qp.drawPixmap( self.rect(), QPixmap( resource_path("player_background.png") ))
 
-        if self.spacehints and self.parent().alex:
-            qp.setBrush(HIGHLIGHTBRUSH)
-            qp.drawPixmap(self.__leftarrowrect, self.__spaceimage)
-            qp.drawPixmap(self.__rightarrowrect, self.__spaceimage)
+        # qp.drawRect(self.name_label.geometry())
+        # qp.drawRect(self.score_label.geometry())
+
+
+
 
 
 class QuestionLabel(QLabel):
@@ -506,7 +466,6 @@ class BoardWidget(QWidget):
         self.cellsize = (cellheight / CELLRATIO, cellheight)
 
         self.grid_layout = QGridLayout()
-        self.grid_layout.setSpacing(10)
 
 
         for x in range(self.board.size[0]):
@@ -529,11 +488,13 @@ class BoardWidget(QWidget):
                     label = QuestionCard(game, q)
                     self.grid_layout.addWidget(label, y, x)
 
+        self.resizeEvent(None)
         self.setLayout(self.grid_layout)
 
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-
         self.show()
+
+    def resizeEvent(self, event):
+        self.grid_layout.setSpacing(self.width() // 150)
 
     # def paintEvent(self, event):
     #     h = self.geometry().height()
@@ -735,16 +696,12 @@ class ScoreWidget(QWidget):
         self.game = game
         self.setAutoFillBackground(True)
 
-        player_layout = QHBoxLayout()
+        self.player_layout = QHBoxLayout()
         for p in self.game.players:
-            player_layout.addWidget( PlayerWidget(game, p) )
-        player_layout.setSpacing(0)
+            self.player_layout.addWidget( PlayerWidget(game, p) )
 
-        self.setLayout(player_layout)
-
-        palette = QPalette()
-        palette.setColor(QPalette.ColorRole.Window, BLUE)
-        self.setPalette(palette)
+        self.setLayout(self.player_layout)
+        self.resizeEvent(None)
 
 
         self.__buzz_hint_players = []
@@ -754,12 +711,19 @@ class ScoreWidget(QWidget):
         # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.show()
 
-    # def paintEvent(self, event):
-    #     h = self.geometry().height()
-    #     w = self.geometry().width()
-    #     qp = QPainter()
-    #     qp.begin(self)
-    #     qp.setBrush(QBrush(RED))
+    def resizeEvent(self, event):
+        spacing  = int( self.width() / (len(self.game.players) + 1) * 0.3 )
+        self.player_layout.setContentsMargins( spacing, 0, spacing, 0)
+        self.player_layout.setSpacing( spacing )
+
+    def minimumHeight(self):
+        return 0.2 * self.width()
+
+    def paintEvent(self, event):
+        qp = QPainter()
+        qp.begin(self)
+        qp.drawPixmap( self.rect(), QPixmap( resource_path("pedestal.png") ))
+
     #     qp.drawRect(self.rect())
 
     # def maximumSizeHint(self):
@@ -930,6 +894,85 @@ class FinalAnswerWidget(QWidget):
             )
 
 
+
+class Borders(object):
+    def __init__(self, parent):
+        super().__init__()
+        self.left  = BorderWidget(parent, -1)
+        self.right = BorderWidget(parent,  1)
+
+    @property
+    def lit(self):
+        return self.__lit
+
+    @lit.setter
+    @updateUI
+    def lit(self, val):
+        self.__lit = val
+
+    @property
+    def arrowhints(self):
+        return self.__lit
+
+    @property
+    def arrowhints(self):
+        pass
+
+    @property
+    def spacehints(self):
+        return self.__lit
+
+    @property
+    def spacehints(self):
+        pass
+
+class BorderWidget(QWidget):
+    def __init__(self, parent=None, d=1):
+        super().__init__(parent)
+    #     self.boardrect = boardrect
+    #     margin_size = self.boardrect.x()
+    #     self.__answerbarrect = boardrect.adjusted(-ANSWERBARS, 0, ANSWERBARS, 0)
+
+    #     self.__correctrect = QRect(0, 0, margin_size, self.boardrect.height())
+    #     self.__incorrectrect = QRect(
+    #         self.boardrect.right(), 0, margin_size, self.boardrect.height()
+    #     )
+    #     arrow_size = QSize(int(margin_size * 0.7), int(margin_size * 0.7))
+    #     self.__leftarrowrect = QRect(QPoint(0, 0), arrow_size)
+    #     self.__leftarrowrect.moveCenter(self.__correctrect.center())
+    #     self.__rightarrowrect = QRect(QPoint(0, 0), arrow_size)
+    #     self.__rightarrowrect.moveCenter(self.__incorrectrect.center())
+
+    #     self.__leftarrowimage = QPixmap(resource_path("left-arrow.png"))
+    #     self.__rightarrowimage = QPixmap(resource_path("right-arrow.png"))
+    #     self.__spaceimage = QPixmap(resource_path("space.png"))
+
+    #     self.show()
+    #     self.__lit = False
+    #     self.arrowhints = False
+    #     self.spacehints = False
+
+
+    # def paintEvent(self, event):
+    #     qp = QPainter()
+    #     qp.begin(self)
+    #     if self.lit:
+    #         qp.setBrush(HIGHLIGHTBRUSH)
+    #         qp.drawRect(self.__answerbarrect)
+    #     if self.arrowhints and self.parent().alex:
+    #         qp.setBrush(CORRECTBRUSH)
+    #         qp.drawRect(self.__correctrect)
+    #         qp.setBrush(INCORRECTBRUSH)
+    #         qp.drawRect(self.__incorrectrect)
+    #         qp.setBrush(HIGHLIGHTBRUSH)
+    #         qp.drawPixmap(self.__leftarrowrect, self.__leftarrowimage)
+    #         qp.drawPixmap(self.__rightarrowrect, self.__rightarrowimage)
+
+    #     if self.spacehints and self.parent().alex:
+    #         qp.setBrush(HIGHLIGHTBRUSH)
+    #         qp.drawPixmap(self.__leftarrowrect, self.__spaceimage)
+    #         qp.drawPixmap(self.__rightarrowrect, self.__spaceimage)
+
 class DisplayWindow(QMainWindow):
     def __init__(self, game, alex=True, monitor=0):
         super().__init__()
@@ -947,8 +990,6 @@ class DisplayWindow(QMainWindow):
 
         monitor = QGuiApplication.screens()[monitor].geometry()
 
-        self.move(monitor.left(), monitor.top())  # move to monitor 0
-        self.showFullScreen()
 
         # self.lights_widget = LightsWidget(self)
 
@@ -958,11 +999,7 @@ class DisplayWindow(QMainWindow):
         # self.finalanswerwindow = FinalAnswerWidget(game)
         # self.finalanswerwindow.setVisible(False)
 
-        self.borderwidget = BorderWidget(game, self.boardwidget.geometry())
-        self.borderwidget.setGeometry(
-            0, 0, self.size().width(), self.boardwidget.size().height()
-        )
-        self.borderwidget.stackUnder(self.boardwidget)
+        self.borders = Borders(self)
 
         self.game = game
         self.game.dc += self
@@ -970,16 +1007,29 @@ class DisplayWindow(QMainWindow):
         self.main_layout = QVBoxLayout()
         self.main_layout.setSpacing(0.)
         self.main_layout.setContentsMargins(0., 0., 0., 0.)
-        self.main_layout.addWidget( self.boardwidget, 0 )
-        # self.main_layout.addWidget( self.lights_widget, 1 )
-        self.main_layout.addWidget( self.scoreboard, 1 )
-        self.main_layout.setStretchFactor( self.scoreboard, 0.5 )
 
-        self.newWidget = QWidget()
+        self.board_layout = QHBoxLayout()
+        self.board_layout.setContentsMargins(0., 0., 0., 0.)
+        self.board_layout.addWidget(self.borders.left, 1)
+        self.board_layout.addWidget(self.boardwidget, 20)
+        self.board_layout.addWidget(self.borders.right, 1)
+        self.main_layout.addLayout( self.board_layout, 7 )
+        # self.main_layout.addWidget( self.lights_widget, 1 )
+        self.main_layout.addWidget( self.scoreboard, 2)
+
+        self.newWidget = QWidget(self)
         self.newWidget.setLayout(self.main_layout)
         self.setCentralWidget(self.newWidget)
 
+        self.move(monitor.left(), monitor.top())  # move to monitor 0
+        self.showFullScreen()
+
         self.show()
+
+    # def resizeEvent(self, event):
+    #     main_layout = self.centralWidget().layout()
+    #     main_layout.setStretchFactor( self.boardwidget,2 )
+    #     self.centralWidget().setLayout(main_layout)
 
     def hide_question(self):
         self.boardwidget.hide_question()
