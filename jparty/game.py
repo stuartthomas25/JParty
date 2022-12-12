@@ -14,7 +14,7 @@ from collections.abc import Iterable
 import logging
 
 from .constants import DEBUG
-from .utils import SongPlayer, resource_path
+from .utils import SongPlayer, resource_path, CompoundObject
 from .helpmsg import helpmsg
 
 BUZZ_DELAY = 0  # ms
@@ -125,30 +125,6 @@ class KeystrokeManager(object):
             self._deactivate(idents)
 
 
-class CompoundObject(object):
-    def __init__(self, *objs):
-        self.__objs = list(objs)
-
-    def __setattr__(self, name, value):
-        if name[0] == "_":
-            self.__dict__[name] = value
-        else:
-            for obj in self.__objs:
-                setattr(obj, name, value)
-
-    def __getattr__(self, name):
-        ret = CompoundObject(*[getattr(obj, name) for obj in self.__objs])
-        return ret
-
-    def __iadd__(self, display):
-        self.__objs.append(display)
-        return self
-
-    def __call__(self, *args, **kwargs):
-        return CompoundObject(*[obj(*args, **kwargs) for obj in self.__objs])
-
-    def __repr__(self):
-        return "CompoundObject(" + ", ".join([repr(o) for o in self.__objs]) + ")"
 
 
 class Question(object):
@@ -193,22 +169,30 @@ def updateUI(f):
     return wrapper
 
 
+
+@dataclass
+class GameData:
+    rounds: list
+    date: str
+    comments: str
+
 class Game(QObject):
     buzz_trigger = pyqtSignal(int)
     # buzzer_disconnected = pyqtSignal(str)
     wager_trigger = pyqtSignal(int, int)
 
-    def __init__(self, rounds, date, comments):
+    def __init__(self, gamedata):
         super().__init__()
-        self.new_game(rounds, date, comments)
+        self.new_game(gamedata)
 
-    def new_game(self, rounds, date, comments):
-        self.date = date
-        self.comments = comments
-        self.rounds = rounds
+    def new_game(self, gamedata):
+        self.rounds = gamedata.rounds
+        self.date = gamedata.date
+        self.comments = gamedata.comments
         self.players = []
 
         self.dc = CompoundObject()
+
         self.alex_window = None
         self.main_window = None
         self.welcome_window = None
@@ -238,35 +222,35 @@ class Game(QObject):
             "CORRECT_RESPONSE",
             Qt.Key.Key_Left,
             self.correct_answer,
-            self.set_arrowhints,
+            self.arrowhints,
         )
         self.keystroke_manager.addEvent(
             "INCORRECT_RESPONSE",
             Qt.Key.Key_Right,
             self.incorrect_answer,
-            self.set_arrowhints,
+            self.arrowhints,
         )
         self.keystroke_manager.addEvent(
-            "BACK_TO_BOARD", Qt.Key.Key_Space, self.back_to_board, self.set_spacehints
+            "BACK_TO_BOARD", Qt.Key.Key_Space, self.back_to_board, self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "OPEN_RESPONSES", Qt.Key.Key_Space, self.open_responses, self.set_spacehints
+            "OPEN_RESPONSES", Qt.Key.Key_Space, self.open_responses, self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "NEXT_ROUND", Qt.Key.Key_Space, self.next_round, self.set_spacehints
+            "NEXT_ROUND", Qt.Key.Key_Space, self.next_round, self.spacehints
         )
         self.keystroke_manager.addEvent(
             "NEXT_SLIDE",
             Qt.Key.Key_Space,
             self.final_next_slide,
-            self.set_spacehints,
+            self.spacehints,
             persistent=True,
         )
         self.keystroke_manager.addEvent(
-            "OPEN_FINAL", Qt.Key.Key_Space, self.open_final, self.set_spacehints
+            "OPEN_FINAL", Qt.Key.Key_Space, self.open_final, self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "CLOSE_GAME", Qt.Key.Key_Space, self.close_game, self.set_spacehints
+            "CLOSE_GAME", Qt.Key.Key_Space, self.close_game, self.spacehints
         )
 
         # if DEBUG:
@@ -275,19 +259,15 @@ class Game(QObject):
         self.wager_trigger.connect(self.wager)
         self.buzz_trigger.connect(self.buzz)
 
-    @updateUI
-    def set_arrowhints(self, val):
-        self.dc.borders.arrowhints = val
+    def arrowhints(self, val):
+        self.dc.borders.arrowhints(val)
 
-    @updateUI
-    def set_spacehints(self, val):
-        self.dc.borders.spacehints = val
+    def spacehints(self, val):
+        self.dc.borders.spacehints(val)
 
     def update(self):
         self.dc.update()
 
-    def complete(self):
-        return all(b.complete for b in self.rounds)
 
     @property
     def current_round(self):

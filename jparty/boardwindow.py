@@ -256,7 +256,6 @@ class PlayerWidget(QWidget):
             palette.setColor(QPalette.ColorRole.WindowText, RED)
         else:
             palette.setColor(QPalette.ColorRole.WindowText, WHITE)
-
         self.score_label.setPalette(palette)
 
         self.score_label.setText( f"{score:,}" )
@@ -932,34 +931,78 @@ class Borders(object):
         self.left  = BorderWidget(parent, -1)
         self.right = BorderWidget(parent,  1)
 
-    @property
-    def lit(self):
-        return self.__lit
+    def __iter__(self):
+        return iter([self.left, self.right])
 
-    @lit.setter
-    @updateUI
-    def lit(self, val):
-        self.__lit = val
 
-    @property
-    def arrowhints(self):
-        return self.__lit
+    def lights(self, val):
+        for b in self:
+            b.lights(val)
 
-    @property
-    def arrowhints(self):
-        pass
+    def arrowhints(self, val):
+        for b in self:
+            b.arrowhints(val)
 
-    @property
-    def spacehints(self):
-        return self.__lit
+    def spacehints(self, val):
+        for b in self:
+            b.spacehints(val)
 
-    @property
-    def spacehints(self):
-        pass
 
 class BorderWidget(QWidget):
     def __init__(self, parent=None, d=1):
         super().__init__(parent)
+        self.d = d
+
+        self.layout = QVBoxLayout()
+        self.hint_label = QLabel(self)
+
+        # icon_size = 64
+        # self.icon_label.setPixmap(
+        #     QPixmap(resource_path("space.png")).scaled(
+        #         icon_size,
+        #         icon_size,
+        #         transformMode=Qt.TransformationMode.SmoothTransformation,
+        #     )
+        # )
+        #
+        self.space_image = QPixmap(resource_path("space.png"))
+
+        self.layout.addWidget(self.hint_label)
+        self.setLayout(self.layout)
+
+        self.show()
+
+    def lights(self, val):
+        color = val if WHITE else BLACK
+        palette = self.palette()
+        palette.setColor(QPalette.ColorRole.Window, color)
+        self.setPalette(palette)
+
+    def arrowhints(self, val):
+        pass
+
+    def spacehints(self, val):
+        if val:
+            self.hint_label.setPixmap(
+                self.space_image.scaled( self.size(),
+                                         Qt.AspectRatioMode.KeepAspectRatio,
+                                         transformMode=Qt.TransformationMode.SmoothTransformation
+                )
+            )
+        else:
+            self.hint_label.setPixmap(QPixmap())
+
+    def sizeHint(self):
+        return QSize()
+
+
+    # def paintEvent(self, event):
+    #     qp = QPainter()
+    #     qp.begin(self)
+    #     qp.drawRect(self.rect())
+
+        # qp.drawRect(self.name_label.geometry())
+        # qp.drawRect(self.score_label.geometry())
     #     self.boardrect = boardrect
     #     margin_size = self.boardrect.x()
     #     self.__answerbarrect = boardrect.adjusted(-ANSWERBARS, 0, ANSWERBARS, 0)

@@ -39,7 +39,7 @@ from functools import partial
 from .retrieve import get_game, get_game_sum, get_random_game
 from .controller import BuzzerController
 from .boardwindow import DisplayWindow
-from .game import Player
+from .game import Player, Game
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
 from .version import version
@@ -102,7 +102,7 @@ class Welcome(QMainWindow):
         self.height = 320
         self.all_games = None
         self.valid_game = False
-        self.game = None
+        self.gamedata = None
         self.song_player = SongPlayer()
         self.host_overlay = None
 
@@ -164,7 +164,8 @@ class Welcome(QMainWindow):
         while not complete:
             game_id = get_random_game()
             logging.info(f"GAMEID {game_id}")
-            complete = get_game(game_id).complete()
+            complete = all(b.complete for b in get_game(game_id).rounds)
+
 
         self.textbox.setText(str(game_id))
         self.textbox.show()
@@ -178,9 +179,9 @@ class Welcome(QMainWindow):
     def _show_summary(self):
         game_id = self.textbox.text()
         try:
-            self.game = get_game(game_id)
-            if self.game.complete():
-                self.summary_label.setText(self.game.date + "\n" + self.game.comments)
+            self.gamedata = get_game(game_id)
+            if all(b.complete for b in self.gamedata.rounds):
+                self.summary_label.setText(self.gamedata.date + "\n" + self.gamedata.comments)
                 self.valid_game = True
             else:
                 self.summary_label.setText("Game has blank questions")
@@ -303,22 +304,24 @@ class Welcome(QMainWindow):
             game_id = self.textbox.text()
             if type(game_id) == str:
                 get_game(game_id)
+
         except ValueError as e:
             error_dialog = QErrorMessage()
             error_dialog.showMessage("Invalid game ID - change sharing permissions & try again")
             return False
 
-        self.game = get_game(game_id)
-        self.game.welcome_window = self
-        self.game.players = self.socket_controller.connected_players
+        self.gamedata = get_game(game_id)
+        game = Game(self.gamedata)
+        game.welcome_window = self
+        game.players = self.socket_controller.connected_players
         if DEBUG:
-            self.game.players = [
+            game.players = [
                 Player(f"Stuart", None),
                 Player(f"Maddie", None),
                 Player(f"Koda", None)
             ]
 
-        self.run_game(self.game)
+        self.run_game(game)
 
     def run_game(self, game):
         if self.song_player:
@@ -330,8 +333,8 @@ class Welcome(QMainWindow):
         self.show_board(game)
 
     def show_board(self, game):
-        self.game.alex_window = DisplayWindow(game, alex=True, monitor=0)
-        self.game.main_window = DisplayWindow(game, alex=False, monitor=1)
+        game.alex_window = DisplayWindow(game, alex=True, monitor=0)
+        game.main_window = DisplayWindow(game, alex=False, monitor=1)
         self.startButton.setEnabled(False)
         if self.help_checkbox.isChecked():
             QTimer.singleShot(200, self.game.show_help)

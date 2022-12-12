@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import re
 from threading import Thread
 from queue import Queue
-from jparty.game import Question, Board, Game
+from jparty.game import Question, Board, GameData
 import logging
 import csv
 
@@ -41,7 +41,7 @@ def list_to_game(s):
     boards.append(Board(categories, questions, final=True, dj=False))
     date = fj[5]
     comments = fj[7]
-    return Game(boards, date, comments)
+    return GameData(boards, date, comments)
 
 
 def get_Gsheet_game(file_id):
@@ -104,7 +104,7 @@ def get_JArchive_Game(game_id, soup=None):
         boards.append(Board(categories, questions, final=final, dj=(i == 1)))
     logging.info(f"Boards {len(boards)}")
 
-    return Game(boards, date, comments)
+    return GameData(boards, date, comments)
 
     # def get_all_games():
     #     r = requests.get("http://j-archive.com/listseasons.php")
