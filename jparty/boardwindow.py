@@ -954,6 +954,7 @@ class BorderWidget(QWidget):
         self.d = d
 
         self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(0,0,0,0)
         self.hint_label = QLabel(self)
 
         # icon_size = 64

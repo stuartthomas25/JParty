@@ -1,19 +1,11 @@
+
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function lights_on(i) {
-    for (l of document.getElementsByClassName("l" + i.toString())){
-        l.classList.add("lit");
-    };
-}
-
-function lights_off(i) {
-    for (l of document.getElementsByClassName("l" + i.toString())){
-        l.classList.remove("lit");
-    };
-}
 var last_buzz = new Date().getTime();
+
 async function buzz() {
     var now = new Date().getTime();
     // if (now - window.last_buzz > 250) {
@@ -45,20 +37,6 @@ function load_page(pagename) {
     return 0;
 }
 
-/*async function yourturn() {*/
-
-    ////var secs = 5;
-    ////var buzzer_obj = document.getElementById("buzzer");
-    ////buzzer_obj.classList.add('answering');
-    ////for (let i = 0; i < secs; i++) {
-        ////lights_on(i);
-    ////}
-    ////for (let i = 0; i < secs; i++) {
-        ////await sleep(1000);
-        ////lights_off(i);
-    ////}
-    //[>buzzer_obj.classList.remove('answering');<]
-/*}*/
 function setToken(token) {
   var d = new Date();
   d.setTime(d.getTime() + (24*60*60*1000)); // lasts 24 hour
@@ -101,15 +79,14 @@ function answerForm() {
     return false;
 }
 
-function nameForm() {
-    var name = $("input[name='playername']").val();
-    if (name != "") {
-        console.log(name);
-        send("NAME",name);
-        load_page("buzz");
-    }
-    return false;
+function nameForm(name) {
+    console.log(name);
+    send("NAME",name);
+    load_page("buzz");
 }
+
+const padding = 2;
+const canvasratio = 2;
 
 $(document).ready(function() {
     if (!window.console) window.console = {};
@@ -122,7 +99,58 @@ $(document).ready(function() {
             updater.socket.send(JSON.stringify({message:"CHECK_IF_EXISTS", text:cookie}));
         };
     };
+
+    const canvas = document.querySelector("canvas");
+    canvas.style.width = "100%";
+
+    const signaturePad = new SignaturePad(canvas, {
+        penColor: "#ffffff",
+        backgroundColor: "#031591"
+    });
+
+    function resizeCanvas() {
+        console.log("resize");
+        const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.width / canvasratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear(); // otherwise isEmpty() might return incorrect value
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    $("#clear-button").on("click", function () {
+        signaturePad.clear()
+    });
+
+    $("#undo-button").on("click", function () {
+        const data = signaturePad.toData();
+
+        if (data) {
+            data.pop(); // remove the last dot or line
+            signaturePad.fromData(data);
+        }
+    });
+
+    $("#prompt-button").on("click", function () {
+        let name = prompt("Enter name", "");
+        if (name != null) {
+            nameForm(name);
+        };
+    });
+
+    $("#submit-button").on("click", function () {
+        if (!signaturePad.isEmpty()) {
+            let image = signaturePad.toDataURL();
+            console.log(image);
+            nameForm(image);
+        };
+    });
 });
+
+
+
 
 var updater = {
     socket: null,
@@ -164,3 +192,6 @@ var updater = {
         }
     }
 };
+
+
+
