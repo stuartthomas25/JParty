@@ -53,3 +53,29 @@ class SongPlayer(object):
             if not self.__repeating:
                 break
             self.__play_obj = self.__wave_obj.play()
+
+
+class CompoundObject(object):
+    def __init__(self, *objs):
+        self.__objs = list(objs)
+
+    def __setattr__(self, name, value):
+        if name[0] == "_":
+            self.__dict__[name] = value
+        else:
+            for obj in self.__objs:
+                setattr(obj, name, value)
+
+    def __getattr__(self, name):
+        ret = CompoundObject(*[getattr(obj, name) for obj in self.__objs])
+        return ret
+
+    def __iadd__(self, display):
+        self.__objs.append(display)
+        return self
+
+    def __call__(self, *args, **kwargs):
+        return CompoundObject(*[obj(*args, **kwargs) for obj in self.__objs])
+
+    def __repr__(self):
+        return "CompoundObject(" + ", ".join([repr(o) for o in self.__objs]) + ")"
