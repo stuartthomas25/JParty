@@ -126,7 +126,7 @@ def autofitsize(text, font, rect, start=None, stepsize=2):
         return fm.boundingRect(rect, flags, text)
 
     newrect = fullrect(font)
-    if newrect.height() > rect.height() or newrect.width() > rect.width():
+    if not rect.contains(newrect):
         while size > 0:
             size -= stepsize
             font.setPointSize(size)
@@ -135,27 +135,68 @@ def autofitsize(text, font, rect, start=None, stepsize=2):
                 return font.pointSize()
 
         logging.warn(f"Nothing fit! (text='{text}')")
+        print(f"Nothing fit! (text='{text}')")
 
     return size
 
+class DynamicLabel(QLabel):
+    def __init__(self, text, initialSize, parent=None):
+        super().__init__( text, parent )
+        self.__initialSize = initialSize
+
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    ### These three re-override QLabel's versions
+    def sizeHint(self):
+        return QSize()
+
+    def initialSize(self):
+        if callable(self.__initialSize):
+            return self.__initialSize()
+        else:
+            return self.__initialSize
+
+
+    def minimizeSizeHint(self):
+        return QSize()
+
+    def heightForWidth(self, w):
+        return -1
+
+    def resizeEvent(self, event):
+        if self.size().height() == 0:
+            return None
+
+        fontsize = autofitsize(self.text(), self.font(), self.rect(), start=self.initialSize())
+        font = self.font()
+        font.setPointSize(fontsize)
+        self.setFont(font)
+
+class MyLabel(DynamicLabel):
+    def __init__(self, text, initialSize, parent=None):
+        super().__init__(text, initialSize, parent)
+        self.setFont( QFont( "Helvetica" ) )
+        self.font().setBold(True)
+        self.setWordWrap(True)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(40)
+        shadow.setColor(QColor("black"))
+        shadow.setOffset(3)
+        self.setGraphicsEffect(shadow)
+        self.show()
 
 class PlayerWidget(QWidget):
+    aspect_ratio = 0.4
     def __init__(self, game, player):
         super().__init__()
         self.player = player
         self.game = game
 
-        self.name_label = QLabel(player.name)
-        self.__name_font = QFont("Helvetica")
-        self.__name_font.setBold(True)
-        self.name_label.setFont(self.__name_font)
-        self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.score_label = QLabel()
-        self.__score_font = QFont("Helvetica")
-        self.__score_font.setBold(True)
-        self.score_label.setFont(self.__score_font)
-        self.score_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.name_label = MyLabel(player.name, self.startNameFontSize, self)
+        self.score_label = MyLabel("$0", self.startScoreFontSize, self)
 
         self.resizeEvent(None)
         self.update_score()
@@ -163,42 +204,37 @@ class PlayerWidget(QWidget):
         self.highlighted = False
 
         layout = QVBoxLayout()
-        layout.addStretch(1)
-        layout.addWidget(self.score_label, 12)
-        layout.addStretch(7)
-        layout.addWidget(self.name_label, 28)
-        layout.addStretch(17)
-
-        # self.setAutoFillBackground(True)
+        layout.addStretch(4)
+        layout.addWidget(self.score_label, 11)
+        layout.addStretch(8)
+        layout.addWidget(self.name_label, 22)
+        layout.addStretch(20)
+        layout.setContentsMargins( 0, 0, 0, 0)
 
         palette = QPalette()
         palette.setColor(QPalette.ColorRole.WindowText, WHITE)
         self.setPalette(palette)
 
-        # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+        self.setSizePolicy( QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding )
 
         self.setLayout(layout)
         self.show()
 
-    def startNameFont(self):
-        return self.height()*0.15
+    def sizeHint(self):
+        h = self.height()
+        return QSize(h, h * PlayerWidget.aspect_ratio)
 
-    def startScoreFont(self):
-        return self.height()*0.12
+    def startNameFontSize(self):
+        return self.height() * 0.2
+
+    def startScoreFontSize(self):
+        return self.height() * 0.2
 
     def resizeEvent(self, event):
-
         if self.size().height() == 0:
             return None
 
-        namefontsize = autofitsize(self.name_label.text(), self.__name_font, self.name_label.rect(), start=self.startNameFont())
-        scorefontsize = autofitsize(self.score_label.text(), self.__score_font, self.score_label.rect(), start=self.startScoreFont())
-
-        self.__name_font.setPointSize(namefontsize)
-        self.__score_font.setPointSize(scorefontsize)
-        self.name_label.setFont(self.__name_font)
-        self.score_label.setFont(self.__score_font)
-        self.update()
+        self.setContentsMargins( self.width() * 0.1, 0, self.width() * 0.1, 0)
 
     def __buzz_hint(self, p):
         self.__buzz_hint_players.append(p)
@@ -214,17 +250,27 @@ class PlayerWidget(QWidget):
         self.__buzz_hint_thread.start()
 
     def update_score(self):
-        self.score_label.setText( f"${self.player.score}" )
+        score = self.player.score
+        palette = self.score_label.palette()
+        if score < 0:
+            palette.setColor(QPalette.ColorRole.WindowText, RED)
+        else:
+            palette.setColor(QPalette.ColorRole.WindowText, WHITE)
+
+        self.score_label.setPalette(palette)
+
+        self.score_label.setText( f"{score:,}" )
 
     def mousePressEvent(self, event):
         self.game.adjust_score(self.player)
         self.update_score()
 
-
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
         qp.drawPixmap( self.rect(), QPixmap( resource_path("player_background.png") ))
+
+        # qp.drawRect(self.rect())
 
         # qp.drawRect(self.name_label.geometry())
         # qp.drawRect(self.score_label.geometry())
@@ -337,50 +383,32 @@ class CardLabel(QWidget):
 
         self.__margin = 0.1
 
-        self.label = QLabel(text, parent=self)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setWordWrap(True)
-        self.__font = QFont("Helvetica")
-        self.__font.setBold(True)
-        self.label.setFont( self.__font )
-        self.setAutoFillBackground(True)
 
-        # font = self.font()
-        # fontsize = autofitsize(self.text, font, self.geometry(), start=self.geometry().height() / 10 )
-        # font.setPointSize(fontsize)
-        # self.label.setFont(font)
+        self.label = MyLabel(text, self.startFontSize, parent=self)
 
         palette = QPalette()
         palette.setColor(QPalette.ColorRole.Window, BLUE)
         palette.setColor(QPalette.ColorRole.WindowText, WHITE)
         self.setPalette(palette)
+        self.setAutoFillBackground(True)
 
-        shadow = QGraphicsDropShadowEffect(self.label)
-        shadow.setBlurRadius(40)
-        shadow.setColor(QColor("black"))
-        shadow.setOffset(3)
-        self.label.setGraphicsEffect(shadow)
+    def startFontSize(self):
+        return self.height() * 0.3
+
+    def labelRect(self):
+        wmargin = int(self.__margin * self.width())
+        hmargin = int(self.__margin * self.height())
+        return self.rect().adjusted(wmargin, hmargin, -wmargin, -hmargin)
 
     @property
     def text(self):
         return self.label.text()
 
-    def startFont(self):
-        return self.height()*0.3
-
     def resizeEvent(self, event):
         if self.height() == 0:
             return None
 
-        wmargin = int(self.__margin * self.width())
-        hmargin = int(self.__margin * self.height())
-        labelrect = self.rect().adjusted(wmargin, hmargin, -wmargin, -hmargin)
-        self.label.setGeometry(labelrect)
-
-        fontsize = autofitsize(self.text, self.__font, labelrect, start=self.startFont())
-
-        self.__font.setPointSize(fontsize)
-        self.label.setFont(self.__font)
+        self.label.setGeometry(self.labelRect())
 
 # class CardLabel(QLabel):
 #     def __init__(self, text, parent=None):
@@ -442,7 +470,7 @@ class QuestionCard(CardLabel):
         palette.setColor(QPalette.ColorRole.WindowText, YELLOW)
         self.setPalette(palette)
 
-    def startFont(self):
+    def startFontSize(self):
         return self.height()*0.5
 
     def mousePressEvent(self, event):
@@ -697,8 +725,12 @@ class ScoreWidget(QWidget):
         self.setAutoFillBackground(True)
 
         self.player_layout = QHBoxLayout()
+        self.player_layout.addStretch()
         for p in self.game.players:
             self.player_layout.addWidget( PlayerWidget(game, p) )
+            self.player_layout.addStretch()
+
+        self.player_layout.setContentsMargins( 0, 0, 0, 0)
 
         self.setLayout(self.player_layout)
         self.resizeEvent(None)
@@ -711,10 +743,10 @@ class ScoreWidget(QWidget):
         # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.show()
 
-    def resizeEvent(self, event):
-        spacing  = int( self.width() / (len(self.game.players) + 1) * 0.3 )
-        self.player_layout.setContentsMargins( spacing, 0, spacing, 0)
-        self.player_layout.setSpacing( spacing )
+    # def resizeEvent(self, event):
+    #     spacing  = int( self.width() / (len(self.game.players) + 1) * 0.3 )
+    #     self.player_layout.setContentsMargins( spacing, 0, spacing, 0)
+    #     self.player_layout.setSpacing( spacing )
 
     def minimumHeight(self):
         return 0.2 * self.width()
@@ -724,7 +756,6 @@ class ScoreWidget(QWidget):
         qp.begin(self)
         qp.drawPixmap( self.rect(), QPixmap( resource_path("pedestal.png") ))
 
-    #     qp.drawRect(self.rect())
 
     # def maximumSizeHint(self):
     #     return QSize(self.geometry().width(), 100)

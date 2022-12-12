@@ -53,7 +53,6 @@ def get_Gsheet_game(file_id):
 
 
 def get_game(game_id):
-    print("getting game")
     if len(str(game_id)) < 7:
         return get_JArchive_Game(game_id)
     else:
