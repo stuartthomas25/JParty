@@ -154,10 +154,10 @@ class Welcome(QMainWindow):
             self.run_game(pickle.load(open(".bkup", "rb")))
 
     def show_overlay(self):
-        self.host_overlay = HostOverlay(self.socket_controller.host())
         if not DEBUG:
+            self.host_overlay = HostOverlay(self.socket_controller.host())
             self.windowHandle().setScreen(QApplication.instance().screens()[1])
-        self.host_overlay.showNormal()
+            self.host_overlay.showNormal()
 
     def _random(self):
         complete = False
@@ -269,7 +269,6 @@ class Welcome(QMainWindow):
 
         if DEBUG:
             self.textbox.setText(str(2534))  # EDIT
-            self.init_game()
 
         self.show()
         logging.info(f"Number of screens: {len(QApplication.instance().screens())}")
@@ -329,7 +328,9 @@ class Welcome(QMainWindow):
         self.socket_controller.game = game
         game.buzzer_controller = self.socket_controller
 
-        self.host_overlay.close()
+        
+        if not DEBUG:
+            self.host_overlay.close()
         self.show_board(game)
 
     def show_board(self, game):
