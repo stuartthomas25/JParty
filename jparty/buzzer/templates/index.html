@@ -15,22 +15,22 @@
   <body>
 
   <div class="w3-container buzz-page noselect" style="margin-top:90px">
-      <button id="buzzer" onclick="buzz()">BUZZ!</button>
+      <button id="buzzer" class="jparty-button" onclick="buzz()">BUZZ!</button>
       <div class="hints">
         Hint:</br> Turn off Auto-Lock and Low Power Mode so your buzzer doesn't go dark!
       </div>
   </div>
 
-  <div class="w3-container name-page" style="margin-top:90px">
+  <div class="w3-container name-page noselect" style="margin-top:90px">
 
-      <canvas></canvas>
+      <canvas id="name-canvas"></canvas>
 
       <div class="canvas-buttons">
-        <button type="button" class="canvas-button" id="clear-button">Clear</button>
-        <button type="button" class="canvas-button" id="undo-button"> Undo</button>
-        <button type="button" class="canvas-button" id="prompt-button">Use Keyboard</button> </br>
+        <button type="button" class="jparty-button canvas-button" id="clear-button">Clear</button>
+        <button type="button" class="jparty-button canvas-button" id="undo-button"> Undo</button>
+        <button type="button" class="jparty-button canvas-button" id="prompt-button">Keyboard</button>
+        <button type="button" class="jparty-button submit-button" id="submit-button">Play!</button>
       </div>
-      <button type="button" class="submit-button" id="submit-button">Play!</button>
 
       <!-- <form onsubmit="nameForm('hi');" action="javascript:void(0);" class="name_form"> -->
 
@@ -42,7 +42,7 @@
   <div class="w3-container wager-page" style="margin-top:90px">
       <form onsubmit="wagerForm();" action="javascript:void(0);" class="wager_form">
           <input type='number' name="wager" pattern="[0-9]*" class="text_input wager_input" min="0" max="100" step="0"/>
-          <button type="submit" class="submit">Wager</button>
+          <button type="submit" class="jparty-button submit">Wager</button>
       </form>
   </div>
 
@@ -50,7 +50,7 @@
       <form onsubmit="answerForm();" action="javascript:void(0);" class="answer_form">
           <div class="prompt">What is ...</div>
           <input type='text' name="answer" class="answer_input text_input" placeholder="Answer"/>
-          <button type="submit" class="submit">Submit</button>
+          <button type="submit" class="jparty-button submit">Submit</button>
       </form>
   </div>
   <!--

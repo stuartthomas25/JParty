@@ -86,7 +86,7 @@ function nameForm(name) {
 }
 
 const padding = 2;
-const canvasratio = 2;
+const canvasratio = 2.011;
 
 $(document).ready(function() {
     if (!window.console) window.console = {};
@@ -99,6 +99,7 @@ $(document).ready(function() {
             updater.socket.send(JSON.stringify({message:"CHECK_IF_EXISTS", text:cookie}));
         };
     };
+
 
     const canvas = document.querySelector("canvas");
     canvas.style.width = "100%";
