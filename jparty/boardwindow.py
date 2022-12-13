@@ -106,12 +106,13 @@ FINALANSWERHEIGHT = 0.6
 
 
 def updateUI(f):
-    def wrapper(self, *args):
-        ret = f(self, *args)
-        self.game.update()
-        return ret
+    return f
+    # def wrapper(self, *args):
+    #     ret = f(self, *args)
+    #     self.game.update()
+    #     return ret
 
-    return wrapper
+    # return wrapper
 
 
 def autofitsize(text, font, rect, start=None, stepsize=2):
@@ -190,10 +191,9 @@ class MyLabel(DynamicLabel):
 
 class PlayerWidget(QWidget):
     aspect_ratio = 0.4
-    def __init__(self, game, player):
+    def __init__(self, player):
         super().__init__()
         self.player = player
-        self.game = game
 
         self.name_label = MyLabel(player.name, self.startNameFontSize, self)
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
@@ -261,7 +261,7 @@ class PlayerWidget(QWidget):
         self.score_label.setText( f"{score:,}" )
 
     def mousePressEvent(self, event):
-        self.game.adjust_score(self.player)
+        self.adjust_score(self.player)
         self.update_score()
 
     def paintEvent(self, event):
@@ -489,8 +489,8 @@ class BoardWidget(QWidget):
 
         self.questionwidget = None
         self.__completed_questions = []
-        cellheight = self.size().height() // (self.board.size[1] + 1)
-        self.cellsize = (cellheight / CELLRATIO, cellheight)
+        # cellheight = self.size().height() // (self.board.size[1] + 1)
+        # self.cellsize = (cellheight / CELLRATIO, cellheight)
 
         self.grid_layout = QGridLayout()
 
@@ -717,23 +717,11 @@ class LightsWidget(QWidget):
         self.__light_level = 0
 
 
-class ScoreWidget(QWidget):
-    def __init__(self, game, parent=None):
-        super().__init__(parent)
-        self.game = game
-        self.setAutoFillBackground(True)
+class ScoreBoard(QWidget):
+    def __init__(self, display):
+        super().__init__(display)
 
-        self.player_layout = QHBoxLayout()
-        self.player_layout.addStretch()
-        for p in self.game.players:
-            self.player_layout.addWidget( PlayerWidget(game, p) )
-            self.player_layout.addStretch()
-
-        self.player_layout.setContentsMargins( 0, 0, 0, 0)
-
-        self.setLayout(self.player_layout)
-        self.resizeEvent(None)
-
+        self.display = display
 
         self.__buzz_hint_players = []
         self.__buzz_hint_thread = []
@@ -742,6 +730,11 @@ class ScoreWidget(QWidget):
         # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.show()
 
+
+
+    def game(self):
+        return self.display.game
+
     # def resizeEvent(self, event):
     #     spacing  = int( self.width() / (len(self.game.players) + 1) * 0.3 )
     #     self.player_layout.setContentsMargins( spacing, 0, spacing, 0)
@@ -749,6 +742,21 @@ class ScoreWidget(QWidget):
 
     def minimumHeight(self):
         return 0.2 * self.width()
+
+    def refreshPlayers(self):
+        game = self.game()
+        if game is None:
+            return None
+
+        player_layout = QHBoxLayout()
+        player_layout.addStretch()
+        for p in game.players:
+            player_layout.addWidget( PlayerWidget(p) )
+            player_layout.addStretch()
+
+        player_layout.setContentsMargins( 0, 0, 0, 0)
+
+        self.setLayout(player_layout)
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -1049,7 +1057,7 @@ class BorderWidget(QWidget):
     #         qp.drawPixmap(self.__rightarrowrect, self.__spaceimage)
 
 class DisplayWindow(QMainWindow):
-    def __init__(self, game, alex=True, monitor=0):
+    def __init__(self, alex=True, monitor=0):
         super().__init__()
         self.alex = alex
         self.setWindowTitle("Host" if alex else "Board")
@@ -1064,20 +1072,18 @@ class DisplayWindow(QMainWindow):
                 monitor = 0
 
         monitor = QGuiApplication.screens()[monitor].geometry()
+        self.game = None
 
 
         # self.lights_widget = LightsWidget(self)
 
-        self.boardwidget = BoardWidget(game, alex, self)
+        self.boardwidget = QWidget() #BoardWidget(alex, self)
 
-        self.scoreboard = ScoreWidget(game, self)
+        self.scoreboard = ScoreBoard(self)
         # self.finalanswerwindow = FinalAnswerWidget(game)
         # self.finalanswerwindow.setVisible(False)
 
         self.borders = Borders(self)
-
-        self.game = game
-        self.game.dc += self
 
         self.main_layout = QVBoxLayout()
         self.main_layout.setSpacing(0.)
@@ -1101,6 +1107,7 @@ class DisplayWindow(QMainWindow):
 
         self.show()
 
+
     # def resizeEvent(self, event):
     #     main_layout = self.centralWidget().layout()
     #     main_layout.setStretchFactor( self.boardwidget,2 )
@@ -1110,7 +1117,8 @@ class DisplayWindow(QMainWindow):
         self.boardwidget.hide_question()
 
     def keyPressEvent(self, event):
-        self.game.keystroke_manager.call(event.key())
+        if self.game is not None:
+            self.game.keystroke_manager.call(event.key())
 
     def load_question(self, q):
         logging.info("DC load_question")

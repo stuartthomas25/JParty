@@ -160,7 +160,6 @@ class BuzzerController:
     def __init__(self):
         self.thread = None
         self.game = None
-        self.welcome_window = None
         tornado.options.parse_command_line()
         self.app = Application(
             self
@@ -189,7 +188,7 @@ class BuzzerController:
             self.game.buzz_trigger.emit(i_player)
         else:
             i_player = self.connected_players.index(player)
-            self.welcome_window.buzz_hint_trigger.emit(i_player)
+            self.game.buzz_hint_trigger.emit(i_player)
 
     def wager(self, player, amount):
         # self.game.wager(player, amount)
@@ -203,7 +202,7 @@ class BuzzerController:
 
     def new_player(self, player):
         self.connected_players.append(player)
-        self.welcome_window.new_player(player)
+        self.game.new_player(player)
 
     # def activate_buzzer(self, name):
     # BuzzerSocketHandler.activate_buzzer(name)
