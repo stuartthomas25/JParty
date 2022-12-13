@@ -35,10 +35,10 @@ import time
 import threading
 import re
 import logging
+from base64 import urlsafe_b64decode
 
 margin = 50
 n = 8  # even integer
-CELLRATIO = 3 / 5
 FONTSIZE = 10
 
 BLUE = QColor("#031591")
@@ -166,7 +166,7 @@ class DynamicLabel(QLabel):
         return -1
 
     def resizeEvent(self, event):
-        if self.size().height() == 0:
+        if self.size().height() == 0 or self.text() == "":
             return None
 
         fontsize = autofitsize(self.text(), self.font(), self.rect(), start=self.initialSize())
@@ -195,7 +195,15 @@ class PlayerWidget(QWidget):
         super().__init__()
         self.player = player
 
-        self.name_label = MyLabel(player.name, self.startNameFontSize, self)
+        if player.name[:21] == 'data:image/png;base64':
+            i = QImage()
+            i.loadFromData(urlsafe_b64decode(self.player.name[22:]), "PNG")
+            self.signature = QPixmap.fromImage(i)
+            self.name_label = DynamicLabel("", 0, self)
+        else:
+            self.name_label = MyLabel(player.name, self.startNameFontSize, self)
+            self.signature = None
+
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
 
         self.resizeEvent(None)
@@ -206,23 +214,27 @@ class PlayerWidget(QWidget):
         layout = QVBoxLayout()
         layout.addStretch(4)
         layout.addWidget(self.score_label, 11)
-        layout.addStretch(8)
+        layout.addStretch(9)
         layout.addWidget(self.name_label, 22)
         layout.addStretch(20)
         layout.setContentsMargins( 0, 0, 0, 0)
 
-        palette = QPalette()
-        palette.setColor(QPalette.ColorRole.WindowText, WHITE)
-        self.setPalette(palette)
+        # palette = QPalette()
+        # palette.setColor(QPalette.ColorRole.WindowText, WHITE)
+        # self.setPalette(palette)
 
-        self.setSizePolicy( QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding )
+        self.setSizePolicy( QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
 
         self.setLayout(layout)
+
         self.show()
 
     def sizeHint(self):
         h = self.height()
-        return QSize(h, h * PlayerWidget.aspect_ratio)
+        return QSize(h * PlayerWidget.aspect_ratio, h)
+
+    def minimumSizeHint(self):
+        return self.sizeHint()
 
     def startNameFontSize(self):
         return self.height() * 0.2
@@ -233,6 +245,17 @@ class PlayerWidget(QWidget):
     def resizeEvent(self, event):
         if self.size().height() == 0:
             return None
+
+        print(self.minimumSize)
+        ## Add signture
+        size = self.sizeHint()
+        if self.signature is not None:
+            self.name_label.setPixmap(
+                self.signature.scaled(
+                    size.width(), size.height(),
+                    transformMode=Qt.TransformationMode.SmoothTransformation,
+                )
+            )
 
         self.setContentsMargins( self.width() * 0.1, 0, self.width() * 0.1, 0)
 
@@ -267,9 +290,10 @@ class PlayerWidget(QWidget):
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
-        qp.drawPixmap( self.rect(), QPixmap( resource_path("player_background.png") ))
-
-        # qp.drawRect(self.rect())
+        # qp.drawPixmap( self.rect(), QPixmap( resource_path("player_background.png") ))
+        print(self.rect().width() / self.rect().height())
+        qp.setBrush(FILLBRUSH)
+        qp.drawRect(self.rect())
 
         # qp.drawRect(self.name_label.geometry())
         # qp.drawRect(self.score_label.geometry())
@@ -480,6 +504,7 @@ class QuestionCard(CardLabel):
 
 
 class BoardWidget(QWidget):
+    cell_ratio = 3/5
     def __init__(self, game, alex, parent=None):
         super().__init__(parent)
         self.game = game
@@ -489,8 +514,6 @@ class BoardWidget(QWidget):
 
         self.questionwidget = None
         self.__completed_questions = []
-        # cellheight = self.size().height() // (self.board.size[1] + 1)
-        # self.cellsize = (cellheight / CELLRATIO, cellheight)
 
         self.grid_layout = QGridLayout()
 
@@ -1073,7 +1096,6 @@ class DisplayWindow(QMainWindow):
 
         monitor = QGuiApplication.screens()[monitor].geometry()
         self.game = None
-
 
         # self.lights_widget = LightsWidget(self)
 
