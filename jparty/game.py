@@ -181,20 +181,25 @@ class Game(QObject):
     # buzzer_disconnected = pyqtSignal(str)
     wager_trigger = pyqtSignal(int, int)
 
-    def __init__(self, gamedata):
+    def __init__(self, host_display, main_display, socket_controller):
         super().__init__()
-        self.new_game(gamedata)
+        self.new_game(host_display, main_display, socket_controller)
 
-    def new_game(self, gamedata):
-        self.rounds = gamedata.rounds
-        self.date = gamedata.date
-        self.comments = gamedata.comments
+    def new_game(self, host_display, main_display, socket_controller):
+        self.alex_window = host_display
+        self.main_window = main_display
+        self.socket_controller = socket_controller
+
+        self.socket_controller.game = self
+        self.alex_window.game = self
+        self.main_window.game = self
+
+        self.dc = CompoundObject(host_display, main_display)
+        self.rounds = []
+        self.date = ""
+        self.comments = ""
         self.players = []
 
-        self.dc = CompoundObject()
-
-        self.alex_window = None
-        self.main_window = None
         self.welcome_window = None
         self.paused = False
         self.active_question = None
@@ -267,6 +272,10 @@ class Game(QObject):
 
     def update(self):
         self.dc.update()
+
+    def new_player(self, player):
+        self.players.append( player )
+        self.dc.scoreboard.refreshPlayers()
 
 
     @property
@@ -527,16 +536,6 @@ class Game(QObject):
         self.players = state[1]
         # self.completed_questions = state[2]
 
-    @updateUI
-    def adjust_score(self, player):
-        new_score, answered = QInputDialog.getInt(
-            self.alex_window,
-            "Adjust Score",
-            f"Enter a new score for {player.name}",
-            value=player.score,
-        )
-        if answered:
-            player.score = new_score
 
     @updateUI
     def show_help(self):
@@ -563,6 +562,16 @@ class Player(object):
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)
+
+    def adjust_score(self, hostwindow):
+        new_score, answered = QInputDialog.getInt(
+            hostwindow,
+            "Adjust Score",
+            f"Enter a new score for {self.name}",
+            value=player.self,
+        )
+        if answered:
+            self.score = new_score
 
 
 game_params = SimpleNamespace()

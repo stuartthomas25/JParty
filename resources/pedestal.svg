@@ -415,9 +415,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.24187859"
-     inkscape:cx="1676.5797"
-     inkscape:cy="140.02763"
+     inkscape:zoom="0.96751436"
+     inkscape:cx="945.82859"
+     inkscape:cy="347.09019"
      inkscape:document-units="mm"
      inkscape:current-layer="layer5"
      inkscape:document-rotation="0"
@@ -425,7 +425,7 @@
      inkscape:window-width="1652"
      inkscape:window-height="943"
      inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-y="5"
      inkscape:window-maximized="0"
      showguides="false" />
   <metadata
@@ -608,8 +608,7 @@
      inkscape:groupmode="layer"
      id="layer4"
      inkscape:label="Player"
-     style="display:inline"
-     sodipodi:insensitive="true">
+     style="display:inline">
     <rect
        style="opacity:1;fill:#5f2121;fill-opacity:1;stroke-width:1.39802;stroke-opacity:0"
        id="rect3072"
@@ -718,15 +717,15 @@
      inkscape:label="Time Lights"
      style="display:inline">
     <rect
-       style="opacity:1;fill:#b5b5b5;fill-opacity:1;stroke:none;stroke-width:6.82052;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+       style="opacity:1;fill:#b5b5b5;fill-opacity:1;stroke:none;stroke-width:6.83351;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
        id="rect3079"
-       width="215.18814"
+       width="216.00854"
        height="10.744596"
        x="155.1889"
        y="0" />
     <g
        id="g3150"
-       transform="matrix(0.82891613,0,0,1.0758492,25.24177,-13.763822)">
+       transform="matrix(0.8343291,0,0,1.0758492,24.374146,-13.763822)">
       <rect
          style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:15.577;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
          id="rect3105"

@@ -334,8 +334,11 @@ class Welcome(QMainWindow):
         self.show_board(game)
 
     def show_board(self, game):
-        game.alex_window = DisplayWindow(game, alex=True, monitor=0)
-        game.main_window = DisplayWindow(game, alex=False, monitor=1)
+        game.alex_window = DisplayWindow(alex=True, monitor=0)
+        game.main_window = DisplayWindow(alex=False, monitor=1)
+        game.dc += game.alex_window
+        game.dc += game.main_window
+
         self.startButton.setEnabled(False)
         if self.help_checkbox.isChecked():
             QTimer.singleShot(200, self.game.show_help)
@@ -437,6 +440,7 @@ class PlayerView(QWidget):
 
     @classmethod
     def new_player(cls, player):
+        print(player.name)
         for i in cls.instances:
             i._new_player(player)
 
@@ -624,11 +628,16 @@ def main():
         # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         app = QApplication(sys.argv)
 
-        SC = BuzzerController()
-        wel = Welcome(SC)
-        song_player = wel.song_player
+        socket_controller = BuzzerController()
+        # wel = Welcome(SC)
+
+        host_window = DisplayWindow(alex=True, monitor=0)
+        main_window = DisplayWindow(alex=False, monitor=1)
+        Game(host_window, main_window, socket_controller)
+
+        # song_player = wel.song_player
         try:
-            SC.start()
+            socket_controller.start()
         except PermissionError as e:
             permission_error()
             raise e
