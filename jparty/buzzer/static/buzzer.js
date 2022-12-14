@@ -86,7 +86,7 @@ function nameForm(name) {
 }
 
 const padding = 2;
-const canvasratio = 2.011;
+const canvasratio = 1.3422;
 
 $(document).ready(function() {
     if (!window.console) window.console = {};
@@ -106,7 +106,7 @@ $(document).ready(function() {
 
     const signaturePad = new SignaturePad(canvas, {
         penColor: "#ffffff",
-        backgroundColor: "#031591"
+        backgroundColor: "#1010a1"
     });
 
     function resizeCanvas() {
