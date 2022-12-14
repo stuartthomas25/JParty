@@ -191,9 +191,10 @@ class MyLabel(DynamicLabel):
 
 class PlayerWidget(QWidget):
     aspect_ratio = 0.4
-    def __init__(self, player, parent=None):
+    def __init__(self, game, player, parent=None):
         super().__init__(parent)
         self.player = player
+        self.game = game
         self.__buzz_hint_thread = None
 
         if player.name[:21] == 'data:image/png;base64':
@@ -287,7 +288,7 @@ class PlayerWidget(QWidget):
         self.score_label.setText( f"{score:,}" )
 
     def mousePressEvent(self, event):
-        self.adjust_score(self.player)
+        self.game.adjust_score(self.player)
         self.update_score()
 
     def paintEvent(self, event):
@@ -777,7 +778,7 @@ class ScoreBoard(QWidget):
         for (i,p) in enumerate(self.game.players):
             if not any(pw.player is p for pw in self.player_widgets):
                 print("add player")
-                pw = PlayerWidget(p, self)
+                pw = PlayerWidget(self.game, p, self)
                 self.player_layout.insertWidget(2*i+1, pw)
                 self.player_layout.insertStretch(2*i+2)
                 self.player_widgets.append(pw)

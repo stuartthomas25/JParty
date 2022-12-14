@@ -423,8 +423,8 @@ class Game(QObject):
         self.keystroke_manager.activate("CLOSE_GAME")
 
     def close_game(self):
-        self.main_window.close()
-        self.alex_window.close()
+        self.main_display.close()
+        self.host_display.close()
         self.buzzer_controller.restart()
         self.welcome_window.restart()
 
@@ -432,7 +432,7 @@ class Game(QObject):
     def run_dd(self):
         while True:
             player_name = QInputDialog.getItem(
-                self.alex_window,
+                self.host_display,
                 "Player selection",
                 "Who found the Daily Double?",
                 [p.name for p in self.players],
@@ -441,7 +441,7 @@ class Game(QObject):
             player = next((p for p in self.players if p.name == player_name), None)
             max_wager = max(player.score, 1000)
             wager_res = QInputDialog.getInt(
-                self.alex_window,
+                self.host_display,
                 "Wager",
                 f"How much does {player_name} wager? (max: ${max_wager})",
                 min=0,
@@ -549,9 +549,21 @@ class Game(QObject):
             "JParty Help",
             helpmsg,
             QMessageBox.StandardButton.Ok,
-            self.alex_window,
+            self.host_display,
         )
         msgbox.exec()
+
+
+    def adjust_score(self, player):
+        new_score, answered = QInputDialog.getInt(
+            self.host_display,
+            "Adjust Score",
+            f"Enter a new score:",
+            value=player.score,
+        )
+        if answered:
+            player.score = new_score
+
 
 
 class Player(object):
@@ -566,16 +578,6 @@ class Player(object):
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)
-
-    def adjust_score(self, hostwindow):
-        new_score, answered = QInputDialog.getInt(
-            hostwindow,
-            "Adjust Score",
-            f"Enter a new score for {self.name}",
-            value=player.self,
-        )
-        if answered:
-            self.score = new_score
 
 
 game_params = SimpleNamespace()
