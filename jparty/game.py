@@ -279,7 +279,7 @@ class Game(QObject):
 
     def new_player(self):
         self.players = self.socket_controller.connected_players
-        self.dc.scoreboard.refreshPlayers()
+        self.dc.scoreboard.refresh_players()
 
 
     @property

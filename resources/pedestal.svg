@@ -407,6 +407,17 @@
          x="165.87476"
          y="69.00341" />
     </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath1007">
+      <rect
+         style="opacity:1;fill:#1010a1;fill-opacity:1;stroke:none;stroke-width:6.41162;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+         id="rect1009"
+         width="194.79857"
+         height="22.725653"
+         x="165.87476"
+         y="261.33325" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -415,9 +426,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.48375718"
-     inkscape:cx="1028.5147"
-     inkscape:cy="475.25367"
+     inkscape:zoom="0.60248278"
+     inkscape:cx="944.54117"
+     inkscape:cy="575.31424"
      inkscape:document-units="mm"
      inkscape:current-layer="layer4"
      inkscape:document-rotation="0"
@@ -635,27 +646,28 @@
        x="165.87476"
        y="69.00341" />
     <rect
-       style="opacity:1;fill:#1010a1;fill-opacity:1;stroke:none;stroke-width:13.2351;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+       style="opacity:1;fill:#1010a1;fill-opacity:1;stroke:none;stroke-width:16.2027;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
        id="rect3160"
        width="194.799"
-       height="96.836739"
+       height="145.127"
        x="165.87476"
        y="110.62978" />
     <rect
-       style="opacity:1;fill:#1010a1;fill-opacity:1;stroke:none;stroke-width:11.3123;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+       style="opacity:1;fill:#1010a1;fill-opacity:1;stroke:none;stroke-width:6.41161;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
        id="rect3173"
        width="194.79857"
-       height="70.743011"
+       height="22.725653"
        x="165.87476"
-       y="213.3159" />
+       y="261.33325" />
     <g
        id="g3704"
-       clip-path="url(#clipPath3706)">
+       clip-path="url(#clipPath1007)">
       <path
          style="opacity:0.703;fill:none;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter3433)"
          d="m 165.87476,284.0589 c 38.29695,-22.44989 142.77172,-48.73809 201.70879,-47.59219"
          id="path3407"
-         sodipodi:nodetypes="cc" />
+         sodipodi:nodetypes="cc"
+         clip-path="none" />
       <path
          style="opacity:0.703;fill:none;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter3617)"
          d="m 218.05156,290.53839 c 45.24445,-20.62576 98.44898,-33.76389 147.83818,-33.12841"
