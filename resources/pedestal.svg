@@ -16,7 +16,7 @@
    id="svg8"
    inkscape:version="1.0.2 (e86c8708, 2021-01-15)"
    sodipodi:docname="pedestal.svg"
-   inkscape:export-filename="/Users/stuart/Documents/Programming/JParty/jparty/data/player_background.png"
+   inkscape:export-filename="/Users/stuart/Documents/Programming/JParty/jparty/data/player.png"
    inkscape:export-xdpi="50"
    inkscape:export-ydpi="50">
   <defs
@@ -415,17 +415,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.96751436"
-     inkscape:cx="945.82859"
-     inkscape:cy="347.09019"
+     inkscape:zoom="0.48375718"
+     inkscape:cx="1028.5147"
+     inkscape:cy="475.25367"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer5"
+     inkscape:current-layer="layer4"
      inkscape:document-rotation="0"
      showgrid="false"
      inkscape:window-width="1652"
      inkscape:window-height="943"
      inkscape:window-x="0"
-     inkscape:window-y="5"
+     inkscape:window-y="0"
      inkscape:window-maximized="0"
      showguides="false" />
   <metadata
@@ -637,7 +637,7 @@
     <rect
        style="opacity:1;fill:#1010a1;fill-opacity:1;stroke:none;stroke-width:13.2351;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
        id="rect3160"
-       width="194.79857"
+       width="194.799"
        height="96.836739"
        x="165.87476"
        y="110.62978" />
@@ -669,7 +669,10 @@
     </g>
     <g
        id="g3713"
-       clip-path="url(#clipPath3727)">
+       clip-path="url(#clipPath3727)"
+       inkscape:export-filename="/Users/stuart/Documents/Programming/JParty/jparty/data/player_active.png"
+       inkscape:export-xdpi="50"
+       inkscape:export-ydpi="50">
       <path
          style="opacity:0.753;fill:none;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter3433)"
          d="M 165.87476,125.3088 C 204.17171,102.85891 308.64648,76.570725 367.58355,77.716625"
@@ -717,9 +720,9 @@
      inkscape:label="Time Lights"
      style="display:inline">
     <rect
-       style="opacity:1;fill:#b5b5b5;fill-opacity:1;stroke:none;stroke-width:6.83351;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+       style="opacity:1;fill:#b5b5b5;fill-opacity:1;stroke:none;stroke-width:6.83783;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
        id="rect3079"
-       width="216.00854"
+       width="216.28201"
        height="10.744596"
        x="155.1889"
        y="0" />

@@ -579,28 +579,6 @@ def get_logs():
 def get_sysinfo():
     return version
 
-def permission_error():
-    button = QMessageBox.critical(
-        None,
-        "Permission Error",
-        "JParty encountered a permissions error when trying to listen on port 80.",
-        buttons=QMessageBox.StandardButton.Abort,
-        defaultButton=QMessageBox.StandardButton.Abort,
-    )
-
-def check_internet():
-    # check internet connection
-    try:
-        r = requests.get(f"http://www.j-archive.com/")
-    except requests.exceptions.ConnectionError as e:  # This is the correct syntax
-        button = QMessageBox.critical(
-            None,
-            "Cannot connect!",
-            "JParty cannot connect to the J-Archive. Please check your internet connection.",
-            buttons=QMessageBox.StandardButton.Abort,
-            defaultButton=QMessageBox.StandardButton.Abort,
-        )
-        raise e
 
 
 def main():
@@ -628,12 +606,12 @@ def main():
         # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         app = QApplication(sys.argv)
 
-        socket_controller = BuzzerController()
-        # wel = Welcome(SC)
-
-        host_window = DisplayWindow(alex=True, monitor=0)
-        main_window = DisplayWindow(alex=False, monitor=1)
-        Game(host_window, main_window, socket_controller)
+        game = Game()
+        socket_controller = BuzzerController(game)
+        host_window = DisplayWindow(game, alex=True, monitor=0)
+        main_window = DisplayWindow(game, alex=False, monitor=1)
+        game.setDisplays(host_window, main_window)
+        game.setSocketController(socket_controller)
 
         # song_player = wel.song_player
         try:

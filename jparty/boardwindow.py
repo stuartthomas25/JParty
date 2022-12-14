@@ -191,9 +191,10 @@ class MyLabel(DynamicLabel):
 
 class PlayerWidget(QWidget):
     aspect_ratio = 0.4
-    def __init__(self, player):
-        super().__init__()
+    def __init__(self, player, parent=None):
+        super().__init__(parent)
         self.player = player
+        self.__buzz_hint_thread = None
 
         if player.name[:21] == 'data:image/png;base64':
             i = QImage()
@@ -209,6 +210,8 @@ class PlayerWidget(QWidget):
         self.resizeEvent(None)
         self.update_score()
 
+        self.background_img = QPixmap( resource_path("player.png") )
+
         self.highlighted = False
 
         layout = QVBoxLayout()
@@ -218,6 +221,7 @@ class PlayerWidget(QWidget):
         layout.addWidget(self.name_label, 22)
         layout.addStretch(20)
         layout.setContentsMargins( 0, 0, 0, 0)
+
 
         # palette = QPalette()
         # palette.setColor(QPalette.ColorRole.WindowText, WHITE)
@@ -242,33 +246,32 @@ class PlayerWidget(QWidget):
     def startScoreFontSize(self):
         return self.height() * 0.2
 
-    def resizeEvent(self, event):
-        if self.size().height() == 0:
-            return None
+    # def resizeEvent(self, event):
+    #     if self.size().height() == 0:
+    #         return None
 
-        print(self.minimumSize)
-        ## Add signture
-        size = self.sizeHint()
-        if self.signature is not None:
-            self.name_label.setPixmap(
-                self.signature.scaled(
-                    size.width(), size.height(),
-                    transformMode=Qt.TransformationMode.SmoothTransformation,
-                )
-            )
+    #     ## Add signture
+    #     size = self.sizeHint()
+    #     if self.signature is not None:
+    #         self.name_label.setPixmap(
+    #             self.signature.scaled(
+    #                 size.width(), size.height(),
+    #                 transformMode=Qt.TransformationMode.SmoothTransformation,
+    #             )
+    #         )
 
-        self.setContentsMargins( self.width() * 0.1, 0, self.width() * 0.1, 0)
+    #     self.setContentsMargins( self.width() * 0.1, 0, self.width() * 0.1, 0)
 
-    def __buzz_hint(self, p):
-        self.__buzz_hint_players.append(p)
+    def __buzz_hint(self):
+        self.background_img = QPixmap( resource_path("player_active.png") )
         self.update()
         time.sleep(0.25)
-        self.__buzz_hint_players.remove(p)
+        self.background_img = QPixmap( resource_path("player.png") )
         self.update()
 
-    def buzz_hint(self, p):
+    def buzz_hint(self):
         self.__buzz_hint_thread = threading.Thread(
-            target=self.__buzz_hint, args=(p,), name="buzz_hint"
+            target=self.__buzz_hint, name="buzz_hint"
         )
         self.__buzz_hint_thread.start()
 
@@ -290,9 +293,8 @@ class PlayerWidget(QWidget):
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
-        # qp.drawPixmap( self.rect(), QPixmap( resource_path("player_background.png") ))
-        print(self.rect().width() / self.rect().height())
-        qp.setBrush(FILLBRUSH)
+        qp.drawPixmap( self.rect(), self.background_img )
+
         qp.drawRect(self.rect())
 
         # qp.drawRect(self.name_label.geometry())
@@ -675,88 +677,85 @@ class BoardWidget(QWidget):
     #         self._identify_question(event)
 
 
-class LightsWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+# class LightsWidget(QWidget):
+#     def __init__(self, parent=None):
+#         super().__init__(parent)
 
-        self.__light_level = 0
-        self.__light_thread = None
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+#         self.__light_level = 0
+#         self.__light_thread = None
+#         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        palette = QPalette()
-        palette.setColor(QPalette.ColorRole.Window, WHITE)
-        self.setPalette(palette)
+#         palette = QPalette()
+#         palette.setColor(QPalette.ColorRole.Window, WHITE)
+#         self.setPalette(palette)
 
-    # def sizeHint(self):
-    #     return QSize(self.geometry().width(), DIVIDERWIDTH)
+#     # def sizeHint(self):
+#     #     return QSize(self.geometry().width(), DIVIDERWIDTH)
 
-    def paintEvent(self, event):
-        w = self.geometry().width()
-        qp = QPainter()
-        qp.begin(self)
+#     def paintEvent(self, event):
+#         w = self.geometry().width()
+#         qp = QPainter()
+#         qp.begin(self)
 
-        # Light dividers
-        num_lights = 9
-        light_width = w // num_lights
-        light_padding = 3
-        ungrouped_rects = [
-            QRect(
-                light_width * i + light_padding,
-                light_padding,
-                light_width - 2 * light_padding,
-                DIVIDERWIDTH - 2 * light_padding,
-            )
-            for i in range(num_lights)
-        ]
-        grouped_rects = [
-            [
-                rect
-                for j, rect in enumerate(ungrouped_rects)
-                if abs(num_lights // 2 - j) == i
-            ]
-            for i in range(5)
-        ]
-        qp.setBrush(LIGHTBRUSH)
-        qp.setPen(LIGHTPEN)
-        for i, rects in enumerate(grouped_rects):
-            if i < self.__light_level:
-                for rect in rects:
-                    qp.drawRect(rect)
+#         # Light dividers
+#         num_lights = 9
+#         light_width = w // num_lights
+#         light_padding = 3
+#         ungrouped_rects = [
+#             QRect(
+#                 light_width * i + light_padding,
+#                 light_padding,
+#                 light_width - 2 * light_padding,
+#                 DIVIDERWIDTH - 2 * light_padding,
+#             )
+#             for i in range(num_lights)
+#         ]
+#         grouped_rects = [
+#             [
+#                 rect
+#                 for j, rect in enumerate(ungrouped_rects)
+#                 if abs(num_lights // 2 - j) == i
+#             ]
+#             for i in range(5)
+#         ]
+#         qp.setBrush(LIGHTBRUSH)
+#         qp.setPen(LIGHTPEN)
+#         for i, rects in enumerate(grouped_rects):
+#             if i < self.__light_level:
+#                 for rect in rects:
+#                     qp.drawRect(rect)
 
-    def __lights(self):
-        self.__light_level = ANSWERSECS + 1
-        while (
-            self.__light_level > 0 and threading.current_thread() is self.__light_thread
-        ):
-            self.__light_level -= 1
-            self.update()
-            time.sleep(1.0)
+#     def __lights(self):
+#         self.__light_level = ANSWERSECS + 1
+#         while (
+#             self.__light_level > 0 and threading.current_thread() is self.__light_thread
+#         ):
+#             self.__light_level -= 1
+#             self.update()
+#             time.sleep(1.0)
 
-    def run_lights(self):
-        self.__light_thread = threading.Thread(target=self.__lights, name="lights")
-        self.__light_thread.start()
+#     def run_lights(self):
+#         self.__light_thread = threading.Thread(target=self.__lights, name="lights")
+#         self.__light_thread.start()
 
-    def stop_lights(self):
-        self.__light_level = 0
+#     def stop_lights(self):
+#         self.__light_level = 0
 
 
 class ScoreBoard(QWidget):
-    def __init__(self, display):
-        super().__init__(display)
+    def __init__(self, game, parent=None):
+        super().__init__(parent)
 
-        self.display = display
-
-        self.__buzz_hint_players = []
-        self.__buzz_hint_thread = []
-
+        self.game = game
 
         # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.player_widgets = []
         self.show()
 
+        self.player_layout = QHBoxLayout()
+        self.player_layout.addStretch()
+        self.setLayout(self.player_layout)
 
-
-    def game(self):
-        return self.display.game
 
     # def resizeEvent(self, event):
     #     spacing  = int( self.width() / (len(self.game.players) + 1) * 0.3 )
@@ -767,24 +766,34 @@ class ScoreBoard(QWidget):
         return 0.2 * self.width()
 
     def refreshPlayers(self):
-        game = self.game()
-        if game is None:
-            return None
+        print("remove player")
+        for pw in self.player_widgets:
+            if pw.player not in self.game.players:
+                print("remove player")
+                self.player_layout.removeWidget(pw)
+                self.player_widgets.remove(pw)
+                delete(pw)
 
-        player_layout = QHBoxLayout()
-        player_layout.addStretch()
-        for p in game.players:
-            player_layout.addWidget( PlayerWidget(p) )
-            player_layout.addStretch()
+        for (i,p) in enumerate(self.game.players):
+            if not any(pw.player is p for pw in self.player_widgets):
+                print("add player")
+                pw = PlayerWidget(p, self)
+                self.player_layout.insertWidget(2*i+1, pw)
+                self.player_layout.insertStretch(2*i+2)
+                self.player_widgets.append(pw)
 
-        player_layout.setContentsMargins( 0, 0, 0, 0)
-
-        self.setLayout(player_layout)
+        # self.setLayout(self.player_layout)
 
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
         qp.drawPixmap( self.rect(), QPixmap( resource_path("pedestal.png") ))
+
+    def buzz_hint(self, player):
+        for pw in self.player_widgets:
+            if pw.player is player:
+                pw.buzz_hint()
+
 
 
     # def maximumSizeHint(self):
@@ -1080,9 +1089,10 @@ class BorderWidget(QWidget):
     #         qp.drawPixmap(self.__rightarrowrect, self.__spaceimage)
 
 class DisplayWindow(QMainWindow):
-    def __init__(self, alex=True, monitor=0):
+    def __init__(self, game, alex=True, monitor=0):
         super().__init__()
         self.alex = alex
+        self.game = game
         self.setWindowTitle("Host" if alex else "Board")
 
         colorpal = QPalette()
@@ -1095,13 +1105,13 @@ class DisplayWindow(QMainWindow):
                 monitor = 0
 
         monitor = QGuiApplication.screens()[monitor].geometry()
-        self.game = None
+        self.game = game
 
         # self.lights_widget = LightsWidget(self)
 
-        self.boardwidget = QWidget() #BoardWidget(alex, self)
+        self.boardwidget = QWidget() #BoardWidget(game, alex, self)
 
-        self.scoreboard = ScoreBoard(self)
+        self.scoreboard = ScoreBoard(game, self)
         # self.finalanswerwindow = FinalAnswerWidget(game)
         # self.finalanswerwindow.setVisible(False)
 

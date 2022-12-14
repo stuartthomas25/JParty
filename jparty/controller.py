@@ -131,7 +131,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         self.player = Player(name, self)
         self.application.controller.new_player(self.player)
         logging.info(
-            f"New Player: {name} {self.request.remote_ip} {self.player.token.hex()}"
+            f"New Player: {self.request.remote_ip} {self.player.token.hex()}"
         )
         self.send("TOKEN", self.player.token.hex())
         # self.send("PROMPTWAGER", 69)
@@ -157,9 +157,9 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
 
 
 class BuzzerController:
-    def __init__(self):
+    def __init__(self, game):
         self.thread = None
-        self.game = None
+        self.game = game
         tornado.options.parse_command_line()
         self.app = Application(
             self
@@ -202,7 +202,7 @@ class BuzzerController:
 
     def new_player(self, player):
         self.connected_players.append(player)
-        self.game.new_player(player)
+        self.game.new_player_trigger.emit()
 
     # def activate_buzzer(self, name):
     # BuzzerSocketHandler.activate_buzzer(name)

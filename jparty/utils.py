@@ -79,3 +79,27 @@ class CompoundObject(object):
 
     def __repr__(self):
         return "CompoundObject(" + ", ".join([repr(o) for o in self.__objs]) + ")"
+
+
+def permission_error():
+    button = QMessageBox.critical(
+        None,
+        "Permission Error",
+        "JParty encountered a permissions error when trying to listen on port 80.",
+        buttons=QMessageBox.StandardButton.Abort,
+        defaultButton=QMessageBox.StandardButton.Abort,
+    )
+
+def check_internet():
+    # check internet connection
+    try:
+        r = requests.get(f"http://www.j-archive.com/")
+    except requests.exceptions.ConnectionError as e:  # This is the correct syntax
+        button = QMessageBox.critical(
+            None,
+            "Cannot connect!",
+            "JParty cannot connect to the J-Archive. Please check your internet connection.",
+            buttons=QMessageBox.StandardButton.Abort,
+            defaultButton=QMessageBox.StandardButton.Abort,
+        )
+        raise e
