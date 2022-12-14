@@ -178,23 +178,18 @@ class GameData:
 
 class Game(QObject):
     buzz_trigger = pyqtSignal(int)
+    new_player_trigger = pyqtSignal()
     # buzzer_disconnected = pyqtSignal(str)
     wager_trigger = pyqtSignal(int, int)
 
-    def __init__(self, host_display, main_display, socket_controller):
+    def __init__(self):
         super().__init__()
-        self.new_game(host_display, main_display, socket_controller)
 
-    def new_game(self, host_display, main_display, socket_controller):
-        self.alex_window = host_display
-        self.main_window = main_display
-        self.socket_controller = socket_controller
+        self.host_display = None
+        self.main_display = None
+        self.socket_controller = None
+        self.dc = None
 
-        self.socket_controller.game = self
-        self.alex_window.game = self
-        self.main_window.game = self
-
-        self.dc = CompoundObject(host_display, main_display)
         self.rounds = []
         self.date = ""
         self.comments = ""
@@ -263,6 +258,15 @@ class Game(QObject):
 
         self.wager_trigger.connect(self.wager)
         self.buzz_trigger.connect(self.buzz)
+        self.new_player_trigger.connect(self.new_player)
+
+    def setDisplays(self, host_display, main_display):
+        self.host_display = host_display
+        self.main_display = main_display
+        self.dc = CompoundObject(host_display, main_display)
+
+    def setSocketController(self, controller):
+        self.socket_controller = controller
 
     def arrowhints(self, val):
         self.dc.borders.arrowhints(val)
@@ -273,8 +277,8 @@ class Game(QObject):
     def update(self):
         self.dc.update()
 
-    def new_player(self, player):
-        self.players.append( player )
+    def new_player(self):
+        self.players = self.socket_controller.connected_players
         self.dc.scoreboard.refreshPlayers()
 
 
