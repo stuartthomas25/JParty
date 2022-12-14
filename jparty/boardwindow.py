@@ -420,6 +420,7 @@ class BoardWidget(QWidget):
 
         self.grid_layout = QGridLayout()
 
+        self.resizeEvent(None)
 
         for x in range(BoardWidget.rows):
             self.grid_layout.setRowStretch(x, 1.)
@@ -445,7 +446,7 @@ class BoardWidget(QWidget):
                     label = QuestionCard(game, q)
                     self.grid_layout.addWidget(label, y, x)
 
-        self.resizeEvent(None)
+
         self.setLayout(self.grid_layout)
 
         self.show()
@@ -763,11 +764,11 @@ class ScoreBoard(QWidget):
 
         # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.player_widgets = []
-        self.show()
 
         self.player_layout = QHBoxLayout()
         self.player_layout.addStretch()
         self.setLayout(self.player_layout)
+        self.show()
 
 
     def resizeEvent(self, event):
@@ -1118,12 +1119,13 @@ class DisplayWindow(QMainWindow):
                 monitor = 0
 
         monitor = QGuiApplication.screens()[monitor].geometry()
-        self.game = game
+
+        self.move(monitor.left(), monitor.top())  # move to monitor 0
+        self.showFullScreen()
 
         # self.lights_widget = LightsWidget(self)
 
         self.boardwidget = BoardWidget(game, alex, self)
-
         self.scoreboard = ScoreBoard(game, self)
         # self.finalanswerwindow = FinalAnswerWidget(game)
         # self.finalanswerwindow.setVisible(False)
@@ -1147,8 +1149,6 @@ class DisplayWindow(QMainWindow):
         self.newWidget.setLayout(self.main_layout)
         self.setCentralWidget(self.newWidget)
 
-        self.move(monitor.left(), monitor.top())  # move to monitor 0
-        self.showFullScreen()
 
         self.show()
 
