@@ -133,7 +133,7 @@ def main():
     main_window = DisplayWindow(game, alex=False, monitor=0)
     game.setDisplays(host_window, main_window)
 
-    game.start()
+    game.begin()
 
 
 
