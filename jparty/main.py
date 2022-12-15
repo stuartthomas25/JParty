@@ -38,7 +38,7 @@ from .controller import BuzzerController
 from .boardwindow import DisplayWindow
 from .game import Player, Game
 from .constants import DEBUG
-from .utils import SongPlayer, resource_path
+from .utils import SongPlayer, resource_path, check_internet
 from .logger import qt_exception_hook
 
 
@@ -119,6 +119,7 @@ def main():
 
     app = QApplication(sys.argv)
     # check_second_monitor()
+    check_internet()
     app.setFont(QFont("Verdana"))
 
     # try:
