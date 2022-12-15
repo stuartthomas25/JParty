@@ -1,9 +1,10 @@
 import simpleaudio as sa
 
+import requests
 from threading import Thread
 import os
 import sys
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QMessageBox
 from PyQt6.QtGui import QColor
 
 
@@ -105,7 +106,7 @@ def check_internet():
             buttons=QMessageBox.StandardButton.Abort,
             defaultButton=QMessageBox.StandardButton.Abort,
         )
-        raise e
+        exit(1)
 
 """add shadow to widget. Radius is proportion of widget height"""
 def add_shadow(widget, radius=0.1, offset=3):
