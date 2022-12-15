@@ -541,17 +541,6 @@ class Game(QObject):
         # self.completed_questions = state[2]
 
 
-    @updateUI
-    def show_help(self):
-        logging.info("Showing help")
-        msgbox = QMessageBox(
-            QMessageBox.Icon.NoIcon,
-            "JParty Help",
-            helpmsg,
-            QMessageBox.StandardButton.Ok,
-            self.host_display,
-        )
-        msgbox.exec()
 
 
     def adjust_score(self, player):
