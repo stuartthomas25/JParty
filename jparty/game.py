@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
-from PyQt6.QtWidgets import QInputDialog, QMessageBox
+from PyQt6.QtWidgets import QInputDialog, QMessageBox, QApplication
+
 
 # from PyQt6.QtMultimedia import QSound
 import threading
@@ -15,7 +16,6 @@ import logging
 
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path, CompoundObject
-from .helpmsg import helpmsg
 
 BUZZ_DELAY = 0  # ms
 
@@ -190,9 +190,13 @@ class Game(QObject):
         self.socket_controller = None
         self.dc = None
 
-        self.rounds = []
-        self.date = ""
-        self.comments = ""
+        self.song_player = SongPlayer()
+
+        self.data = None
+
+        # self.rounds = []
+        # self.date = ""
+        # self.comments = ""
         self.players = []
 
         self.welcome_window = None
@@ -260,6 +264,23 @@ class Game(QObject):
         self.buzz_trigger.connect(self.buzz)
         self.new_player_trigger.connect(self.new_player)
 
+
+
+    def startable(self):
+        if DEBUG:
+            return True
+        return (
+            self.valid()
+            and len(self.socket_controller.connected_players) > 0
+            and len(QApplication.instance().screens()) > 1
+        )
+
+    def start(self):
+        if not DEBUG:
+            self.song_player.play(repeat=True)
+        else:
+            self.song_player = None
+
     def setDisplays(self, host_display, main_display):
         self.host_display = host_display
         self.main_display = main_display
@@ -280,6 +301,10 @@ class Game(QObject):
     def new_player(self):
         self.players = self.socket_controller.connected_players
         self.dc.scoreboard.refresh_players()
+
+    def valid(self):
+        return self.data is not None and all(b.complete for b in self.data.rounds)
+
 
 
     @property
@@ -552,6 +577,10 @@ class Game(QObject):
         )
         if answered:
             player.score = new_score
+
+    def close(self):
+        self.song_player.stop()
+        QApplication.quit()
 
 
 

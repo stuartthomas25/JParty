@@ -1,4 +1,4 @@
-from jparty.welcome_window import main
+from jparty.main import main
 
 
 if __name__ == "__main__":
