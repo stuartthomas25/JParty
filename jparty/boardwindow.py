@@ -146,7 +146,6 @@ class DynamicLabel(QLabel):
         super().__init__( text, parent )
         self.__initialSize = initialSize
 
-
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     ### These three re-override QLabel's versions
@@ -159,6 +158,9 @@ class DynamicLabel(QLabel):
         else:
             return self.__initialSize
 
+    def setText(self, text):
+        super().setText(text)
+        self.resizeEvent(None)
 
     def minimizeSizeHint(self):
         return QSize()
@@ -294,7 +296,6 @@ class CardLabel(QWidget):
 
         self.__margin = 0.1
 
-
         self.label = MyLabel(text, self.startFontSize, parent=self)
 
         palette = QPalette()
@@ -312,6 +313,9 @@ class CardLabel(QWidget):
         hmargin = int(self.__margin * self.height())
         return self.rect().adjusted(wmargin, hmargin, -wmargin, -hmargin)
 
+    def setText(self, text):
+        self.label.setText(text)
+
     @property
     def text(self):
         return self.label.text()
@@ -326,16 +330,25 @@ class CardLabel(QWidget):
 class QuestionCard(CardLabel):
     def __init__(self, game, question=None):
         self.game = game
-        self.question = question
-        if question is not None and not question.complete:
-            moneytext = "$" + str(question.value)
-        else:
-            moneytext = ""
-        super().__init__(moneytext)
+        self.__question = question
+        super().__init__(self.__moneytext())
+        self.label.setStyleSheet("color: #ffcc00")
 
-        palette = self.palette()
-        palette.setColor(QPalette.ColorRole.WindowText, YELLOW)
-        self.setPalette(palette)
+
+    @property
+    def question(self):
+        return self.__question
+
+    def __moneytext(self):
+        if self.question is not None and not self.question.complete:
+            return "$" + str(self.question.value)
+        else:
+            return ""
+
+    @question.setter
+    def question(self, q):
+        self.__question = q
+        self.setText(self.__moneytext())
 
     def startFontSize(self):
         return self.height()*0.5
@@ -350,6 +363,7 @@ class BoardWidget(QWidget):
     cell_ratio = 3/5
     rows = 6
     columns = 6
+
     def __init__(self, game, alex, parent=None):
         super().__init__(parent)
         self.game = game
@@ -374,25 +388,30 @@ class BoardWidget(QWidget):
             for y in range(BoardWidget.columns):
 
                 if y == 0:
-                    # Categories
-                    # label = CardLabel(self.board.categories[x])
                     label = CardLabel("")
                     self.grid_layout.addWidget(label, 0, x)
 
                 else:
-                    # Questions
-                    if self.__round is not None:
-                        q = self.__round.get_question(x,y-1)
-                    else:
-                        q = None
-
-                    label = QuestionCard(game, q)
+                    label = QuestionCard(game, None)
                     self.grid_layout.addWidget(label, y, x)
 
 
         self.setLayout(self.grid_layout)
 
         self.show()
+
+    def load_round(self, round):
+        gl = self.grid_layout
+        for x in range(BoardWidget.rows):
+            for y in range(BoardWidget.columns):
+                if y == 0:
+                    # Categories
+                    gl.itemAtPosition(y,x).widget().setText(round.categories[x])
+                else:
+                    # Questions
+                    q = round.get_question(x,y-1)
+                    gl.itemAtPosition(y,x).widget().question = q
+
 
     def resizeEvent(self, event):
         self.grid_layout.setSpacing(self.width() // 150)
@@ -875,6 +894,7 @@ class DisplayWindow(QMainWindow):
         self.show()
 
 
+
     def resizeEvent(self, event):
         fullrect = self.rect()
         margins = QMargins(fullrect.width(), fullrect.height(), fullrect.width(), fullrect.height()) * 0.3
@@ -884,6 +904,13 @@ class DisplayWindow(QMainWindow):
 
         if self.qrwidget is not None:
             self.qrwidget.setGeometry( fullrect - margins )
+
+    def hide_welcome_widgets(self):
+        if self.welcome_widget is not None:
+            self.welcome_widget.setVisible(False)
+
+        if self.qrwidget is not None:
+            self.qrwidget.setVisible(False)
 
 
     def hide_question(self):

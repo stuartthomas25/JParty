@@ -197,20 +197,15 @@ class Game(QObject):
         # self.rounds = []
         # self.date = ""
         # self.comments = ""
+        self.current_round = None
         self.players = []
 
-        self.welcome_window = None
         self.paused = False
         self.active_question = None
         self.accepting_responses = False
         self.answering_player = None
         self.previous_answerer = None
         self.timer = None
-
-        if DEBUG:
-            self.__current_round = 1
-        else:
-            self.__current_round = 0
 
         # self.song = QSound('data:song.wav')
         self.song_player = SongPlayer()
@@ -272,14 +267,18 @@ class Game(QObject):
         return (
             self.valid()
             and len(self.socket_controller.connected_players) > 0
-            and len(QApplication.instance().screens()) > 1
         )
 
-    def start(self):
+    def begin(self):
         if not DEBUG:
             self.song_player.play(repeat=True)
         else:
             self.song_player = None
+
+    def start_game(self):
+        self.current_round = self.data.rounds[1]
+        self.dc.hide_welcome_widgets()
+        self.dc.board_widget.load_round(self.current_round)
 
     def setDisplays(self, host_display, main_display):
         self.host_display = host_display
@@ -296,7 +295,8 @@ class Game(QObject):
         self.dc.borders.spacehints(val)
 
     def update(self):
-        self.dc.update()
+        pass
+        # self.dc.update()
 
     def new_player(self):
         self.players = self.socket_controller.connected_players
@@ -305,14 +305,7 @@ class Game(QObject):
     def valid(self):
         return self.data is not None and all(b.complete for b in self.data.rounds)
 
-
-
-    @property
-    def current_round(self):
-        return self.rounds[self.__current_round]
-
     def __accept_responses(self):
-        logging.info("accepting responses")
         self.accepting_responses = True
         # global activation_time
         # activation_time = time.time()
