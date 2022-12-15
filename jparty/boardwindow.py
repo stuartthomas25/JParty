@@ -28,12 +28,14 @@ from PyQt6.QtCore import (
 )
 from PyQt6.sip import delete
 from .version import version
+import qrcode
 
 
+from .welcome_widget import Welcome, QRWidget
 import os
 from .retrieve import get_game, get_game_sum, get_random_game
 from .game import game_params as gp
-from .utils import resource_path, SongPlayer
+from .utils import resource_path, SongPlayer, add_shadow
 from .constants import DEBUG
 from .helpmsg import helpmsg
 import time
@@ -113,6 +115,7 @@ FINALANSWERHEIGHT = 0.6
 def updateUI(f):
     return f
 
+
 def autofitsize(text, font, rect, start=None, stepsize=2):
     if start:
         font.setPointSize(start)
@@ -181,11 +184,7 @@ class MyLabel(DynamicLabel):
         self.setWordWrap(True)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(40)
-        shadow.setColor(QColor("black"))
-        shadow.setOffset(3)
-        self.setGraphicsEffect(shadow)
+        add_shadow(self)
 
         palette = QPalette()
         palette.setColor(QPalette.ColorRole.WindowText, QColor("white"))
@@ -206,11 +205,7 @@ class QuestionLabel(QLabel):
         self.font.setPointSize(fontsize)
         self.setFont(self.font)
 
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(40)
-        shadow.setColor(QColor("black"))
-        shadow.setOffset(3)
-        self.setGraphicsEffect(shadow)
+        add_shadow(self)
 
 
 class QuestionWidget(QWidget):
@@ -271,6 +266,7 @@ class QuestionWidget(QWidget):
                 self.size().width(),
                 (1 - ANSWERHEIGHT) * self.size().height(),
             )
+        qp.end()
 
 
 class DailyDoubleWidget(QuestionWidget):
@@ -350,7 +346,7 @@ class QuestionCard(CardLabel):
             self.label.setText("")
 
 
-class Board_Widget(QWidget):
+class BoardWidget(QWidget):
     cell_ratio = 3/5
     rows = 6
     columns = 6
@@ -369,13 +365,13 @@ class Board_Widget(QWidget):
 
         self.resizeEvent(None)
 
-        for x in range(Board_Widget.rows):
+        for x in range(BoardWidget.rows):
             self.grid_layout.setRowStretch(x, 1.)
-        for y in range(Board_Widget.columns):
+        for y in range(BoardWidget.columns):
             self.grid_layout.setColumnStretch(y, 1.)
 
-        for x in range(Board_Widget.rows):
-            for y in range(Board_Widget.columns):
+        for x in range(BoardWidget.rows):
+            for y in range(BoardWidget.columns):
 
                 if y == 0:
                     # Categories
@@ -614,6 +610,7 @@ class PlayerWidget(QWidget):
         qp = QPainter()
         qp.begin(self)
         qp.drawPixmap( self.rect(), self.background_img )
+        qp.end()
 
 
 class ScoreBoard(QWidget):
@@ -663,6 +660,7 @@ class ScoreBoard(QWidget):
         qp = QPainter()
         qp.begin(self)
         qp.drawPixmap( self.rect(), QPixmap( resource_path("pedestal.png") ))
+        qp.end()
 
     def buzz_hint(self, player):
         for pw in self.player_widgets:
@@ -744,6 +742,7 @@ class FinalAnswerWidget(QWidget):
                 Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
                 f"{p.wager:,}",
             )
+        qp.end()
 
 
 class Borders(object):
@@ -829,7 +828,6 @@ class DisplayWindow(QMainWindow):
         colorpal.setColor(QPalette.ColorRole.Window, BLACK)
         self.setPalette(colorpal)
 
-        # monitor = QDesktopWidget().screenGeometry(monitor)
         if DEBUG:
             if len(QGuiApplication.screens()) == 1:
                 monitor = 0
@@ -843,7 +841,7 @@ class DisplayWindow(QMainWindow):
         # self.lights_widget = LightsWidget(self)
         self.showFullScreen()
 
-        self.board_widget = Board_Widget(game, alex, self)
+        self.board_widget = BoardWidget(game, alex, self)
         self.scoreboard = ScoreBoard(game, self)
         # self.finalanswerwindow = FinalAnswerWidget(game)
         # self.finalanswerwindow.setVisible(False)
@@ -869,7 +867,8 @@ class DisplayWindow(QMainWindow):
 
         if alex:
             self.welcome_widget = Welcome(game, self)
-            self.qrwidget = None
+        else:
+            self.qrwidget = QRWidget(self.game.socket_controller.host(), self)
 
         self.setCentralWidget(self.newWidget)
         self.resizeEvent(None)
@@ -877,15 +876,15 @@ class DisplayWindow(QMainWindow):
 
 
     def resizeEvent(self, event):
+        fullrect = self.rect()
+        margins = QMargins(fullrect.width(), fullrect.height(), fullrect.width(), fullrect.height()) * 0.3
+
         if self.welcome_widget is not None:
-            fullrect = self.geometry()
-            margins = QMargins(fullrect.width(), fullrect.height(), fullrect.width(), fullrect.height()) * 0.3
             self.welcome_widget.setGeometry( fullrect - margins )
 
-    # def resizeEvent(self, event):
-    #     main_layout = self.centralWidget().layout()
-    #     main_layout.setStretchFactor( self.board_widget,2 )
-    #     self.centralWidget().setLayout(main_layout)
+        if self.qrwidget is not None:
+            self.qrwidget.setGeometry( fullrect - margins )
+
 
     def hide_question(self):
         self.board_widget.hide_question()
@@ -898,397 +897,5 @@ class DisplayWindow(QMainWindow):
         logging.info("DC load_question")
         self.board_widget.load_question(q)
 
-
-class Welcome(QWidget):
-    def __init__(self, game, parent=None):
-        super().__init__(parent)
-        self.game = game
-        self.valid_game = False
-        self.gamedata = None
-        self.song_player = SongPlayer()
-
-        if not DEBUG:
-            self.song_player.play(repeat=True)
-        else:
-            self.song_player = None
-
-
-
-        main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        main_layout.setContentsMargins(20,20,20,20)
-
-        self.icon_label = QLabel(self)
-        icon_size = 84
-        icon = QPixmap(resource_path("icon.png"))
-        self.icon_label.setPixmap(
-            icon.scaled(
-                icon_size,
-                icon_size,
-                transformMode=Qt.TransformationMode.SmoothTransformation,
-            )
-        )
-        self.icon_label.resize(icon_size, icon_size)
-
-        icon_layout = QHBoxLayout()
-        icon_layout.addStretch()
-        icon_layout.addWidget(self.icon_label)
-        icon_layout.addStretch()
-
-        main_layout.addLayout(icon_layout)
-
-
-        self.title_font = QFont()
-        self.title_font.setPointSize(24)
-        self.title_font.setBold(True)
-
-        self.title_label = QLabel("JParty!")
-        self.title_label.setFont(self.title_font)
-        self.title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        main_layout.addWidget(self.title_label)
-
-        self.version_label = QLabel(f"version {version}\nCopyright © Stuart Thomas 2022\nDistributed under the GNU General Public License (v3)")
-        self.version_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.version_label.setStyleSheet("QLabel { color : grey}")
-
-        self.version_font = QFont()
-        self.version_font.setPointSize(10)
-        self.version_label.setFont(self.version_font)
-        main_layout.addWidget(self.version_label)
-
-        select_layout = QHBoxLayout()
-
-        template_url = "https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit#gid=0"
-        gameid_text = f"Game ID:<br>(from J-Archive URL) <br>or <a href=\"{template_url}\">GSheet ID for custom game</a>"
-        gameid_label = QLabel(gameid_text, self)
-        gameid_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        gameid_label.setOpenExternalLinks(True)
-        select_layout.addWidget(gameid_label)
-
-        self.textbox = QLineEdit(self)
-        self.textbox.resize(100, 40)
-        self.textbox.textChanged.connect(self.show_summary)
-        f = self.textbox.font()
-        f.setPointSize(30)  # sets the size to 27
-        self.textbox.setFont(f)
-        select_layout.addWidget(self.textbox)
-
-        button_layout = QVBoxLayout()
-        self.start_button = QPushButton("Start!", self)
-        self.start_button.setToolTip("Start Game")
-        self.start_button.clicked.connect(self.init_game)
-        button_layout.addWidget(self.start_button)
-
-        self.rand_button = QPushButton("Random", self)
-        self.rand_button.setToolTip("Get a Random Game")
-        self.rand_button.clicked.connect(self.random)
-        button_layout.addWidget(self.rand_button)
-        select_layout.addLayout(button_layout)
-
-        main_layout.addLayout(select_layout)
-
-        self.summary_label = QLabel("", self)
-        self.summary_label.setWordWrap(True)
-        self.summary_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.summary_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        main_layout.addWidget(self.summary_label, 1)
-
-        self.help_button = QPushButton("Show help", self)
-        self.help_button.clicked.connect(self.show_help)
-        help_button_layout = QHBoxLayout()
-        help_button_layout.addStretch()
-        help_button_layout.addWidget(self.help_button)
-        help_button_layout.addStretch()
-
-        main_layout.addLayout(help_button_layout)
-        main_layout.addStretch()
-        # main_layout.addWidget(self.help_button, 1)
-
-        self.setLayout(main_layout)
-
-
-        # qtRectangle = self.geometry()
-        # centerPoint = self.parent().geometry().center()
-        # qtRectangle.moveCenter(centerPoint)
-        # self.move(qtRectangle.topLeft())
-
-        if DEBUG:
-            self.textbox.setText(str(2534))  # EDIT
-
-        ### FOR TESTING
-
-        # self.socket_controller.connected_players = [
-        # Player("Stuart", None),
-        # ]
-        # self.socket_controller.connected_players[0].token = bytes.fromhex(
-        # "6ab3a010ce36cc5c62e3e8f219c9be"
-        # )
-        # self.init_game()
-
-
-        self.show()
-
-
-
-    def show_help(self):
-        logging.info("Showing help")
-        msgbox = QMessageBox(
-            QMessageBox.Icon.NoIcon,
-            "JParty Help",
-            helpmsg,
-            QMessageBox.StandardButton.Ok,
-            self,
-        )
-        msgbox.exec()
-        # self.initUI()
-
-        # if os.path.exists(".bkup"):
-        #     logging.info("backup")
-        #     self.run_game(pickle.load(open(".bkup", "rb")))
-
-    def paintEvent(self, event):
-        qp = QPainter()
-        qp.begin(self)
-
-        qp.setBrush(FILLBRUSH)
-        qp.drawRect(self.rect())
-
-    # def show_overlay(self):
-    #     if not DEBUG:
-    #         self.host_overlay = HostOverlay(self.socket_controller.host())
-    #         self.windowHandle().setScreen(QApplication.instance().screens()[1])
-    #         self.host_overlay.showNormal()
-
-
-    def _random(self):
-        complete = False
-        while not complete:
-            game_id = get_random_game()
-            logging.info(f"GAMEID {game_id}")
-            complete = all(b.complete for b in get_game(game_id).rounds)
-
-
-        self.textbox.setText(str(game_id))
-        self.textbox.show()
-
-    def random(self, checked):
-        self.summary_label.setText("Loading...")
-        t = Thread(target=self._random)
-        t.start()
-
-    @updateUI
-    def _show_summary(self):
-        game_id = self.textbox.text()
-        try:
-            self.gamedata = get_game(game_id)
-            if all(b.complete for b in self.gamedata.rounds):
-                self.summary_label.setText(self.gamedata.date + "\n" + self.gamedata.comments)
-                self.valid_game = True
-            else:
-                self.summary_label.setText("Game has blank questions")
-                self.valid_game = False
-        except ValueError as e:
-            self.summary_label.setText("invalid game id")
-            self.valid_game = False
-        self.check_start()
-
-    def show_summary(self, text=None):
-        logging.info("show sum")
-        self.summary_label.setText("Loading...")
-        t = Thread(target=self._show_summary)
-        t.start()
-
-        self.check_start()
-
-
-    def check_start(self):
-        if self.startable():
-            self.start_button.setEnabled(True)
-        else:
-            self.start_button.setEnabled(False)
-
-    def startable(self):
-        if DEBUG:
-            return True
-        return (
-            self.valid_game
-            and len(self.socket_controller.connected_players) > 0
-            and len(QApplication.instance().screens()) > 1
-        )
-
-    def init_game(self):
-        try:
-            game_id = self.textbox.text()
-            if type(game_id) == str:
-                get_game(game_id)
-
-        except ValueError as e:
-            error_dialog = QErrorMessage()
-            error_dialog.showMessage("Invalid game ID - change sharing permissions & try again")
-            return False
-
-        self.gamedata = get_game(game_id)
-        game = Game(self.gamedata)
-        game.welcome_window = self
-        game.players = self.socket_controller.connected_players
-        if DEBUG:
-            game.players = [
-                Player(f"Stuart", None),
-                Player(f"Maddie", None),
-                Player(f"Koda", None)
-            ]
-
-        self.run_game(game)
-
-    def run_game(self, game):
-        if self.song_player:
-            self.song_player.stop()
-        self.socket_controller.game = game
-        game.buzzer_controller = self.socket_controller
-
-
-        if not DEBUG:
-            self.host_overlay.close()
-        self.show_board(game)
-
-    def show_board(self, game):
-        game.alex_window = DisplayWindow(alex=True, monitor=0)
-        game.main_window = DisplayWindow(alex=False, monitor=1)
-        game.dc += game.alex_window
-        game.dc += game.main_window
-
-        self.start_button.setEnabled(False)
-
-    def restart(self):
-        self.player_view.close()
-        self.player_view = PlayerView(self.rect() - QMargins(0, 210, 0, 0), parent=self)
-        # self.show_overlay()
-        QTimer.singleShot(500, self.show_overlay)
-
-        self.start_button.setEnabled(False)
-
-    @updateUI
-    def new_player(self, player):
-        PlayerView.new_player(player)
-        self.check_start()
-        # label = self.player_labels[len(self.socket_controller.connected_players) - 1]
-        # label.setText(player.name)
-        # label.setFixedWidth(LABELWIDTH)
-        # label.move(label.pos() + QPoint((MOVIEWIDTH - LABELWIDTH)/2,0))
-        # label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # self.check_start()
-
-    @updateUI
-    def buzz_hint(self, i_player):
-        player = self.socket_controller.connected_players[i_player]
-        PlayerView.buzz_hint(player)
-        # for l in self.player_labels:
-        # if player.name == l.text():
-        # l.setStyleSheet("QLabel { background-color : grey}")
-        # def return_to_default(label=l, widget=self):
-        # l.setStyleSheet("QLabel { background-color : none}")
-        # self.update()
-
-        # t = threading.Timer(0.1, return_to_default)
-        # t.start()
-
-        # break
-
     def closeEvent(self, event):
-        if os.path.exists(".bkup"):
-            os.remove(".bkup")
-        QApplication.quit()
-
-
-class PlayerLabel(QLabel):
-    loading_movie = None
-
-    def __init__(self, fontsize, parent=None):
-        super().__init__(parent)
-        self.fontsize = fontsize
-
-        cls = type(self)
-        if not cls.loading_movie:
-            cls.loading_movie = QMovie(resource_path("loading.gif"))
-            cls.loading_movie.setScaledSize(QSize(MOVIEWIDTH, MOVIEWIDTH))
-            cls.loading_movie.start()
-        # self.player_heading.setGeometry(0, 140, self.rect().width(), 50)
-        # self.player_heading.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        f = self.font()
-        f.setPointSize(self.fontsize)
-        self.setFont(f)
-        self.setAutoFillBackground(True)
-
-        self.setMovie(cls.loading_movie)
-
-        self.blink_timer = None
-
-    def buzz_hint(self):
-        self.setStyleSheet("QLabel { background-color : grey}")
-        self.blink_timer = QTimer()
-        # self.blink_timer.moveToThread(QApplication.instance().thread())
-        self.blink_timer.timeout.connect(self._buzz_hint_callback)
-        self.blink_timer.start(100)
-
-    def _buzz_hint_callback(self):
-        self.setStyleSheet("QLabel { background-color : none}")
-class HostOverlay(QWidget):
-    def __init__(self, host):
-        QMainWindow.__init__(self)
-        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        if DEBUG:
-            screen = QGuiApplication.screens()[0]
-        else:
-            screen = QGuiApplication.screens()[1]
-
-        screen_width = screen.size().width()
-        display_width = int(0.7 * screen_width)
-        display_height = int(0.2 * display_width)
-        font_size = int(0.06 * display_width)
-
-        self.setWindowFlags(
-            Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.X11BypassWindowManagerHint
-        )
-        self.setGeometry(
-            QStyle.alignedRect(
-                Qt.LayoutDirection.LeftToRight,
-                Qt.AlignmentFlag.AlignCenter,
-                QSize(display_width, display_height),
-                screen.geometry(),
-            )
-        )
-
-        font = QFont()
-        font.setPointSize(font_size)
-
-
-        url = "http://" + host
-
-        self.label = QLabel(url, self)
-        self.label.setGeometry(
-            self.rect() - QMargins(0, 0, 0, self.rect().height() // 2)
-        )
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setFont(font)
-
-        self.qrlabel = QLabel(self)
-        self.qrlabel.setPixmap(
-            qrcode.make(url,
-                        image_factory=Image,
-                        box_size=self.label.rect().height()//30).pixmap())
-
-        self.qrlabel.setGeometry( self.label.rect())
-        self.qrlabel.setAlignment(Qt.AlignmentFlag.AlignRight)
-        #     self.label.geometry().right(),
-        #     self.label.geometry().y(),
-        #     self.label.geometry().height(),
-        #     self.label.geometry().height()
-        # ))
-
-
-        self.show()
-
-    def closeEvent(self, event):
-        event.accept()
+        self.game.close()

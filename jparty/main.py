@@ -1,6 +1,5 @@
 import sys
 import os
-from random import shuffle
 from PyQt6.QtGui import (
     QImage,
     QPainter,
@@ -27,22 +26,19 @@ import logging
 
 import pickle
 from threading import Thread, active_count
-from random import choice
 import time
 import subprocess
-import qrcode
 
 import threading
 from functools import partial
 
 # from .data_rc import *
-from .retrieve import get_game, get_game_sum, get_random_game
+from .retrieve import get_game, get_game_sum
 from .controller import BuzzerController
 from .boardwindow import DisplayWindow
 from .game import Player, Game
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path
-from .version import version
 from .logger import qt_exception_hook
 
 
@@ -58,34 +54,6 @@ def updateUI(f):
 MOVIEWIDTH = 64
 LABELFONTSIZE = 15
 OVERLAYFONTSIZE = 40
-
-
-
-class Image(qrcode.image.base.BaseImage):
-    def __init__(self, border, width, box_size):
-        self.border = border
-        self.width = width
-        self.box_size = box_size
-        size = (width + border * 2) * box_size
-        self._image = QImage(
-            size, size, QImage.Format.Format_RGB16)
-        self._image.fill(Qt.GlobalColor.white)
-
-    def pixmap(self):
-        return QPixmap.fromImage(self._image)
-
-    def drawrect(self, row, col):
-        painter = QPainter(self._image)
-        painter.fillRect(
-            (col + self.border) * self.box_size,
-            (row + self.border) * self.box_size,
-            self.box_size, self.box_size,
-            Qt.GlobalColor.black)
-
-    def save(self, stream, kind=None):
-        pass
-
-
 
     # def restart(self):
     # self.playerview.close()
@@ -150,45 +118,50 @@ def main():
     # r = app.exec()
 
     app = QApplication(sys.argv)
-    check_second_monitor()
+    # check_second_monitor()
+    app.setFont(QFont("Verdana"))
 
-    try:
+    # try:
         # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
-        game = Game()
+    game = Game()
 
-        socket_controller = BuzzerController(game)
-        host_window = DisplayWindow(game, alex=True, monitor=0)
-        main_window = DisplayWindow(game, alex=False, monitor=1)
-        game.setDisplays(host_window, main_window)
-        game.setSocketController(socket_controller)
+    socket_controller = BuzzerController(game)
+    game.setSocketController(socket_controller)
 
+    host_window = DisplayWindow(game, alex=True, monitor=0)
+    main_window = DisplayWindow(game, alex=False, monitor=0)
+    game.setDisplays(host_window, main_window)
 
-
-        # if DEBUG:
-        #     game.players = [
-        #         Player(f"Stuart", None),
-        #         Player(f"Maddie", None),
-        #         Player(f"Koda", None)
-        #     ]
-        #     game.dc.scoreboard.refresh_players()
+    game.start()
 
 
-        # song_player = wel.song_player
-        try:
-            socket_controller.start()
-        except PermissionError as e:
-            permission_error()
-            raise e
 
-        r = app.exec()
+    # if DEBUG:
+    #     game.players = [
+    #         Player(f"Stuart", None),
+    #         Player(f"Maddie", None),
+    #         Player(f"Koda", None)
+    #     ]
+    #     game.dc.scoreboard.refresh_players()
 
-    finally:
-        logging.info("terminated")
-        if song_player:
-            song_player.stop()
-        if not DEBUG:
-            try:
-                sys.exit(r)
-            except NameError:
-                sys.exit(1)
+
+    song_player = game.song_player
+    try:
+        socket_controller.start()
+    except PermissionError as e:
+        permission_error()
+        raise e
+
+    r = app.exec()
+
+
+    # finally:
+    #     logging.info("terminated")
+    #     if song_player:
+    #         song_player.stop()
+    #     if not DEBUG:
+    #         try:
+    #             sys.exit(r)
+    #         except NameError:
+    #             sys.exit(1)
