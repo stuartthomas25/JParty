@@ -10,10 +10,10 @@
 
 * TODO make sure HostOverlay doesn't crash (see Nayib's email)
 * TODO Bug fix: leaving buzzer and returning during wager period sets maximum to 100
-* TODO Scaling issue on TV
-* TODO team - multiple buzzers same score
-* TODO self-hosting mode (players pick next category on their screen and select if they got the question right/wrong)
+* DONE Scaling issue on TV
+* WAIT team - multiple buzzers same score
+* NO self-hosting mode (players pick next category on their screen and select if they got the question right/wrong)
 * TODO remove players
-* TODO Incorporate signature pad [[https://szimek.github.io/signature_pad/]]
+* DONE Incorporate signature pad [[https://szimek.github.io/signature_pad/]]
 * TODO Make welcome screen full screen
-* TODO remove "name taken" feature
+* DONE remove "name taken" feature
