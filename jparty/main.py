@@ -35,7 +35,7 @@ from functools import partial
 # from .data_rc import *
 from .retrieve import get_game, get_game_sum
 from .controller import BuzzerController
-from .boardwindow import DisplayWindow
+from .boardwindow import DisplayWindow, HostDisplayWindow
 from .game import Player, Game
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path, check_internet
@@ -122,47 +122,37 @@ def main():
     check_internet()
     app.setFont(QFont("Verdana"))
 
-    # try:
+    try:
         # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
-    game = Game()
+        game = Game()
 
-    socket_controller = BuzzerController(game)
-    game.setSocketController(socket_controller)
+        socket_controller = BuzzerController(game)
+        game.setSocketController(socket_controller)
 
-    host_window = DisplayWindow(game, alex=True, monitor=0)
-    main_window = DisplayWindow(game, alex=False, monitor=0)
-    game.setDisplays(host_window, main_window)
+        main_window = DisplayWindow(game)
+        host_window = HostDisplayWindow(game)
+        game.setDisplays(host_window, main_window)
 
-    game.begin()
-
-
-
-    # if DEBUG:
-    #     game.players = [
-    #         Player(f"Stuart", None),
-    #         Player(f"Maddie", None),
-    #         Player(f"Koda", None)
-    #     ]
-    #     game.dc.scoreboard.refresh_players()
+        game.begin()
 
 
-    song_player = game.song_player
-    try:
-        socket_controller.start()
-    except PermissionError as e:
-        permission_error()
-        raise e
+        song_player = game.song_player
+        try:
+            socket_controller.start()
+        except PermissionError as e:
+            permission_error()
+            raise e
 
-    r = app.exec()
+        r = app.exec()
 
 
-    # finally:
-    #     logging.info("terminated")
-    #     if song_player:
-    #         song_player.stop()
-    #     if not DEBUG:
-    #         try:
-    #             sys.exit(r)
-    #         except NameError:
-    #             sys.exit(1)
+    finally:
+        logging.info("terminated")
+        if song_player:
+            song_player.stop()
+        if not DEBUG:
+            try:
+                sys.exit(r)
+            except NameError:
+                sys.exit(1)

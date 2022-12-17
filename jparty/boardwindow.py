@@ -35,7 +35,7 @@ from .welcome_widget import Welcome, QRWidget
 import os
 from .retrieve import get_game, get_game_sum, get_random_game
 from .game import game_params as gp
-from .utils import resource_path, SongPlayer, add_shadow
+from .utils import resource_path, SongPlayer, add_shadow, DynamicLabel
 from .constants import DEBUG
 from .helpmsg import helpmsg
 import time
@@ -108,74 +108,12 @@ SCOREHEIGHT = 0.15
 ANSWERHEIGHT = 0.15
 
 ANSWERBARS = 30
-ANSWERSECS = 5
 
 FINALANSWERHEIGHT = 0.6
 
 def updateUI(f):
     return f
 
-
-def autofitsize(text, font, rect, start=None, stepsize=2):
-    if start:
-        font.setPointSize(start)
-
-    size = font.pointSize()
-    flags = Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter
-
-    def fullrect(font, text=text, flags=flags):
-        fm = QFontMetrics(font)
-        return fm.boundingRect(rect, flags, text)
-
-    newrect = fullrect(font)
-    if not rect.contains(newrect):
-        while size > 0:
-            size -= stepsize
-            font.setPointSize(size)
-            newrect = fullrect(font)
-            if rect.contains(newrect):
-                return font.pointSize()
-
-        logging.warn(f"Nothing fit! (text='{text}')")
-        print(f"Nothing fit! (text='{text}')")
-
-    return size
-
-class DynamicLabel(QLabel):
-    def __init__(self, text, initialSize, parent=None):
-        super().__init__( text, parent )
-        self.__initialSize = initialSize
-
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-
-    ### These three re-override QLabel's versions
-    def sizeHint(self):
-        return QSize()
-
-    def initialSize(self):
-        if callable(self.__initialSize):
-            return self.__initialSize()
-        else:
-            return self.__initialSize
-
-    def setText(self, text):
-        super().setText(text)
-        self.resizeEvent(None)
-
-    def minimizeSizeHint(self):
-        return QSize()
-
-    def heightForWidth(self, w):
-        return -1
-
-    def resizeEvent(self, event):
-        if self.size().height() == 0 or self.text() == "":
-            return None
-
-        fontsize = autofitsize(self.text(), self.font(), self.rect(), start=self.initialSize())
-        font = self.font()
-        font.setPointSize(fontsize)
-        self.setFont(font)
 
 
 class MyLabel(DynamicLabel):
@@ -195,80 +133,52 @@ class MyLabel(DynamicLabel):
         self.show()
 
 
-class QuestionLabel(QLabel):
-    def __init__(self, text, rect, parent=None):
-        super().__init__(text, parent)
-        self.setStyleSheet("color: white;")
-        self.setGeometry(QRect(rect))
-        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setWordWrap(True)
-        self.font = QFont("Helvetica")
-        fontsize = autofitsize(text, self.font, rect, start=72)
-        self.font.setPointSize(fontsize)
-        self.setFont(self.font)
+# class QuestionLabel(MyLabel):
+#     def __init__(self, text, initialSize, parent=None):
+#         super().__init__(text, parent)
+#         self.setStyleSheet("color: white;")
+#         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+#         self.setWordWrap(True)
+#         self.font = QFont("Helvetica")
+#         self.font.setPointSize(fontsize)
+#         self.setFont(self.font)
 
-        add_shadow(self)
+#         add_shadow(self)
 
 
 class QuestionWidget(QWidget):
     def __init__(self, question, parent=None):
         super().__init__(parent)
         self.question = question
+        self.setAutoFillBackground(True)
 
-        self.responses_open = False
+        self.main_layout = QVBoxLayout()
+        self.question_label = MyLabel(question.text, self.startFontSize, self)
+        self.main_layout.addWidget(self.question_label)
+        self.setLayout(self.main_layout)
 
-        # pheight = parent.geometry().height()
-        # height = pheight * (1 - SCOREHEIGHT)
-        # width = height / CELLRATIO
-        self.resize(parent.size())
-        # self.move(
-        # self.parent().geometry().width() / 2 - self.parent().board_widget.geometry().width() / 2, 0
-        # )
-        alex = self.parent().alex
-
-        if alex:
-            anheight = ANSWERHEIGHT * self.size().height()
-            self.qurect = self.rect().adjusted(
-                QUMARGIN, QUMARGIN, -2 * QUMARGIN, -ANSWERHEIGHT * self.size().height(),
-            )
-            self.anrect = QRect(
-                QUMARGIN,
-                self.size().height() * (1 - ANSWERHEIGHT),
-                self.size().width() - 2 * QUMARGIN,
-                ANSWERHEIGHT * self.size().height(),
-            )
-            self.answer_label = QuestionLabel(question.answer, self.anrect, self)
-            text = question.text
-
-        else:
-            self.qurect = self.rect().adjusted(
-                QUMARGIN, QUMARGIN, -2 * QUMARGIN, -2 * QUMARGIN
-            )
-            self.anrect = None
-            self.answer_label = None
-
-            text = question.text.upper()
-
-        self.question_label = QuestionLabel(text, self.qurect, self)
-
+        self.setPalette(CARDPAL)
         self.show()
+
+    def startFontSize(self):
+        return self.width() * 0.05
+
+
+class HostQuestionWidget(QuestionWidget):
+    def __init__(self, question, parent=None):
+        super().__init__(question, parent)
+
+        self.main_layout.setStretchFactor(self.question_label, 6)
+        self.answer_label = MyLabel(question.answer, self.startFontSize, self)
+        self.main_layout.addWidget(self.answer_label, 1)
+        self.setLayout(self.main_layout)
+
 
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
-
-        qp.setBrush(FILLBRUSH)
-        qp.drawRect(self.rect())
-        # Show question
-        if self.parent().alex:
-            anheight = ANSWERHEIGHT * self.size().height()
-            qp.drawLine(
-                0,
-                (1 - ANSWERHEIGHT) * self.size().height(),
-                self.size().width(),
-                (1 - ANSWERHEIGHT) * self.size().height(),
-            )
-        qp.end()
+        line_y = self.answer_label.geometry().top()
+        qp.drawLine(0, line_y, self.width(), line_y)
 
 
 class DailyDoubleWidget(QuestionWidget):
@@ -281,7 +191,6 @@ class DailyDoubleWidget(QuestionWidget):
         self.dd_label = QuestionLabel("DAILY<br/>DOUBLE!", self.qurect, self)
         self.dd_label.setFont(QFont("Helvetica", 140))
         self.dd_label.setVisible(True)
-        self.update()
 
     def show_question(self):
         self.question_label.setVisible(True)
@@ -291,10 +200,9 @@ class DailyDoubleWidget(QuestionWidget):
 
 
 class CardLabel(QWidget):
+    margin = 0.1
     def __init__(self, text, parent=None):
         super().__init__(parent)
-
-        self.__margin = 0.1
 
         self.label = MyLabel(text, self.startFontSize, parent=self)
 
@@ -309,8 +217,8 @@ class CardLabel(QWidget):
         return self.height() * 0.3
 
     def labelRect(self):
-        wmargin = int(self.__margin * self.width())
-        hmargin = int(self.__margin * self.height())
+        wmargin = int(CardLabel.margin * self.width())
+        hmargin = int(CardLabel.margin * self.height())
         return self.rect().adjusted(wmargin, hmargin, -wmargin, -hmargin)
 
     def setText(self, text):
@@ -325,6 +233,7 @@ class CardLabel(QWidget):
             return None
 
         self.label.setGeometry(self.labelRect())
+
 
 
 class QuestionCard(CardLabel):
@@ -353,6 +262,8 @@ class QuestionCard(CardLabel):
     def startFontSize(self):
         return self.height()*0.5
 
+
+class HostQuestionCard(QuestionCard):
     def mousePressEvent(self, event):
         if self.question is not None and not self.question.complete:
             self.game.load_question(self.question)
@@ -364,10 +275,9 @@ class BoardWidget(QWidget):
     rows = 6
     columns = 6
 
-    def __init__(self, game, alex, parent=None):
+    def __init__(self, game, parent=None):
         super().__init__(parent)
         self.game = game
-        self.alex = alex
         self.__round = None
 
         self.responses_open = False
@@ -392,7 +302,10 @@ class BoardWidget(QWidget):
                     self.grid_layout.addWidget(label, 0, x)
 
                 else:
-                    label = QuestionCard(game, None)
+                    if self.parent().host():
+                        label = HostQuestionCard(game, None)
+                    else:
+                        label = QuestionCard(game, None)
                     self.grid_layout.addWidget(label, y, x)
 
 
@@ -416,121 +329,32 @@ class BoardWidget(QWidget):
     def resizeEvent(self, event):
         self.grid_layout.setSpacing(self.width() // 150)
 
-    # def paintEvent(self, event):
-    #     h = self.geometry().height()
-    #     w = self.geometry().width()
-    #     qp = QPainter()
-    #     qp.begin(self)
-    #     qp.setBrush(QBrush(YELLOW))
-    #     qp.drawRect(self.rect())
-
-    # def minimumSizeHint(self):
-    #     return QSize(self.geometry().width(), 900)
-
-    # @updateUI
-    # def resizeEvent(self, event):
-    #     print(self.geometry().height())
-    #     print(self.parent().geometry().height())
-    #     parent = self.parent()
-    #     pheight = parent.geometry().height()
-    #     height = pheight * (1 - SCOREHEIGHT)
-    #     width = height / CELLRATIO
-    #     self.resize(width + BORDERWIDTH, height)
-    #     print("RESIZE!")
-
-
     @property
     def board(self):
         return self.game.current_round
 
-    # def paintEvent(self, event):
-    #     return None
-    #     qp = QPainter()
-    #     qp.begin(self)
-    #     qp.setBrush(FILLBRUSH)
-    #     parent = self.parent()
-    #     pheight = parent.geometry().height()
-    #     height = pheight * (1 - SCOREHEIGHT)
-    #     width = height / CELLRATIO
-    #     if not self.board.final:
-    #         # Normal board
-    #         for x in range(self.board.size[0]):
-    #             for y in range(-1, self.board.size[1]):
-    #                 rel_pos = (
-    #                     x * self.cellsize[0] + BORDERWIDTH / 2,
-    #                     (y + 1) * self.cellsize[1],
-    #                 )
-    #                 cell = (x, y)
-    #                 qp.setPen(BORDERPEN)
-    #                 qp.setBrush(FILLBRUSH)
-    #                 cell_rect = QRectF(*rel_pos, *self.cellsize)
-    #                 text_rect = QRectF(cell_rect)
-    #                 text_rect.setX(cell_rect.x() + TEXTPADDING)
-    #                 text_rect.setWidth(cell_rect.width() - 2 * TEXTPADDING)
-    #                 qp.drawRect(cell_rect)
-    #                 if y == -1:
-    #                     # Categories
-    #                     qp.setPen(CATPEN)
-    #                     qp.setFont(CATFONT)
-    #                     qp.drawText(
-    #                         text_rect,
-    #                         Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
-    #                         self.board.categories[x],
-    #                     )
-    #                 else:
-    #                     # Questions
-    #                     q = self.board.get_question(*cell)
-    #                     if not q in self.game.completed_questions:
-    #                         qp.setPen(MONPEN)
-    #                         qp.setFont(MONFONT)
-    #                         if not self.board.dj:
-    #                             monies = gp.money1
-    #                         else:
-    #                             monies = gp.money2
-    #                         qp.drawText(
-    #                             text_rect,
-    #                             Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
-    #                             "$" + str(q.value),
-    #                         )
-    #     else:
-    #         # Final jeopardy
-    #         qp.setBrush(FILLBRUSH)
-    #         qp.drawRect(self.rect())
-    #         qp.setPen(CATPEN)
-    #         qp.setFont(QUFONT)
+class MainBoardWidget(BoardWidget):
+    pass
 
-    #         qurect = self.rect().adjusted(
-    #             QUMARGIN, QUMARGIN, -2 * QUMARGIN, -2 * QUMARGIN
-    #         )
-
-    #         qp.drawText(
-    #             qurect,
-    #             Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter,
-    #             self.board.categories[0],
-    #         )
-
-    @updateUI
+class HostBoardWidget(BoardWidget):
     def load_question(self, q):
         if q.dd:
             self.questionwidget = DailyDoubleWidget(q, self)
         else:
-            logging.info("Question widget!")
-            self.questionwidget = QuestionWidget(q, self)
-
-    @updateUI
-    def hide_question(self):
-        delete(self.questionwidget)
+            self.questionwidget = HostQuestionWidget(q, self)
 
 
 class PlayerWidget(QWidget):
     aspect_ratio = 0.732
     name_aspect_ratio = 1.3422
     margin = 0.05
+
     def __init__(self, game, player, parent=None):
         super().__init__(parent)
         self.player = player
         self.game = game
         self.__buzz_hint_thread = None
+        self.__light_thread = None
 
         if player.name[:21] == 'data:image/png;base64':
             i = QImage()
@@ -547,13 +371,17 @@ class PlayerWidget(QWidget):
         self.resizeEvent(None)
         self.update_score()
 
-        self.background_img = QPixmap( resource_path("player.png") )
+
+        self.main_background = QPixmap( resource_path("player.png") )
+        self.active_background= QPixmap( resource_path("player_active.png") )
+        self.lights_backgrounds = [QPixmap( resource_path(f"player_lights{i}.png") ) for i in range(1,6)]
+        self.background = self.main_background
 
         self.highlighted = False
 
         layout = QVBoxLayout()
-        layout.addStretch(4)
-        layout.addWidget(self.score_label, 11)
+        layout.addStretch(5)
+        layout.addWidget(self.score_label, 10)
         layout.addStretch(9)
         layout.addWidget(self.name_label, 32)
         layout.addStretch(10)
@@ -597,10 +425,10 @@ class PlayerWidget(QWidget):
 
 
     def __buzz_hint(self):
-        self.background_img = QPixmap( resource_path("player_active.png") )
+        self.background = self.active_background
         self.update()
         time.sleep(0.25)
-        self.background_img = QPixmap( resource_path("player.png") )
+        self.background = self.main_background
         self.update()
 
     def buzz_hint(self):
@@ -610,6 +438,7 @@ class PlayerWidget(QWidget):
         self.__buzz_hint_thread.start()
 
     def update_score(self):
+        logging.info("update_score")
         score = self.player.score
         palette = self.score_label.palette()
         if score < 0:
@@ -620,15 +449,35 @@ class PlayerWidget(QWidget):
 
         self.score_label.setText( f"{score:,}" )
 
+    def run_lights(self):
+        self.__light_thread = Thread(target=self.__lights, name="lights")
+        self.__light_thread.start()
+
+    def stop_lights(self):
+        self.__light_thread = None
+        self.background = self.main_background
+        self.update()
+
+    def __lights(self):
+        for img in self.lights_backgrounds:
+            self.background = img
+            self.update()
+            time.sleep(1.0)
+            if self.__light_thread is None: # provide stopability
+                return None
+
+        self.background = self.active_background
+        self.update()
+
+
     def mousePressEvent(self, event):
-        print(self.player.name)
         self.game.adjust_score(self.player)
         self.update_score()
 
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
-        qp.drawPixmap( self.rect(), self.background_img )
+        qp.drawPixmap( self.rect(), self.background )
         qp.end()
 
 
@@ -647,27 +496,18 @@ class ScoreBoard(QWidget):
         self.setLayout(self.player_layout)
         self.show()
 
-
-    def resizeEvent(self, event):
-        pass
-        # spacing  = int( self.width() / (len(self.game.players) + 1) * 0.3 )
-        # self.player_layout.setContentsMargins( spacing, 0, spacing, 0)
-        # self.player_layout.setSpacing( spacing )
-
     def minimumHeight(self):
         return 0.2 * self.width()
 
     def refresh_players(self):
         for pw in self.player_widgets:
             if pw.player not in self.game.players:
-                print("remove player")
                 self.player_layout.removeWidget(pw)
                 self.player_widgets.remove(pw)
                 delete(pw)
 
         for (i,p) in enumerate(self.game.players):
             if not any(pw.player is p for pw in self.player_widgets):
-                print("add player")
                 pw = PlayerWidget(self.game, p, self)
                 self.player_layout.insertWidget(2*i+1, pw)
                 self.player_layout.insertStretch(2*i+2)
@@ -681,10 +521,10 @@ class ScoreBoard(QWidget):
         qp.drawPixmap( self.rect(), QPixmap( resource_path("pedestal.png") ))
         qp.end()
 
-    def buzz_hint(self, player):
-        for pw in self.player_widgets:
-            if pw.player is player:
-                pw.buzz_hint()
+    # def buzz_hint(self, player):
+    #     for pw in self.player_widgets:
+    #         if pw.player is player:
+    #             pw.buzz_hint()
 
 
 class FinalAnswerWidget(QWidget):
@@ -767,12 +607,23 @@ class FinalAnswerWidget(QWidget):
 class Borders(object):
     def __init__(self, parent):
         super().__init__()
-        self.left  = BorderWidget(parent, -1)
-        self.right = BorderWidget(parent,  1)
+        if parent.host():
+            self.left  = HostBorderWidget(parent, -1)
+            self.right = HostBorderWidget(parent,  1)
+        else:
+            self.left  = BorderWidget(parent, -1)
+            self.right = BorderWidget(parent,  1)
 
     def __iter__(self):
         return iter([self.left, self.right])
 
+
+    def flash(self):
+        self.lights(False)
+        time.sleep(0.2)
+        self.lights(True)
+        time.sleep(0.2)
+        self.lights(False)
 
     def lights(self, val):
         for b in self:
@@ -788,43 +639,55 @@ class Borders(object):
 
 
 class BorderWidget(QWidget):
-    def __init__(self, parent=None, d=1):
+    def __init__(self, parent, d):
         super().__init__(parent)
         self.d = d
-
-        self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(0,0,0,0)
-        self.hint_label = QLabel(self)
-
-        # icon_size = 64
-        # self.icon_label.setPixmap(
-        #     QPixmap(resource_path("space.png")).scaled(
-        #         icon_size,
-        #         icon_size,
-        #         transformMode=Qt.TransformationMode.SmoothTransformation,
-        #     )
-        # )
-        #
-        self.space_image = QPixmap(resource_path("space.png"))
-
-        self.layout.addWidget(self.hint_label)
-        self.setLayout(self.layout)
-
+        self.__lit = False
         self.show()
 
     def lights(self, val):
-        color = val if WHITE else BLACK
-        palette = self.palette()
-        palette.setColor(QPalette.ColorRole.Window, color)
-        self.setPalette(palette)
+        self.__lit = val
+        self.update()
+
+    def sizeHint(self):
+        return QSize()
+
+    def paintEvent(self, event):
+        qp = QPainter()
+        qp.begin(self)
+        if self.__lit:
+            qp.setBrush(QBrush(QColor("white")))
+            qp.drawRect(self.rect())
 
     def arrowhints(self, val):
         pass
 
     def spacehints(self, val):
+        pass
+
+
+class HostBorderWidget(BorderWidget):
+    def __init__(self, parent, d):
+        super().__init__(parent, d)
+        self.layout = QVBoxLayout()
+        self.hint_label = QLabel(self)
+
+        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.addWidget(self.hint_label)
+        self.setLayout(self.layout)
+
+        self.__space_image = QPixmap(resource_path("space.png"))
+        self.__arrow_image = QPixmap(resource_path(("right" if d==1 else "left") + "-arrow.png"))
+        self.__arrow_lit = False
+        self.show()
+
+    def arrowhints(self, val):
+        logging.info(f"ARROWHINTS {val}")
+        self.__arrow_lit = val
         if val:
+            self.hint_label.setMargin(self.width() * 0.05)
             self.hint_label.setPixmap(
-                self.space_image.scaled( self.size(),
+                self.__arrow_image.scaled( self.size() * 0.9,
                                          Qt.AspectRatioMode.KeepAspectRatio,
                                          transformMode=Qt.TransformationMode.SmoothTransformation
                 )
@@ -832,16 +695,36 @@ class BorderWidget(QWidget):
         else:
             self.hint_label.setPixmap(QPixmap())
 
-    def sizeHint(self):
-        return QSize()
+    def spacehints(self, val):
+        if val:
+            self.hint_label.setPixmap(
+                self.__space_image.scaled( self.size() * 0.9,
+                                         Qt.AspectRatioMode.KeepAspectRatio,
+                                         transformMode=Qt.TransformationMode.SmoothTransformation
+                )
+            )
+        else:
+            self.hint_label.setPixmap(QPixmap())
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        qp = QPainter()
+        qp.begin(self)
+        if self.__arrow_lit:
+            qp.setBrush(QBrush(QColor("#ff0000" if self.d==1 else "#33cc33")))
+            qp.drawRect(self.rect())
+
+
+
+
 
 
 class DisplayWindow(QMainWindow):
-    def __init__(self, game, alex=True, monitor=0):
+    def __init__(self, game):
+
         super().__init__()
-        self.alex = alex
         self.game = game
-        self.setWindowTitle("Host" if alex else "Board")
+        self.setWindowTitle("Host" if self.host() else "Board")
 
         colorpal = QPalette()
         colorpal.setColor(QPalette.ColorRole.Window, BLACK)
@@ -851,16 +734,15 @@ class DisplayWindow(QMainWindow):
             if len(QGuiApplication.screens()) == 1:
                 monitor = 0
 
-        monitor = QGuiApplication.screens()[monitor].geometry()
+        monitor = QGuiApplication.screens()[self.monitor()].geometry()
 
-        # self.move(monitor.left(), monitor.top())  # move to monitor 0
         self.welcome_widget = None
-        self.qrwidget = None
+        self.question_widget = None
 
         # self.lights_widget = LightsWidget(self)
-        self.showFullScreen()
+        # self.showFullScreen()
 
-        self.board_widget = BoardWidget(game, alex, self)
+        self.board_widget = BoardWidget(game, self)
         self.scoreboard = ScoreBoard(game, self)
         # self.finalanswerwindow = FinalAnswerWidget(game)
         # self.finalanswerwindow.setVisible(False)
@@ -883,46 +765,78 @@ class DisplayWindow(QMainWindow):
         self.newWidget = QWidget(self)
         self.newWidget.setLayout(self.main_layout)
 
-
-        if alex:
-            self.welcome_widget = Welcome(game, self)
-        else:
-            self.qrwidget = QRWidget(self.game.socket_controller.host(), self)
+        self.welcome_widget = self.create_start_menu()
 
         self.setCentralWidget(self.newWidget)
         self.resizeEvent(None)
         self.show()
 
+    def host(self):
+        return False
 
+    def monitor(self):
+        return 0
+
+    def create_start_menu(self):
+        return QRWidget(self.game.socket_controller.host(), self)
+
+    def create_question_widget(self, q):
+        if q.dd:
+            self.questionwidget = DailyDoubleWidget(q, self)
+        else:
+            self.questionwidget = QuestionWidget(q, self)
 
     def resizeEvent(self, event):
         fullrect = self.rect()
         margins = QMargins(fullrect.width(), fullrect.height(), fullrect.width(), fullrect.height()) * 0.3
-
         if self.welcome_widget is not None:
             self.welcome_widget.setGeometry( fullrect - margins )
-
-        if self.qrwidget is not None:
-            self.qrwidget.setGeometry( fullrect - margins )
 
     def hide_welcome_widgets(self):
         if self.welcome_widget is not None:
             self.welcome_widget.setVisible(False)
-
-        if self.qrwidget is not None:
-            self.qrwidget.setVisible(False)
-
+            self.welcome_widget.setDisabled(True)
 
     def hide_question(self):
-        self.board_widget.hide_question()
-
-    def keyPressEvent(self, event):
-        if self.game is not None:
-            self.game.keystroke_manager.call(event.key())
+        self.board_widget.setVisible(True)
+        self.board_widget.setDisabled(False)
+        self.board_layout.replaceWidget(self.question_widget, self.board_widget)
+        delete(self.question_widget)
 
     def load_question(self, q):
-        logging.info("DC load_question")
-        self.board_widget.load_question(q)
+        self.question_widget = self.create_question_widget(q)
+        self.board_widget.setVisible(False)
+        self.board_widget.setDisabled(True)
+        self.board_layout.replaceWidget(self.board_widget, self.question_widget)
 
     def closeEvent(self, event):
         self.game.close()
+
+    def player_widget(self, player):
+        for pw in self.scoreboard.player_widgets:
+            if pw.player is player:
+                return pw
+
+class HostDisplayWindow(DisplayWindow):
+    def __init__(self, game):
+        super().__init__(game)
+
+    def host(self):
+        return True
+
+    def monitor(self):
+        logging.warn("Using one monitor!")
+        return 0
+
+    def create_start_menu(self):
+        return Welcome(self.game, self)
+
+
+    def create_question_widget(self, q):
+        if q.dd:
+            self.questionwidget = DailyDoubleWidget(q, self)
+        else:
+            self.questionwidget = HostQuestionWidget(q, self)
+
+    def keyPressEvent(self, event):
+        self.game.keystroke_manager.call(event.key())

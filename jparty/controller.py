@@ -115,18 +115,10 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
 
     def init_player(self, name):
 
-        if len(self.controller.connected_players) >= 8:
+        if not self.controller.accepting_players:
             logging.info("Game full!")
             self.send("GAMEFULL")
             return
-
-        for p in self.controller.connected_players:
-            if p.name == name:
-                logging.info("Name taken!")
-                self.send("NAMETAKEN")
-                return
-            elif name == "":
-                return
 
         self.player = Player(name, self)
         self.application.controller.new_player(self.player)
@@ -147,7 +139,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         data = {"message": msg, "text": text}
         try:
             self.write_message(data)
-            logging.info(f"Sent {data} to {self.player.name}")
+            logging.info(f"Sent {data}")
         except:
             logging.error(f"Error sending message {msg}", exc_info=True)
 
@@ -166,6 +158,7 @@ class BuzzerController:
         )  # this is to remove sleep mode on Macbook network card
         self.port = options.port
         self.connected_players = []
+        self.accepting_players = True
 
     def start(self, threaded=True):
         self.app.listen(self.port)
@@ -202,6 +195,8 @@ class BuzzerController:
 
     def new_player(self, player):
         self.connected_players.append(player)
+        if len(self.connected_players) >= 8:
+            self.accepting_players = False
         self.game.new_player_trigger.emit()
 
     # def activate_buzzer(self, name):
