@@ -12,7 +12,7 @@ from .constants import DEBUG
 from .environ import root
 
 log_filename = os.path.join(root, "latest.log")
-logging.basicConfig(filename=log_filename, encoding="utf-8", level=logging.DEBUG)
+# logging.basicConfig(filename=log_filename, encoding="utf-8", level=logging.DEBUG)
 logging.basicConfig(encoding="utf-8", level=logging.DEBUG)
 
 # basic logger functionality

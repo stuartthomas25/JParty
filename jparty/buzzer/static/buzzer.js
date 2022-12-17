@@ -166,7 +166,7 @@ var updater = {
             switch (jsondata.message) {
                 case "GAMEFULL":
                     //alert((Date.now()-last_buzz) % 1000);
-                    alert("This game already has three players!")
+                    alert("Game has started or has too many players!")
                     break;
                 case "NAMETAKEN":
                     alert("That name is already taken");

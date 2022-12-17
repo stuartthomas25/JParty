@@ -8,12 +8,13 @@
 * DONE automatically skip games with blank questions
 * DONE add timeout sound effects
 
-* TODO make sure HostOverlay doesn't crash (see Nayib's email)
+* DONE make sure HostOverlay doesn't crash (see Nayib's email)
 * TODO Bug fix: leaving buzzer and returning during wager period sets maximum to 100
 * DONE Scaling issue on TV
 * WAIT team - multiple buzzers same score
 * NO self-hosting mode (players pick next category on their screen and select if they got the question right/wrong)
 * TODO remove players
 * DONE Incorporate signature pad [[https://szimek.github.io/signature_pad/]]
-* TODO Make welcome screen full screen
+* DONE Make welcome screen full screen
 * DONE remove "name taken" feature
+* TODO

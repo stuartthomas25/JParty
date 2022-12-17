@@ -2,10 +2,38 @@ import simpleaudio as sa
 
 import requests
 from threading import Thread
+import logging
 import os
 import sys
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QMessageBox
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import (
+    QPainter,
+    QPen,
+    QBrush,
+    QImage,
+    QColor,
+    QFont,
+    QPalette,
+    QPixmap,
+    QTextDocument,
+    QTextOption,
+    QGuiApplication,
+    QFontMetrics,
+    QTransform
+)
+from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
+from PyQt6.QtCore import (
+    Qt,
+    QRectF,
+    QRect,
+    QPoint,
+    QPointF,
+    QTimer,
+    QRect,
+    QSize,
+    QSizeF,
+    QMargins,
+)
+from PyQt6.sip import delete
 
 
 def resource_path(relative_path):
@@ -115,3 +143,67 @@ def add_shadow(widget, radius=0.1, offset=3):
         shadow.setColor(QColor("black"))
         shadow.setOffset(offset)
         widget.setGraphicsEffect(shadow)
+
+
+def autofitsize(text, font, rect, start=None, stepsize=2):
+    if start:
+        font.setPointSize(start)
+
+    size = font.pointSize()
+    flags = Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter
+
+    def fullrect(font, text=text, flags=flags):
+        fm = QFontMetrics(font)
+        return fm.boundingRect(rect, flags, text)
+
+    newrect = fullrect(font)
+    if not rect.contains(newrect):
+        while size > 0:
+            size -= stepsize
+            font.setPointSize(size)
+            newrect = fullrect(font)
+            if rect.contains(newrect):
+                return font.pointSize()
+
+        logging.warn(f"Nothing fit! (text='{text}')")
+        print(f"Nothing fit! (text='{text}')")
+
+    return size
+
+
+
+class DynamicLabel(QLabel):
+    def __init__(self, text, initialSize, parent=None):
+        super().__init__( text, parent )
+        self.__initialSize = initialSize
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    ### These three re-override QLabel's versions
+    def sizeHint(self):
+        return QSize()
+
+    def initialSize(self):
+        if callable(self.__initialSize):
+            return self.__initialSize()
+        else:
+            return self.__initialSize
+
+    def setText(self, text):
+        super().setText(text)
+        self.resizeEvent(None)
+
+    def minimizeSizeHint(self):
+        return QSize()
+
+    def heightForWidth(self, w):
+        return -1
+
+    def resizeEvent(self, event):
+        if self.size().height() == 0 or self.text() == "":
+            return None
+
+        fontsize = autofitsize(self.text(), self.font(), self.rect(), start=self.initialSize())
+        font = self.font()
+        font.setPointSize(fontsize)
+        self.setFont(font)

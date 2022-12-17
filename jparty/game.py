@@ -17,8 +17,6 @@ import logging
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path, CompoundObject
 
-BUZZ_DELAY = 0  # ms
-
 activation_time = 0
 
 
@@ -279,6 +277,9 @@ class Game(QObject):
         self.current_round = self.data.rounds[1]
         self.dc.hide_welcome_widgets()
         self.dc.board_widget.load_round(self.current_round)
+        self.socket_controller.accepting_players = False
+        if not DEBUG:
+            self.song_player.stop()
 
     def setDisplays(self, host_display, main_display):
         self.host_display = host_display
@@ -301,6 +302,7 @@ class Game(QObject):
     def new_player(self):
         self.players = self.socket_controller.connected_players
         self.dc.scoreboard.refresh_players()
+        self.host_display.welcome_widget.check_start()
 
     def valid(self):
         return self.data is not None and all(b.complete for b in self.data.rounds)
@@ -313,7 +315,7 @@ class Game(QObject):
     @updateUI
     def open_responses(self):
         logging.info("open responses")
-        self.dc.borders.lit = True
+        self.dc.borders.lights(True)
         if self.current_round.final:
             self.buzzer_controller.prompt_answers()
 
@@ -324,13 +326,7 @@ class Game(QObject):
                 self.song_player.final()
             self.timer = QuestionTimer(FJTIME, self.stumped)
         else:
-            if BUZZ_DELAY > 0:
-                accept_timer = threading.Timer(
-                    BUZZ_DELAY / 1000, self.__accept_responses
-                )
-                accept_timer.start()
-            else:
-                self.__accept_responses()
+            self.__accept_responses()
 
             if not self.timer:
                 self.timer = QuestionTimer(4, self.stumped)
@@ -341,24 +337,23 @@ class Game(QObject):
         logging.info("close responses")
         self.timer.pause()
         self.accepting_responses = False
-        self.dc.borders.lit = True
+        self.dc.borders.lights(True)
 
-    # Don't update UI every buzz
     def buzz(self, i_player):
         player = self.players[i_player]
         if self.accepting_responses and player is not self.previous_answerer:
-            logging.info(f"{player.name}: buzz ({time.time() - activation_time:.6f} s)")
+            logging.info(f"buzz ({time.time() - activation_time:.6f} s)")
             self.accepting_responses = False
             self.timer.pause()
             self.previous_answerer = player
-            self.dc.scoreboard.run_lights()
+            self.dc.player_widget(player).run_lights()
 
             self.answering_player = player
             self.keystroke_manager.activate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
-            self.dc.borders.lit = False
+            self.dc.borders.lights(False)
             self.update()
         elif self.active_question is None:
-            self.dc.scoreboard.buzz_hint(player)
+            self.dc.player_widget(player).buzz_hint()
         else:
             pass
 
@@ -369,7 +364,7 @@ class Game(QObject):
             self.keystroke_manager.activate("NEXT_SLIDE")
             return
 
-        self.dc.scoreboard.stop_lights()
+        self.dc.player_widget(self.answering_player).stop_lights()
         self.keystroke_manager.deactivate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
         self.answering_player = None
 
@@ -453,7 +448,7 @@ class Game(QObject):
                 self.host_display,
                 "Player selection",
                 "Who found the Daily Double?",
-                [p.name for p in self.players],
+                ["name" for p in self.players],
                 editable=False,
             )[0]
             player = next((p for p in self.players if p.name == player_name), None)
@@ -498,28 +493,32 @@ class Game(QObject):
     @updateUI
     def correct_answer(self):
         logging.info("correct")
+        ap = self.answering_player
         if self.current_round.final:
-            self.answering_player.score += self.answering_player.wager
+            ap.score += ap.wager
+            self.set_score( ap, ap.score + ap.wager)
             self.answer_given()
             return
 
         if self.timer:
             self.timer.cancel()
-        self.answering_player.score += self.active_question.value
+
+        self.set_score( ap, ap.score + self.active_question.value)
         self.back_to_board()
-        self.dc.borders.lit = False
+        self.dc.borders.lights(False)
 
         self.answer_given()
 
     @updateUI
     def incorrect_answer(self):
         logging.info("incorrect")
+        ap = self.answering_player
         if self.current_round.final:
-            self.answering_player.score -= self.answering_player.wager
+            self.set_score( ap, ap.score - ap.value)
             self.answer_given()
             return
 
-        self.answering_player.score -= self.active_question.value
+        self.set_score( ap, ap.score - self.active_question.value)
         self.answer_given()
         if self.active_question.dd:
             self.back_to_board()
@@ -536,11 +535,7 @@ class Game(QObject):
             wo.play()
 
         # flash
-        self.dc.borders.lit = False
-        time.sleep(0.2)
-        self.dc.borders.lit = True
-        time.sleep(0.2)
-        self.dc.borders.lit = False
+        self.dc.borders.flash()
         if self.current_round.final:
             self.keystroke_manager.activate("NEXT_SLIDE")
         else:
@@ -559,7 +554,9 @@ class Game(QObject):
         # self.completed_questions = state[2]
 
 
-
+    def set_score(self, player, score):
+        player.score = score
+        self.dc.player_widget(player).update_score()
 
     def adjust_score(self, player):
         new_score, answered = QInputDialog.getInt(
@@ -569,10 +566,11 @@ class Game(QObject):
             value=player.score,
         )
         if answered:
-            player.score = new_score
+            self.set_score(player, new_score)
 
     def close(self):
-        self.song_player.stop()
+        if not DEBUG:
+            self.song_player.stop()
         QApplication.quit()
 
 
