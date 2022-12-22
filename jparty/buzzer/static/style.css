@@ -101,10 +101,14 @@ button:active {
     display: block;
     width: 100%;
     padding: 14px 28px;
+    margin-bottom: 12px;
     text-align: center;
 }
 
 .buzz-page {
+    display: None;
+}
+.name-page {
     display: None;
 }
 .wager-page {
@@ -113,7 +117,7 @@ button:active {
 
 .wager_input {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='48px' width='85px'><text x='15' y='35' fill='gray' font-size='30' font-family='arial'>$</text></svg>");
-    padding-left: 12px;
+    padding: 12px;
     background-repeat: no-repeat;
 }
 .answer-page {
@@ -136,8 +140,13 @@ button:active {
 }
 
 .hints {
-    font-family: Tahoma;
+    font-family: Helvetica;
     text-align:center;
     color:white;
+}
+.buzz-hint {
     margin-top:10pt;
+}
+.name-hint {
+    margin-bottom:10pt;
 }

@@ -7,14 +7,33 @@
 * DONE add better text for communicating game id is found in URL
 * DONE automatically skip games with blank questions
 * DONE add timeout sound effects
+* WAIT team - multiple buzzers same score
 
 * DONE make sure HostOverlay doesn't crash (see Nayib's email)
-* TODO Bug fix: leaving buzzer and returning during wager period sets maximum to 100
 * DONE Scaling issue on TV
-* WAIT team - multiple buzzers same score
 * NO self-hosting mode (players pick next category on their screen and select if they got the question right/wrong)
-* TODO remove players
 * DONE Incorporate signature pad [[https://szimek.github.io/signature_pad/]]
 * DONE Make welcome screen full screen
 * DONE remove "name taken" feature
-* TODO
+* DONE Fix daily double
+* TODO remove players
+* DONE better "game full" and "game already full" notifications
+
+* DONE Bug fix: leaving buzzer and returning during wager period sets maximum to 100. Better state management for buzzer
+* DONE fix final jeopardy
+* DONE Fix next round
+* DONE fix game restart
+
+* DONE darken card on mouseover
+* DONE applause on DD
+* DONE Fix welcome window scaling
+* DONE dont show sign-in screen on buzzer refresh
+* DONE ties
+
+* TODO big refactor
+* DONE fix initial two monitors
+* DONE fix scoreboard restart
+* DONE Hint for wagers finished
+* DONE Hint for drawing name
+
+* DONE flash hints

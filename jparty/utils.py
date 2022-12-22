@@ -3,6 +3,7 @@ import simpleaudio as sa
 import requests
 from threading import Thread
 import logging
+import re
 import os
 import sys
 from PyQt6.QtGui import (
@@ -123,87 +124,124 @@ def permission_error():
     )
 
 def check_internet():
+    pass
     # check internet connection
-    try:
-        r = requests.get(f"http://www.j-archive.com/")
-    except requests.exceptions.ConnectionError as e:  # This is the correct syntax
-        button = QMessageBox.critical(
-            None,
-            "Cannot connect!",
-            "JParty cannot connect to the J-Archive. Please check your internet connection.",
-            buttons=QMessageBox.StandardButton.Abort,
-            defaultButton=QMessageBox.StandardButton.Abort,
-        )
-        exit(1)
+    # try:
+    #     r = requests.get(f"http://www.j-archive.com/")
+    # except requests.exceptions.ConnectionError as e:  # This is the correct syntax
+    #     button = QMessageBox.critical(
+    #         None,
+    #         "Cannot connect!",
+    #         "JParty cannot connect to the J-Archive. Please check your internet connection.",
+    #         buttons=QMessageBox.StandardButton.Abort,
+    #         defaultButton=QMessageBox.StandardButton.Abort,
+    #     )
+    #     exit(1)
 
 """add shadow to widget. Radius is proportion of widget height"""
 def add_shadow(widget, radius=0.1, offset=3):
-        shadow = QGraphicsDropShadowEffect(widget)
-        shadow.setBlurRadius(widget.height())
-        shadow.setColor(QColor("black"))
-        shadow.setOffset(offset)
-        widget.setGraphicsEffect(shadow)
-
-
-def autofitsize(text, font, rect, start=None, stepsize=2):
-    if start:
-        font.setPointSize(start)
-
-    size = font.pointSize()
-    flags = Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignCenter
-
-    def fullrect(font, text=text, flags=flags):
-        fm = QFontMetrics(font)
-        return fm.boundingRect(rect, flags, text)
-
-    newrect = fullrect(font)
-    if not rect.contains(newrect):
-        while size > 0:
-            size -= stepsize
-            font.setPointSize(size)
-            newrect = fullrect(font)
-            if rect.contains(newrect):
-                return font.pointSize()
-
-        logging.warn(f"Nothing fit! (text='{text}')")
-        print(f"Nothing fit! (text='{text}')")
-
-    return size
+    shadow = QGraphicsDropShadowEffect(widget)
+    shadow.setBlurRadius(widget.height())
+    shadow.setColor(QColor("black"))
+    shadow.setOffset(offset)
+    widget.setGraphicsEffect(shadow)
 
 
 
-class DynamicLabel(QLabel):
-    def __init__(self, text, initialSize, parent=None):
-        super().__init__( text, parent )
-        self.__initialSize = initialSize
+class AutosizeWidget(object):
 
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    def getInitialSize(self):
+        if callable(self.initialSize):
+            return self.initialSize()
+        else:
+            return self.initialSize
 
-    ### These three re-override QLabel's versions
+
     def sizeHint(self):
         return QSize()
 
-    def initialSize(self):
-        if callable(self.__initialSize):
-            return self.__initialSize()
-        else:
-            return self.__initialSize
-
-    def setText(self, text):
-        super().setText(text)
-        self.resizeEvent(None)
-
-    def minimizeSizeHint(self):
+    def minimumSizeHint(self):
         return QSize()
 
     def heightForWidth(self, w):
         return -1
 
     def resizeEvent(self, event):
+        self.autoresize()
+
+    def autoresize(self):
         if self.size().height() == 0 or self.text() == "":
             return None
 
-        fontsize = autofitsize(self.text(), self.font(), self.rect(), start=self.initialSize())
+        fontsize = self.autofitsize()
         font = self.font()
-        font.setPointSize(fontsize)
+        font.setPixelSize(fontsize)
         self.setFont(font)
+
+    def plaintext(self):
+        text = self.text()
+        text = re.sub("<br>", "\n", text)
+        text = re.sub("<[^>]*>", "", text)
+        return text
+
+    def autofitsize(self, stepsize=1):
+
+        font = self.font()
+        rect = self.rect()
+        text = self.plaintext()
+
+        font.setPointSize(self.getInitialSize())
+        size = font.pointSize()
+
+        def fullrect(font):
+            fm = QFontMetrics(font)
+            return fm.boundingRect(rect, self.flags(), text)
+
+
+        newrect = fullrect(font)
+        if not rect.contains(newrect):
+            while size > 2:
+                size -= stepsize
+                font.setPixelSize(size)
+                newrect = fullrect(font)
+                if rect.contains(newrect):
+                    return font.pixelSize()
+
+            # logging.warn(f"Nothing fit! (text='{text}')")
+            # print(f"Nothing fit! (text='{text}')")
+
+        return size
+
+class DynamicLabel(QLabel, AutosizeWidget):
+    def __init__(self, text, initialSize, parent=None):
+        super().__init__( text, parent )
+        self.initialSize = initialSize
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.autoresize()
+
+    def flags(self):
+        flags = 0
+        if self.wordWrap():
+            flags |= Qt.TextFlag.TextWordWrap
+
+        flags |= self.alignment()
+
+        return flags
+
+    def setText(self, text):
+        super().setText(text)
+        self.autoresize()
+
+
+
+class DynamicButton(QPushButton, AutosizeWidget):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.initialSize = lambda : self.height() * 0.5
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.autoresize()
+
+    def flags(self):
+        return 0
+
+

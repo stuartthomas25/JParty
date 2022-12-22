@@ -37,6 +37,7 @@ from .retrieve import get_game, get_game_sum
 from .controller import BuzzerController
 from .boardwindow import DisplayWindow, HostDisplayWindow
 from .game import Player, Game
+from .style import JPartyStyle
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path, check_internet
 from .logger import qt_exception_hook
@@ -88,12 +89,17 @@ def get_sysinfo():
     return version
 
 def check_second_monitor():
+    if DEBUG:
+        return True
+
     if len(QApplication.instance().screens()) < 2 and not DEBUG:
         print("error!")
         msgBox = QMessageBox()
         msgBox.setText("JParty needs two separate displays. Please attach a second monitor or turn off mirroring and try again.")
         msgBox.exec()
         sys.exit(1)
+
+
 
 
 def main():
@@ -117,18 +123,21 @@ def main():
     # SC.start()
     # r = app.exec()
 
+    QApplication.setStyle(JPartyStyle())
     app = QApplication(sys.argv)
-    # check_second_monitor()
+    check_second_monitor()
     check_internet()
     app.setFont(QFont("Verdana"))
 
     try:
         # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+        # PM_LayoutHorizontalSpacing
+        i = QFontDatabase.addApplicationFont( resource_path('itc-korinna-std/ITC Korinna Regular.otf') )
 
         game = Game()
 
         socket_controller = BuzzerController(game)
-        game.setSocketController(socket_controller)
+        game.setBuzzerController(socket_controller)
 
         main_window = DisplayWindow(game)
         host_window = HostDisplayWindow(game)
@@ -136,8 +145,8 @@ def main():
 
         game.begin()
 
-
         song_player = game.song_player
+
         try:
             socket_controller.start()
         except PermissionError as e:
