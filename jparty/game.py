@@ -17,8 +17,11 @@ import logging
 from .constants import DEBUG
 from .utils import SongPlayer, resource_path, CompoundObject
 
-activation_time = 0
 
+if DEBUG:
+    FJTIME = 5
+else:
+    FJTIME = 31
 
 def rasync(f, *args, **kwargs):
     t = threading.Thread(target=f, args=args, kwargs=kwargs)
@@ -123,27 +126,20 @@ class KeystrokeManager(object):
             self._deactivate(idents)
 
 
-
-
-class Question(object):
-    def __init__(self, index, text, answer, value, dd=False):
-        self.index = index
-        self.text = text
-        self.answer = answer
-        self.value = value
-        self.dd = dd
-        self.complete = False
+@dataclass
+class Question:
+    index: tuple
+    text: str
+    answer: str
+    category: str
+    value: int = -1
+    dd: bool = False
+    complete: bool = False
 
 
 class Board(object):
-    def __init__(self, categories, questions, final=False, dj=False):
-        logging.info(f"{len(questions)} questions in round")
-        self.complete = len(questions) == 30 if not final else len(questions) == 1
-        if final:
-            self.size = (1, 1)
-        else:
-            self.size = (6, 5)
-        self.final = final
+    size = (6,5)
+    def __init__(self, categories, questions, dj=False):
         self.categories = categories
         self.dj = dj
         if not questions is None:
@@ -157,14 +153,28 @@ class Board(object):
                 return q
         return None
 
+    def complete(self):
+        return len(self.questions) == 30
+
+class FinalBoard(Board):
+    size = (1,1)
+    def __init__(self, category, question):
+        super().__init__([category], [question], dj=False)
+        self.category = category
+        self.question = question
+
+    def complete(self):
+        return len(self.questions) == 1
+
 
 def updateUI(f):
-    def wrapper(self, *args):
-        ret = f(self, *args)
-        self.update()
-        return ret
+    return f
+    # def wrapper(self, *args):
+    #     ret = f(self, *args)
+    #     self.update()
+    #     return ret
 
-    return wrapper
+    # return wrapper
 
 
 
@@ -177,40 +187,32 @@ class GameData:
 class Game(QObject):
     buzz_trigger = pyqtSignal(int)
     new_player_trigger = pyqtSignal()
-    # buzzer_disconnected = pyqtSignal(str)
     wager_trigger = pyqtSignal(int, int)
+    toolate_trigger = pyqtSignal()
 
     def __init__(self):
         super().__init__()
 
         self.host_display = None
         self.main_display = None
-        self.socket_controller = None
         self.dc = None
 
-        self.song_player = SongPlayer()
 
         self.data = None
 
-        # self.rounds = []
-        # self.date = ""
-        # self.comments = ""
         self.current_round = None
         self.players = []
 
-        self.paused = False
         self.active_question = None
         self.accepting_responses = False
         self.answering_player = None
         self.previous_answerer = None
         self.timer = None
+        self.soliciting_player = False # part of selecting who found a daily double
 
-        # self.song = QSound('data:song.wav')
         self.song_player = SongPlayer()
-        self.__judgement_round = -1
-        self.__judgement_subround = 2
+        self.__judgement_round = 0
         self.__sorted_players = None
-        self.wagered = set()
 
         self.buzzer_controller = None
 
@@ -237,47 +239,72 @@ class Game(QObject):
             "NEXT_ROUND", Qt.Key.Key_Space, self.next_round, self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "NEXT_SLIDE",
-            Qt.Key.Key_Space,
-            self.final_next_slide,
-            self.spacehints,
-            persistent=True,
-        )
-        self.keystroke_manager.addEvent(
             "OPEN_FINAL", Qt.Key.Key_Space, self.open_final, self.spacehints
         )
         self.keystroke_manager.addEvent(
             "CLOSE_GAME", Qt.Key.Key_Space, self.close_game, self.spacehints
         )
 
-        # if DEBUG:
-        #     self.completed_questions = self.rounds[1].questions[:-1]
+        self.keystroke_manager.addEvent(
+            "FINAL_OPEN_RESPONSES", Qt.Key.Key_Space, self.final_open_responses, self.spacehints
+        )
+        self.keystroke_manager.addEvent(
+            "FINAL_NEXT_PLAYER",
+            Qt.Key.Key_Space,
+            self.final_next_player,
+            self.spacehints
+        )
+        self.keystroke_manager.addEvent(
+            "FINAL_SHOW_ANSWER",
+            Qt.Key.Key_Space,
+            self.final_show_answer,
+            self.spacehints
+        )
+        self.keystroke_manager.addEvent(
+            "FINAL_CORRECT_RESPONSE",
+            Qt.Key.Key_Left,
+            self.final_correct_answer,
+            self.arrowhints,
+        )
+        self.keystroke_manager.addEvent(
+            "FINAL_INCORRECT_RESPONSE",
+            Qt.Key.Key_Right,
+            self.final_incorrect_answer,
+            self.arrowhints,
+        )
 
         self.wager_trigger.connect(self.wager)
         self.buzz_trigger.connect(self.buzz)
         self.new_player_trigger.connect(self.new_player)
-
+        self.toolate_trigger.connect(self.__toolate)
 
 
     def startable(self):
         if DEBUG:
             return True
         return (
-            self.valid()
-            and len(self.socket_controller.connected_players) > 0
+            self.valid_game()
+            and len(self.buzzer_controller.connected_players) > 0
         )
 
     def begin(self):
         if not DEBUG:
             self.song_player.play(repeat=True)
-        else:
-            self.song_player = None
+        # else:
+        #     self.song_player = None
 
     def start_game(self):
         self.current_round = self.data.rounds[1]
+        logging.warn("STARTING AT DOUBLE JEOPARDY")
+
+        if DEBUG:
+            self.current_round = self.data.rounds[1]
+            for q in self.current_round.questions[0:-1]:
+                q.complete = True
+
         self.dc.hide_welcome_widgets()
         self.dc.board_widget.load_round(self.current_round)
-        self.socket_controller.accepting_players = False
+        self.buzzer_controller.accepting_players = False
         if not DEBUG:
             self.song_player.stop()
 
@@ -286,55 +313,38 @@ class Game(QObject):
         self.main_display = main_display
         self.dc = CompoundObject(host_display, main_display)
 
-    def setSocketController(self, controller):
-        self.socket_controller = controller
+    def setBuzzerController(self, controller):
+        self.buzzer_controller = controller
 
     def arrowhints(self, val):
-        self.dc.borders.arrowhints(val)
+        self.host_display.borders.arrowhints(val)
 
     def spacehints(self, val):
-        self.dc.borders.spacehints(val)
+        self.host_display.borders.spacehints(val)
 
     def update(self):
         pass
         # self.dc.update()
 
     def new_player(self):
-        self.players = self.socket_controller.connected_players
+        self.players = self.buzzer_controller.connected_players
         self.dc.scoreboard.refresh_players()
         self.host_display.welcome_widget.check_start()
 
-    def valid(self):
-        return self.data is not None and all(b.complete for b in self.data.rounds)
+    def valid_game(self):
+        return self.data is not None and all(b.complete() for b in self.data.rounds)
 
-    def __accept_responses(self):
-        self.accepting_responses = True
-        # global activation_time
-        # activation_time = time.time()
-
-    @updateUI
     def open_responses(self):
-        logging.info("open responses")
         self.dc.borders.lights(True)
-        if self.current_round.final:
-            self.buzzer_controller.prompt_answers()
+        self.accepting_responses = True
 
-            if DEBUG:
-                FJTIME = 1
-            else:
-                FJTIME = 31
-                self.song_player.final()
-            self.timer = QuestionTimer(FJTIME, self.stumped)
-        else:
-            self.__accept_responses()
+        if not self.timer:
+            self.timer = QuestionTimer(4, self.stumped)
 
-            if not self.timer:
-                self.timer = QuestionTimer(4, self.stumped)
         self.timer.start()
 
     @updateUI
     def close_responses(self):
-        logging.info("close responses")
         self.timer.pause()
         self.accepting_responses = False
         self.dc.borders.lights(True)
@@ -342,7 +352,7 @@ class Game(QObject):
     def buzz(self, i_player):
         player = self.players[i_player]
         if self.accepting_responses and player is not self.previous_answerer:
-            logging.info(f"buzz ({time.time() - activation_time:.6f} s)")
+            logging.info(f"buzz ({time.time():.6f} s)")
             self.accepting_responses = False
             self.timer.pause()
             self.previous_answerer = player
@@ -357,13 +367,8 @@ class Game(QObject):
         else:
             pass
 
-    def answer_given(self):
-        logging.info("answer given")
-        if self.current_round.final:
-            self.final_next_slide()
-            self.keystroke_manager.activate("NEXT_SLIDE")
-            return
 
+    def answer_given(self):
         self.dc.player_widget(self.answering_player).stop_lights()
         self.keystroke_manager.deactivate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
         self.answering_player = None
@@ -376,149 +381,202 @@ class Game(QObject):
         self.active_question.complete = True
         self.active_question = None
         self.previous_answerer = None
-        rasync(self.save)
+        # rasync(self.save)
         if all(q.complete for q in self.current_round.questions):
+            logging.info("NEXT ROUND")
             self.keystroke_manager.activate("NEXT_ROUND")
 
     @updateUI
     def next_round(self):
         logging.info("next round")
-        self.__current_round += 1
-        # self.completed_questions = self.rounds[self.__current_round].questions[:-1]  # EDIT
-        if self.__current_round == 2:
+        i = self.data.rounds.index(self.current_round)
+        logging.info(f"ROUND {i}")
+        self.current_round = self.data.rounds[i+1]
+
+        # if DEBUG:
+        #     if i<2:
+        #         for q in self.current_round.questions[0:-1]:
+        #             q.complete = True
+
+        if isinstance(self.current_round, FinalBoard):
+            self.dc.load_final(self.current_round.question)
             self.start_final()
+        else:
+            self.dc.board_widget.load_round(self.current_round)
+
 
     def start_final(self):
+        logging.info("start final")
+        for player in self.players:
+            self.dc.player_widget(player).set_lights(True)
+
         self.buzzer_controller.open_wagers()
 
     @updateUI
     def wager(self, i_player, amount):
         player = self.players[i_player]
         player.wager = amount
-        self.wagered.add(player)
-        logging.info(f"{player.name} wagered {amount}")
-        if len(self.wagered) == len(self.players):
+        self.dc.player_widget(player).set_lights(False)
+        logging.info(f"{player} wagered {amount}")
+        if all(p.wager is not None for p in self.players):
+            self.host_display.question_widget.hint_label.setText("Press space to show clue!")
             self.keystroke_manager.activate("OPEN_FINAL")
 
     def answer(self, player, guess):
         player.finalanswer = guess
-        logging.info(f"{player.name} guessed {guess}")
+        logging.info(f"{player} guessed {guess}")
 
-    @updateUI
-    def final_next_slide(self):
-        logging.info("NEXT SLIDE")
-        if self.__judgement_round == -1:
-            self.dc.finalanswerwindow.setVisible(True)
+    def final_open_responses(self):
+        self.dc.borders.lights(True)
+        self.buzzer_controller.prompt_answers()
+
+        if not DEBUG:
+            self.song_player.final()
+
+        self.timer = QuestionTimer(FJTIME, self.final_finished_song)
+        self.timer.start()
+
+    def final_next_player(self):
+        for p in self.players:
+            self.dc.player_widget(p).set_lights(False)
+
+        if self.__judgement_round == 0:
+            self.dc.load_final_judgement()
             self.__sorted_players = sorted(self.players, key=lambda x: x.score)
 
-        if self.__judgement_subround == 2:
-            if self.__judgement_round == len(self.players) - 1:
-                self.end_game()
-            else:
-                self.__judgement_subround = 0
-                self.__judgement_round += 1
-                self.answering_player = self.__sorted_players[self.__judgement_round]
-        else:
-            self.__judgement_subround += 1
+        elif self.__judgement_round == len(self.players):
+            self.end_game()
+            return
 
-        self.dc.finalanswerwindow.info_level = self.__judgement_subround
+        self.answering_player = self.__sorted_players[self.__judgement_round]
 
-        if self.__judgement_subround == 1:
-            self.keystroke_manager.deactivate("NEXT_SLIDE")
-            self.keystroke_manager.activate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
+        self.dc.player_widget(self.answering_player).set_lights(True)
+
+        self.dc.final_window.guess_label.setText("")
+        self.dc.final_window.wager_label.setText("")
+
+        self.keystroke_manager.activate("FINAL_SHOW_ANSWER")
+
+    def final_show_answer(self):
+        answer = self.answering_player.finalanswer
+        if answer == "":
+            answer = "________"
+
+        self.dc.final_window.guess_label.setText(answer)
+        self.keystroke_manager.activate("FINAL_CORRECT_RESPONSE", "FINAL_INCORRECT_RESPONSE")
+
+    def final_correct_answer(self):
+        ap = self.answering_player
+        self.set_score( ap, ap.score + ap.wager)
+        self.final_judgement_given()
+
+    def final_incorrect_answer(self):
+        ap = self.answering_player
+        self.set_score( ap, ap.score - ap.wager)
+        self.final_judgement_given()
+
+    def final_judgement_given(self):
+        self.dc.final_window.wager_label.setText(str(self.answering_player.wager))
+        self.keystroke_manager.activate("FINAL_NEXT_PLAYER")
+        self.__judgement_round += 1
+
+    def final_finished_song(self):
+        self.toolate_trigger.emit()
+        self.accepting_responses = False
+        self.dc.borders.flash()
+        self.keystroke_manager.activate("FINAL_NEXT_PLAYER")
+
 
     @updateUI
     def end_game(self):
-        winner = max(self.players, key=lambda p: p.score)
-        self.dc.finalanswerwindow.winner = winner
-        self.answering_player = winner
-        self.keystroke_manager.deactivate("NEXT_SLIDE")
+        top_score = max([p.score for p in self.players])
+        winners = [p for p in self.players if p.score==top_score]
+        for w in winners:
+            self.dc.player_widget(w).set_lights(True)
+
+        if len(winners) == 1:
+            self.dc.final_window.show_winner(winners[0])
+        else:
+            self.dc.final_window.show_tie()
+
+        print("activate close game")
         self.keystroke_manager.activate("CLOSE_GAME")
 
     def close_game(self):
-        self.main_display.close()
-        self.host_display.close()
         self.buzzer_controller.restart()
-        self.welcome_window.restart()
+        self.players = []
+        self.current_round = None
+        self.data = None
+        self.__judgement_round = 0
+        self.dc.restart()
+        self.begin()
 
-    @updateUI
-    def run_dd(self):
-        while True:
-            player_name = QInputDialog.getItem(
-                self.host_display,
-                "Player selection",
-                "Who found the Daily Double?",
-                ["name" for p in self.players],
-                editable=False,
-            )[0]
-            player = next((p for p in self.players if p.name == player_name), None)
-            max_wager = max(player.score, 1000)
-            wager_res = QInputDialog.getInt(
-                self.host_display,
-                "Wager",
-                f"How much does {player_name} wager? (max: ${max_wager})",
-                min=0,
-                max=max_wager,
-            )
-            if wager_res[1]:
-                break
+    # def id_dd(self, p):         #
+    #     """Identity who found the daily double"""
+    #     logging.info("log!")
+    #     if self.ddplayermsg is None:
+    #         return False
+
+    #     self.answering_player = p
+    #     self.ddplayermsg.close()
+    #     self.ddplayermsg = None
+
+    def get_dd_wager(self, player):
+        self.answering_player = player
+        self.soliciting_player = False
+
+        max_wager = max(self.answering_player.score, 1000)
+        wager_res = QInputDialog.getInt(
+            self.host_display,
+            "Wager",
+            f"How much do they wager? (max: ${max_wager})",
+            min=0,
+            max=max_wager,
+        )
+        if not wager_res[1]:
+            self.soliciting_player = True
+            return False
+
         wager = wager_res[0]
         self.active_question.value = wager
 
-        self.answering_player = player
         self.keystroke_manager.activate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
-        self.dc.boardwidget.questionwidget.show_question()
+        self.dc.question_widget.show_question()
 
-    @updateUI
     def load_question(self, q):
         self.active_question = q
         if q.dd:
             logging.info("Daily double!")
             wo = sa.WaveObject.from_wave_file(resource_path("dd.wav"))
             wo.play()
-            self.run_dd()
+            self.soliciting_player = True
         else:
             self.keystroke_manager.activate("OPEN_RESPONSES")
         self.dc.load_question(q)
+        self.dc.remove_card(q)
 
     @updateUI
     def open_final(self):
-        self.dc.load_question(self.current_round.questions[0])
-        self.keystroke_manager.activate("OPEN_RESPONSES")
+        self.dc.question_widget.show_question()
+        self.keystroke_manager.activate("FINAL_OPEN_RESPONSES")
 
-    def save(self):
-        # pickle.dump(self, open(".bkup",'wb'))
-        pass
+    # def save(self):
+    #     # pickle.dump(self, open(".bkup",'wb'))
+    #     pass
 
     @updateUI
     def correct_answer(self):
-        logging.info("correct")
-        ap = self.answering_player
-        if self.current_round.final:
-            ap.score += ap.wager
-            self.set_score( ap, ap.score + ap.wager)
-            self.answer_given()
-            return
-
         if self.timer:
             self.timer.cancel()
 
-        self.set_score( ap, ap.score + self.active_question.value)
-        self.back_to_board()
+        self.set_score( self.answering_player, self.answering_player.score + self.active_question.value)
         self.dc.borders.lights(False)
-
         self.answer_given()
+        self.back_to_board()
 
     @updateUI
     def incorrect_answer(self):
-        logging.info("incorrect")
-        ap = self.answering_player
-        if self.current_round.final:
-            self.set_score( ap, ap.score - ap.value)
-            self.answer_given()
-            return
-
-        self.set_score( ap, ap.score - self.active_question.value)
+        self.set_score( self.answering_player, self.answering_player.score - self.active_question.value)
         self.answer_given()
         if self.active_question.dd:
             self.back_to_board()
@@ -526,32 +584,27 @@ class Game(QObject):
             self.open_responses()
             self.timer.resume()
 
-    @updateUI
     def stumped(self):
-        logging.info("stumped")
         self.accepting_responses = False
-        if not self.current_round.final:
-            wo = sa.WaveObject.from_wave_file(resource_path("stumped.wav"))
-            wo.play()
-
-        # flash
+        sa.WaveObject.from_wave_file(resource_path("stumped.wav")).play()
         self.dc.borders.flash()
-        if self.current_round.final:
-            self.keystroke_manager.activate("NEXT_SLIDE")
-        else:
-            self.keystroke_manager.activate("BACK_TO_BOARD")
+        self.keystroke_manager.activate("BACK_TO_BOARD")
 
-    def __getstate__(self):
-        return (
-            (self.rounds, self.date, self.comments),
-            self.players
-            # TODO: include completed questions
-        )
+    def __toolate(self):
+        self.buzzer_controller.toolate()
 
-    def __setstate__(self, state):
-        self.new_game(*state[0])
-        self.players = state[1]
-        # self.completed_questions = state[2]
+
+    # def __getstate__(self):
+    #     return (
+    #         (self.rounds, self.date, self.comments),
+    #         self.players
+    #         # TODO: include completed questions
+    #     )
+
+    # def __setstate__(self, state):
+    #     self.new_game(*state[0])
+    #     self.players = state[1]
+    #     # self.completed_questions = state[2]
 
 
     def set_score(self, player, score):
@@ -587,6 +640,9 @@ class Player(object):
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)
+
+    def state(self):
+        return {'page':self.page, 'score':self.score}
 
 
 game_params = SimpleNamespace()

@@ -22,6 +22,7 @@ from tornado.options import define, options
 
 define("port", default=8080, help="run on the given port", type=int)
 
+MAXPLAYERS = 8
 
 class Application(tornado.web.Application):
     def __init__(self, controller):
@@ -82,14 +83,28 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         self.set_nodelay(True)
         # self.controller.connected_players.add(self)
 
+    def send(self, msg, text=""):
+        data = {"message": msg, "text": text}
+        try:
+            self.write_message(data)
+            logging.info(f"Sent {data}")
+        except:
+            logging.error(f"Error sending message {msg}", exc_info=True)
+
     def check_if_exists(self, token):
+
+
         p = self.controller.player_with_token(token)
-        if p is not None:
-            logging.info(f"Reconnected as {p.name}")
+        if p is None:
+            logging.info("NEW")
+            self.send("NEW")
+        else:
+            logging.info(f"Reconnected {p}")
             self.player = p
             p.connected = True
             p.waiter = self
-            self.send("EXISTS", p.page)
+            self.send("EXISTS", tornado.escape.json_encode(p.state()))
+
 
     def on_message(self, message):
         # do this first to kill latency
@@ -103,7 +118,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         if msg == "NAME":
             self.init_player(text)
         elif msg == "CHECK_IF_EXISTS":
-            logging.info(f"Checking if {parsed['text']} exists")
+            logging.info(f"Checking if {self.player} exists")
             self.check_if_exists(text)
         elif msg == "WAGER":
             self.wager(text)
@@ -116,14 +131,18 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
     def init_player(self, name):
 
         if not self.controller.accepting_players:
-            logging.info("Game full!")
-            self.send("GAMEFULL")
+            logging.info("Game started!")
+            self.send("GAMESTARTED")
+            return
+
+        if len(self.controller.connected_players) >= MAXPLAYERS:
+            self.send("FULL")
             return
 
         self.player = Player(name, self)
         self.application.controller.new_player(self.player)
         logging.info(
-            f"New Player: {self.request.remote_ip} {self.player.token.hex()}"
+            f"New Player: {self.player} {self.request.remote_ip} {self.player.token.hex()}"
         )
         self.send("TOKEN", self.player.token.hex())
         # self.send("PROMPTWAGER", 69)
@@ -135,17 +154,11 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         self.application.controller.wager(self.player, int(text))
         self.player.page = "null"
 
-    def send(self, msg, text=""):
-        data = {"message": msg, "text": text}
-        try:
-            self.write_message(data)
-            logging.info(f"Sent {data}")
-        except:
-            logging.error(f"Error sending message {msg}", exc_info=True)
+    def toolate(self):
+        self.send("TOOLATE")
 
     def on_close(self):
         pass
-        # self.application.controller.buzzer_disconnected(self.player)
 
 
 class BuzzerController:
@@ -173,7 +186,7 @@ class BuzzerController:
         for p in self.connected_players:
             p.waiter.close()
         self.connected_players = []
-        self.game = None
+        self.accepting_players = True
 
     def buzz(self, player):
         if self.game:
@@ -195,8 +208,6 @@ class BuzzerController:
 
     def new_player(self, player):
         self.connected_players.append(player)
-        if len(self.connected_players) >= 8:
-            self.accepting_players = False
         self.game.new_player_trigger.emit()
 
     # def activate_buzzer(self, name):
@@ -207,33 +218,6 @@ class BuzzerController:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", options.port))
         return s.getsockname()[0]
-
-    # hostname = socket.gethostname()
-    # try:
-    # ip = socket.gethostbyname(hostname)
-    # if ip.startswith("127."):
-    # raise Exception()
-    # return ip
-    # except:
-    # return hostname
-
-    # return [
-    # l
-    # for l in (
-    # [
-    # ip
-    # for ip in socket.gethostbyname_ex(socket.gethostname())[2]
-    # if not ip.startswith("127.")
-    # ][:1],
-    # [
-    # [
-    # (s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close())
-    # for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]
-    # ][0][1]
-    # ],
-    # )
-    # if l
-    # ][0][0]
 
     def host(self):
         localip = BuzzerController.localip()
