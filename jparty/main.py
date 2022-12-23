@@ -1,127 +1,59 @@
 import sys
-import os
-from PyQt6.QtGui import (
-    QImage,
-    QPainter,
-    QPen,
-    QBrush,
-    QColor,
-    QFont,
-    QMovie,
-    QPixmap,
-    QDesktopServices,
-    QPalette,
-    QGuiApplication,
-    QFontDatabase,
-    QColor,
-)
-
+from PyQt6.QtGui import QFontDatabase, QFont
+from PyQt6.QtWidgets import QApplication, QMessageBox
 import requests
-
-
-# from PyQt6.QtMultimedia import QSound
-from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
-from PyQt6.QtCore import Qt, QRectF, QRect, QPoint, QTimer, QSize, QDir, QMargins, pyqtSignal
 import logging
 
-import pickle
-from threading import Thread, active_count
-import time
-import subprocess
 
-import threading
-from functools import partial
-
-# from .data_rc import *
-from .retrieve import get_game, get_game_sum
-from .controller import BuzzerController
-from .boardwindow import DisplayWindow, HostDisplayWindow
-from .game import Player, Game
-from .style import JPartyStyle
-from .constants import DEBUG
-from .utils import SongPlayer, resource_path, check_internet
-from .logger import qt_exception_hook
+from jparty.game import Game
+from jparty.controller import BuzzerController
+from jparty.main_display import DisplayWindow, HostDisplayWindow
+from jparty.style import JPartyStyle
+from jparty.utils import resource_path
 
 
-def updateUI(f):
-    def wrapper(self, *args):
-        ret = f(self, *args)
-        self.update()
-        return ret
-
-    return wrapper
-
-
-MOVIEWIDTH = 64
-LABELFONTSIZE = 15
-OVERLAYFONTSIZE = 40
-
-    # def restart(self):
-    # self.playerview.close()
-    # self.playerview = PlayerView(
-    # self.rect() - QMargins(0, self.rect().height() // 2, 0, 0),
-    # fontsize = OVERLAYFONTSIZE,
-    # parent = self
-    # )
+def check_internet():
+    """check internet connection"""
+    try:
+        requests.get("http://www.j-archive.com/")
+    except requests.exceptions.ConnectionError:  # This is the correct syntax
+        QMessageBox.critical(
+            None,
+            "Cannot connect!",
+            "JParty cannot connect to the J-Archive. Please check your internet connection.",
+            buttons=QMessageBox.StandardButton.Abort,
+            defaultButton=QMessageBox.StandardButton.Abort,
+        )
+        exit(1)
 
 
-def find_gateway():
-    Interfaces = netifaces.interfaces()
-    for inter in Interfaces:
-        if inter == "wlan0":
-            temp_list = []
-            Addresses = netifaces.ifaddresses(inter)
-            gws = netifaces.gateways()
-            temp_list = list(gws["default"][netifaces.AF_INET])
-            count = 0
-            for item in temp_list:
-                count += 1
-                if count == 1:
-                    return item
-                else:
-                    pass
+def permission_error():
+    QMessageBox.critical(
+        None,
+        "Permission Error",
+        "JParty encountered a permissions error when trying to listen on port 80.",
+        buttons=QMessageBox.StandardButton.Abort,
+        defaultButton=QMessageBox.StandardButton.Abort,
+    )
 
-def get_logs():
-    return sys.stdout.read() + "\n\n\n" + sys.stderr.read()
-
-
-def get_sysinfo():
-    return version
 
 def check_second_monitor():
-    if DEBUG:
-        return True
+    pass
 
-    if len(QApplication.instance().screens()) < 2 and not DEBUG:
+    if len(QApplication.instance().screens()) < 2:
         print("error!")
         msgBox = QMessageBox()
-        msgBox.setText("JParty needs two separate displays. Please attach a second monitor or turn off mirroring and try again.")
+        msgBox.setText(
+            "JParty needs two separate displays. Please attach a second monitor or turn off mirroring and try again."
+        )
         msgBox.exec()
         sys.exit(1)
 
 
-
-
 def main():
 
-    # r = QFontDatabase.addApplicationFont("data:ITC_Korinna.ttf")
-    # logging.info("Loading font: ",r)
-
-    # ip_addr = '192.168.1.1'
-    # ping_command = ['ping','-i','0.19',ip_addr]
-    # ping_process = subprocess.Popen(ping_command, stdout=open(os.devnull, 'wb'))
     song_player = None
-    if DEBUG:
-        logging.warn("RUNNING IN DEBUG MODE")
-
-    # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-    # app = QApplication(sys.argv)
-
-    # SC = BuzzerController()
-    # wel = Welcome(SC)
-    # # song_player = wel.song_player
-    # SC.start()
-    # r = app.exec()
+    r = 1
 
     QApplication.setStyle(JPartyStyle())
     app = QApplication(sys.argv)
@@ -130,12 +62,11 @@ def main():
     app.setFont(QFont("Verdana"))
 
     try:
-        # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-        # PM_LayoutHorizontalSpacing
-        i = QFontDatabase.addApplicationFont( resource_path('itc-korinna-std/ITC Korinna Regular.otf') )
+        QFontDatabase.addApplicationFont(
+            resource_path("itc-korinna-std/ITC Korinna Regular.otf")
+        )
 
         game = Game()
-
         socket_controller = BuzzerController(game)
         game.setBuzzerController(socket_controller)
 
@@ -155,13 +86,9 @@ def main():
 
         r = app.exec()
 
-
     finally:
         logging.info("terminated")
         if song_player:
             song_player.stop()
-        if not DEBUG:
-            try:
-                sys.exit(r)
-            except NameError:
-                sys.exit(1)
+
+        sys.exit(r)
