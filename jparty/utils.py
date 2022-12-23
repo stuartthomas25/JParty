@@ -1,40 +1,12 @@
 import simpleaudio as sa
 
-import requests
 from threading import Thread
-import logging
 import re
 import os
 import sys
-from PyQt6.QtGui import (
-    QPainter,
-    QPen,
-    QBrush,
-    QImage,
-    QColor,
-    QFont,
-    QPalette,
-    QPixmap,
-    QTextDocument,
-    QTextOption,
-    QGuiApplication,
-    QFontMetrics,
-    QTransform
-)
-from PyQt6.QtWidgets import *  # QWidget, QApplication, QDesktopWidget, QPushButton
-from PyQt6.QtCore import (
-    Qt,
-    QRectF,
-    QRect,
-    QPoint,
-    QPointF,
-    QTimer,
-    QRect,
-    QSize,
-    QSizeF,
-    QMargins,
-)
-from PyQt6.sip import delete
+from PyQt6.QtGui import QColor, QFontMetrics
+from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QPushButton, QSizePolicy
+from PyQt6.QtCore import Qt, QSize
 
 
 def resource_path(relative_path):
@@ -57,10 +29,6 @@ class SongPlayer(object):
         self.__play_obj = None
         self.__repeating = False
         self.__repeat_thread = None
-
-    @property
-    def is_playing():
-        return self.__play_obj.is_repeating()
 
     def play(self, repeat=False):
         self.__repeating = repeat
@@ -114,31 +82,9 @@ class CompoundObject(object):
         return "CompoundObject(" + ", ".join([repr(o) for o in self.__objs]) + ")"
 
 
-def permission_error():
-    button = QMessageBox.critical(
-        None,
-        "Permission Error",
-        "JParty encountered a permissions error when trying to listen on port 80.",
-        buttons=QMessageBox.StandardButton.Abort,
-        defaultButton=QMessageBox.StandardButton.Abort,
-    )
-
-def check_internet():
-    pass
-    # check internet connection
-    # try:
-    #     r = requests.get(f"http://www.j-archive.com/")
-    # except requests.exceptions.ConnectionError as e:  # This is the correct syntax
-    #     button = QMessageBox.critical(
-    #         None,
-    #         "Cannot connect!",
-    #         "JParty cannot connect to the J-Archive. Please check your internet connection.",
-    #         buttons=QMessageBox.StandardButton.Abort,
-    #         defaultButton=QMessageBox.StandardButton.Abort,
-    #     )
-    #     exit(1)
-
 """add shadow to widget. Radius is proportion of widget height"""
+
+
 def add_shadow(widget, radius=0.1, offset=3):
     shadow = QGraphicsDropShadowEffect(widget)
     shadow.setBlurRadius(widget.height())
@@ -147,15 +93,12 @@ def add_shadow(widget, radius=0.1, offset=3):
     widget.setGraphicsEffect(shadow)
 
 
-
 class AutosizeWidget(object):
-
     def getInitialSize(self):
         if callable(self.initialSize):
             return self.initialSize()
         else:
             return self.initialSize
-
 
     def sizeHint(self):
         return QSize()
@@ -197,7 +140,6 @@ class AutosizeWidget(object):
             fm = QFontMetrics(font)
             return fm.boundingRect(rect, self.flags(), text)
 
-
         newrect = fullrect(font)
         if not rect.contains(newrect):
             while size > 2:
@@ -212,9 +154,10 @@ class AutosizeWidget(object):
 
         return size
 
+
 class DynamicLabel(QLabel, AutosizeWidget):
     def __init__(self, text, initialSize, parent=None):
-        super().__init__( text, parent )
+        super().__init__(text, parent)
         self.initialSize = initialSize
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.autoresize()
@@ -233,15 +176,12 @@ class DynamicLabel(QLabel, AutosizeWidget):
         self.autoresize()
 
 
-
 class DynamicButton(QPushButton, AutosizeWidget):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
-        self.initialSize = lambda : self.height() * 0.5
+        self.initialSize = lambda: self.height() * 0.5
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.autoresize()
 
     def flags(self):
         return 0
-
-

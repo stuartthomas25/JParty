@@ -1,16 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-from threading import Thread
-from queue import Queue
 from jparty.game import Question, Board, FinalBoard, GameData
 import logging
 import csv
+from jparty.constants import MONIES
 
-
-import pickle
-
-monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
 def list_to_game(s):
     # Template link: https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing
@@ -18,10 +13,10 @@ def list_to_game(s):
     boards = []
     # gets single and double jeopardy rounds
     for n1 in [1, 14]:
-        categories = s[n1-1][1:7]
+        categories = s[n1 - 1][1:7]
         questions = []
         for row in range(5):
-            for col,cat in enumerate(categories):
+            for col, cat in enumerate(categories):
                 address = alpha[col] + str(row + n1 + 1)
                 index = (col, row)
                 text = s[row + n1][col + 1]
@@ -45,9 +40,9 @@ def list_to_game(s):
 
 
 def get_Gsheet_game(file_id):
-    csv_url = f'https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv'
+    csv_url = f"https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv"
     with requests.get(csv_url, stream=True) as r:
-        lines = (line.decode('utf-8') for line in r.iter_lines())
+        lines = (line.decode("utf-8") for line in r.iter_lines())
         r3 = csv.reader(lines)
         return list_to_game(list(r3))
 
@@ -70,7 +65,7 @@ def get_JArchive_Game(game_id, soup=None):
     comments = soup.select("#game_comments")[0].contents
     comments = comments[0] if len(comments) > 0 else ""
 
-    # Normal Roudns
+    # Normal Rounds
     boards = []
     rounds = soup.find_all(class_="round")
     for i, ro in enumerate(rounds):
@@ -85,17 +80,21 @@ def get_JArchive_Game(game_id, soup=None):
 
             text = text_obj.text
             index_key = text_obj["id"]
-            index = (int(index_key[-3]) - 1, int(index_key[-1]) - 1) # get index from id string
+            index = (
+                int(index_key[-3]) - 1,
+                int(index_key[-1]) - 1,
+            )  # get index from id string
             js = clue.find("div")["onmouseover"]
             dd = clue.find(class_="clue_value_daily_double") is not None
-            value = monies[i][index[1]]
+            value = MONIES[i][index[1]]
             answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
-            questions.append(Question(index, text, answer, categories[index[0]], value, dd))
+            questions.append(
+                Question(index, text, answer, categories[index[0]], value, dd)
+            )
 
         boards.append(Board(categories, questions, dj=(i == 1)))
 
-
-    # Final jeopardy
+    # Final Jeopardy
     fro = soup.find_all(class_="final_round")[0]
     category_obj = fro.find_all(class_="category")[0]
     category = category_obj.find(class_="category_name").text
@@ -108,12 +107,12 @@ def get_JArchive_Game(game_id, soup=None):
     index_key = text_obj["id"]
     js = list(clue.parents)[1].find("div")["onmouseover"]
     answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
-    question = Question((0,0), text, answer, category)
+    question = Question((0, 0), text, answer, category)
 
     boards.append(FinalBoard(category, question))
 
-
     return GameData(boards, date, comments)
+
 
 def get_game_sum(soup):
     date = re.search(
