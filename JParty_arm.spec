@@ -4,7 +4,7 @@ block_cipher = None
 DISTPATH = "./dist_arm"
 
 
-a = Analysis(['gui.py'],
+a = Analysis(['run.py'],
              pathex=['.'],
              binaries=[],
              datas=[

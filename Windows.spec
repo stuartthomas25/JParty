@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['gui.py'],
+a = Analysis(['run.py'],
              pathex=['/Users/stuart/Documents/Programming/JParty'],
              binaries=[],
              datas=[
