@@ -6,8 +6,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
-from jparty.style import MyLabel
-from jparty.constants import CARDPAL
+from jparty.style import MyLabel, CARDPAL
 
 
 class QuestionWidget(QWidget):
@@ -40,7 +39,6 @@ class HostQuestionWidget(QuestionWidget):
         self.answer_label = MyLabel(question.answer, self.startFontSize, self)
         self.answer_label.setFont(QFont("ITC Korinna"))
         self.main_layout.addWidget(self.answer_label, 1)
-        # self.setLayout(self.main_layout
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -54,9 +52,7 @@ class DailyDoubleWidget(QuestionWidget):
     def __init__(self, question, parent=None):
         super().__init__(question, parent)
         self.question_label.setVisible(False)
-        # if self.parent().alex():
 
-        print("create dd label")
         self.dd_label = MyLabel("DAILY<br/>DOUBLE!", self.startDDFontSize, self)
         self.main_layout.replaceWidget(self.question_label, self.dd_label)
 
@@ -96,8 +92,6 @@ class FinalJeopardyWidget(QuestionWidget):
     def __init__(self, question, parent=None):
         super().__init__(question, parent)
         self.question_label.setVisible(False)
-        # if self.parent().alex():
-        #     self.answer_label.setVisible(False)
 
         self.category_label = MyLabel(
             question.category, self.startCategoryFontSize, self
@@ -120,7 +114,6 @@ class HostFinalJeopardyWidget(FinalJeopardyWidget, HostQuestionWidget):
         super().__init__(question, parent)
         self.answer_label.setVisible(False)
 
-        # self.main_layout.setStretchFactor(self.category_label, 6)
         self.main_layout.setStretchFactor(self.question_label, 6)
         self.hint_label = MyLabel(
             "Waiting for all players to wager...", self.startFontSize, self

@@ -197,7 +197,10 @@ class Game(QObject):
 
         self.keystroke_manager = KeystrokeManager()
         self.keystroke_manager.addEvent(
-            "CORRECT_RESPONSE", Qt.Key.Key_Left, self.correct_answer, self.arrowhints,
+            "CORRECT_RESPONSE",
+            Qt.Key.Key_Left,
+            self.correct_answer,
+            self.arrowhints,
         )
         self.keystroke_manager.addEvent(
             "INCORRECT_RESPONSE",
@@ -264,9 +267,7 @@ class Game(QObject):
         self.song_player.play(repeat=True)
 
     def start_game(self):
-        self.current_round = self.data.rounds[1]
-        logging.warn("STARTING AT DOUBLE JEOPARDY")
-
+        self.current_round = self.data.rounds[0]
         self.dc.hide_welcome_widgets()
         self.dc.board_widget.load_round(self.current_round)
         self.buzzer_controller.accepting_players = False
@@ -286,12 +287,14 @@ class Game(QObject):
     def spacehints(self, val):
         self.host_display.borders.spacehints(val)
 
-    def update(self):
-        pass
-        # self.dc.update()
-
     def new_player(self):
         self.players = self.buzzer_controller.connected_players
+        self.dc.scoreboard.refresh_players()
+        self.host_display.welcome_widget.check_start()
+
+    def remove_player(self, player):
+        self.players.remove(player)
+        player.waiter.close()
         self.dc.scoreboard.refresh_players()
         self.host_display.welcome_widget.check_start()
 
@@ -324,7 +327,6 @@ class Game(QObject):
             self.answering_player = player
             self.keystroke_manager.activate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
             self.dc.borders.lights(False)
-            self.update()
         elif self.active_question is None:
             self.dc.player_widget(player).buzz_hint()
         else:
@@ -541,7 +543,10 @@ class Game(QObject):
 
     def adjust_score(self, player):
         new_score, answered = QInputDialog.getInt(
-            self.host_display, "Adjust Score", "Enter a new score:", value=player.score,
+            self.host_display,
+            "Adjust Score",
+            "Enter a new score:",
+            value=player.score,
         )
         if answered:
             self.set_score(player, new_score)

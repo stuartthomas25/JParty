@@ -1,4 +1,4 @@
-from PyQt6.QtGui import QPainter, QBrush, QImage, QColor, QFont, QPalette, QPixmap
+from PyQt6.QtGui import QPainter, QBrush, QImage, QFont, QPalette, QPixmap
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -9,24 +9,17 @@ from PyQt6.QtWidgets import (
     QLabel,
 )
 from PyQt6.QtCore import Qt, QSize
-from jparty.version import version
-import qrcode
 
-from jparty.retrieve import get_game, get_random_game
-from jparty.utils import resource_path, add_shadow, DynamicLabel, DynamicButton
-from jparty.helpmsg import helpmsg
+import qrcode
 import time
 from threading import Thread
 import logging
 
-
-WINDOWPAL = QPalette()
-WINDOWPAL.setColor(QPalette.ColorRole.Base, QColor("white"))
-WINDOWPAL.setColor(QPalette.ColorRole.WindowText, QColor("black"))
-WINDOWPAL.setColor(QPalette.ColorRole.Text, QColor("black"))
-WINDOWPAL.setColor(QPalette.ColorRole.Window, QColor("#fefefe"))
-WINDOWPAL.setColor(QPalette.ColorRole.Button, QColor("#e6e6e6"))
-WINDOWPAL.setColor(QPalette.ColorRole.ButtonText, QColor("black"))
+from jparty.version import version
+from jparty.retrieve import get_game, get_random_game
+from jparty.utils import resource_path, add_shadow, DynamicLabel, DynamicButton
+from jparty.helpmsg import helpmsg
+from jparty.style import WINDOWPAL
 
 
 class Image(qrcode.image.base.BaseImage):
@@ -190,10 +183,10 @@ class Welcome(StartWidget):
         )
         self.icon_label.setMaximumWidth(icon_size)
 
-        textbox_height = self.gameid_label.height() * 0.8
+        textbox_height = int(self.gameid_label.height() * 0.8)
         self.textbox.setMinimumSize(QSize(0, textbox_height))
         f = self.textbox.font()
-        f.setPixelSize(textbox_height * 0.9)
+        f.setPixelSize(int(textbox_height * 0.9))
         self.textbox.setFont(f)
 
     def __random(self):

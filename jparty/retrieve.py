@@ -59,9 +59,12 @@ def get_JArchive_Game(game_id, soup=None):
 
     r = requests.get(f"http://www.j-archive.com/showgame.php?game_id={game_id}")
     soup = BeautifulSoup(r.text, "html.parser")
-    date = re.search(
+    datesearch = re.search(
         r"- \w+, (.*?)$", soup.select("#game_title > h1")[0].contents[0]
-    ).groups()[0]
+    )
+    if datesearch is None:
+        return None
+    date = datesearch.groups()[0]
     comments = soup.select("#game_comments")[0].contents
     comments = comments[0] if len(comments) > 0 else ""
 
@@ -76,7 +79,7 @@ def get_JArchive_Game(game_id, soup=None):
             text_obj = clue.find(class_="clue_text")
             if text_obj is None:
                 logging.info("this game is incomplete")
-                continue
+                return None
 
             text = text_obj.text
             index_key = text_obj["id"]
@@ -102,6 +105,7 @@ def get_JArchive_Game(game_id, soup=None):
     text_obj = clue.find(class_="clue_text")
     if text_obj is None:
         logging.info("this game is incomplete")
+        return None
 
     text = text_obj.text
     index_key = text_obj["id"]

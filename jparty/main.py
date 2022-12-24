@@ -10,6 +10,8 @@ from jparty.controller import BuzzerController
 from jparty.main_display import DisplayWindow, HostDisplayWindow
 from jparty.style import JPartyStyle
 from jparty.utils import resource_path
+from jparty.logger import qt_exception_hook
+from jparty.constants import PORT
 
 
 def check_internet():
@@ -17,6 +19,7 @@ def check_internet():
     try:
         requests.get("http://www.j-archive.com/")
     except requests.exceptions.ConnectionError:  # This is the correct syntax
+        logging.error("Connection Error")
         QMessageBox.critical(
             None,
             "Cannot connect!",
@@ -28,35 +31,37 @@ def check_internet():
 
 
 def permission_error():
+    logging.error(f"Cannot access port {PORT}")
     QMessageBox.critical(
         None,
         "Permission Error",
-        "JParty encountered a permissions error when trying to listen on port 80.",
+        f"JParty encountered a permissions error when trying to listen on port {PORT}.",
         buttons=QMessageBox.StandardButton.Abort,
         defaultButton=QMessageBox.StandardButton.Abort,
     )
 
 
 def check_second_monitor():
-    pass
-
     if len(QApplication.instance().screens()) < 2:
-        print("error!")
-        msgBox = QMessageBox()
-        msgBox.setText(
-            "JParty needs two separate displays. Please attach a second monitor or turn off mirroring and try again."
+        logging.error("No two monitors")
+        QMessageBox.critical(
+            None,
+            "Two monitors needed!",
+            "JParty needs two separate displays. Please attach a second monitor or turn off mirroring and try again.",
+            buttons=QMessageBox.StandardButton.Abort,
+            defaultButton=QMessageBox.StandardButton.Abort,
         )
-        msgBox.exec()
         sys.exit(1)
 
 
 def main():
 
     song_player = None
-    r = 1
+    r = 1  # default return code
 
     QApplication.setStyle(JPartyStyle())
     app = QApplication(sys.argv)
+
     check_second_monitor()
     check_internet()
     app.setFont(QFont("Verdana"))
@@ -67,6 +72,7 @@ def main():
         )
 
         game = Game()
+
         socket_controller = BuzzerController(game)
         game.setBuzzerController(socket_controller)
 
@@ -75,7 +81,6 @@ def main():
         game.setDisplays(host_window, main_window)
 
         game.begin()
-
         song_player = game.song_player
 
         try:

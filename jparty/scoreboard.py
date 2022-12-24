@@ -1,10 +1,11 @@
-from PyQt6.QtGui import QPainter, QPixmap, QImage, QPalette, QColor
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QPainter, QPixmap, QImage, QPalette, QColor, QIcon
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy, QPushButton
+from PyQt6.QtCore import Qt, QSize, QPoint
 
 import time
 from threading import Thread
 from base64 import urlsafe_b64decode
+from functools import partial
 
 from jparty.style import MyLabel
 from jparty.utils import resource_path
@@ -33,7 +34,7 @@ class NameLabel(MyLabel):
         if self.signature is not None:
             self.setPixmap(
                 self.signature.scaled(
-                    self.height() * NameLabel.name_aspect_ratio,
+                    int(self.height() * NameLabel.name_aspect_ratio),
                     self.height(),
                     transformMode=Qt.TransformationMode.SmoothTransformation,
                 )
@@ -53,10 +54,9 @@ class PlayerWidget(QWidget):
         self.__light_thread = None
 
         self.name_label = NameLabel(player.name, self)
-
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
 
-        self.resizeEvent(None)
+        # self.resizeEvent(None)
         self.update_score()
 
         self.setMouseTracking(True)
@@ -78,14 +78,13 @@ class PlayerWidget(QWidget):
         layout.addStretch(10)
 
         self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
-
         self.setLayout(layout)
 
         self.show()
 
     def sizeHint(self):
         h = self.height()
-        return QSize(h * PlayerWidget.aspect_ratio, h)
+        return QSize(int(h * PlayerWidget.aspect_ratio), h)
 
     def minimumSizeHint(self):
         return QSize()
@@ -94,8 +93,8 @@ class PlayerWidget(QWidget):
         return self.height() * 0.2
 
     def resizeEvent(self, event):
-        m = PlayerWidget.margin
-        self.setContentsMargins(self.width() * m, 0, self.width() * m, 0)
+        m = int(PlayerWidget.margin * self.width())
+        self.setContentsMargins(m, 0, m, 0)
 
     def set_lights(self, val):
         self.background = self.active_background if val else self.main_background
@@ -163,13 +162,31 @@ class PlayerWidget(QWidget):
             self.set_lights(True)
 
 
+class HostPlayerWidget(PlayerWidget):
+    def __init__(self, game, player, parent=None):
+        self.remove_button = None
+        super().__init__(game, player, parent)
+        self.remove_button = QPushButton("", self)
+        # self.remove_button.setStyleSheet("color: red")
+        self.remove_button.clicked.connect(partial(self.game.remove_player, player))
+        self.remove_button.setIcon(QIcon(resource_path("close-icon.png")))
+        self.remove_button.show()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.remove_button is not None:
+            self.remove_button.move(QPoint(0, 0))
+            xbutton_size = int(self.width() * 0.2)
+            self.remove_button.resize(QSize(xbutton_size, xbutton_size))
+            self.remove_button.setIconSize(self.size())
+
+
 class ScoreBoard(QWidget):
     def __init__(self, game, parent=None):
         super().__init__(parent)
 
         self.game = game
 
-        # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.player_widgets = []
 
         self.player_layout = QHBoxLayout()
@@ -181,7 +198,6 @@ class ScoreBoard(QWidget):
         return 0.2 * self.width()
 
     def refresh_players(self):
-
         for pw in list(self.player_widgets):  # copy list so we can remove elements
             if pw.player not in self.game.players:
                 i = self.player_layout.indexOf(pw)
@@ -192,17 +208,28 @@ class ScoreBoard(QWidget):
 
         for (i, p) in enumerate(self.game.players):
             if not any(pw.player is p for pw in self.player_widgets):
-                pw = PlayerWidget(self.game, p, self)
+                pw = self.create_player_widget(p)
                 self.player_layout.insertWidget(2 * i + 1, pw)
                 self.player_layout.insertStretch(2 * i + 2)
                 self.player_widgets.append(pw)
 
         self.update()
 
-        # self.setLayout(self.player_layout)
+    def create_player_widget(self, player):
+        return PlayerWidget(self.game, player, self)
 
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
         qp.drawPixmap(self.rect(), QPixmap(resource_path("pedestal.png")))
         qp.end()
+
+
+class HostScoreBoard(ScoreBoard):
+    def create_player_widget(self, player):
+        return HostPlayerWidget(self.game, player, self)
+
+    def hide_close_buttons(self):
+        for pw in self.player_widgets:
+            pw.remove_button.setVisible(False)
+            pw.remove_button.setEnabled(False)

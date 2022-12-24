@@ -142,12 +142,12 @@ class HostBorderWidget(BorderWidget):
         self.hint_label.setPixmap(QPixmap())
 
     def resizeEvent(self, event):
-        self.hint_label.setMargin(self.width() * 0.05)
+        self.hint_label.setMargin(int(self.width() * 0.05))
 
     def paintEvent(self, event):
         super().paintEvent(event)
         qp = QPainter()
         qp.begin(self)
         if self.colors:
-            qp.setBrush(QBrush(QColor("red" if self.d == 1 else "green")))
+            qp.setBrush(QBrush(QColor("#ff0000" if self.d == 1 else "#33cc33")))
             qp.drawRect(self.rect())

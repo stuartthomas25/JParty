@@ -1,22 +1,20 @@
-#!/usr/bin/env python
 import logging
 import tornado.escape
 import tornado.ioloop
-import tornado.options
 import tornado.web
 import tornado.websocket
+from tornado.options import define, options
 
 import os
 from threading import Thread
 import socket
-from .environ import root
-from .game import Player
 
-from tornado.options import define, options
+from jparty.environ import root
+from jparty.game import Player
+from jparty.constants import MAXPLAYERS, PORT
 
-define("port", default=8080, help="run on the given port", type=int)
 
-MAXPLAYERS = 8
+define("port", default=PORT, help="run on the given port", type=int)
 
 
 class Application(tornado.web.Application):
@@ -50,9 +48,6 @@ class BuzzerHandler(tornado.web.RequestHandler):
         else:
             logging.info(f"cookie: {self.get_cookie('test')}")
         self.render("play.html", messages=BuzzerSocketHandler.cache)
-
-
-max_waiters = 8
 
 
 class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
@@ -103,7 +98,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         if msg == "NAME":
             self.init_player(text)
         elif msg == "CHECK_IF_EXISTS":
-            logging.info(f"Checking if {self.player} exists")
+            logging.info(f"Checking if {text} exists")
             self.check_if_exists(text)
         elif msg == "WAGER":
             self.wager(text)

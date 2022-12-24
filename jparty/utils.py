@@ -133,8 +133,8 @@ class AutosizeWidget(object):
         rect = self.rect()
         text = self.plaintext()
 
-        font.setPointSize(self.getInitialSize())
-        size = font.pointSize()
+        font.setPixelSize(int(self.getInitialSize()))
+        size = font.pixelSize()
 
         def fullrect(font):
             fm = QFontMetrics(font)
@@ -179,9 +179,11 @@ class DynamicLabel(QLabel, AutosizeWidget):
 class DynamicButton(QPushButton, AutosizeWidget):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
-        self.initialSize = lambda: self.height() * 0.5
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.autoresize()
+
+    def initialSize(self):
+        return self.height() * 0.5
 
     def flags(self):
         return 0

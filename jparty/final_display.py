@@ -1,10 +1,8 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
 from jparty.scoreboard import NameLabel
-from jparty.style import MyLabel
-
+from jparty.style import MyLabel, CARDPAL
 from jparty.utils import add_shadow
-from jparty.constants import CARDPAL
 
 
 class FinalDisplay(QWidget):
