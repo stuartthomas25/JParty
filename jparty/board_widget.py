@@ -3,8 +3,7 @@ from PyQt6.QtGui import QPalette
 
 
 from jparty.game import Board
-from jparty.style import MyLabel
-from jparty.constants import CARDPAL, JBLUE, DARKBLUE
+from jparty.style import MyLabel, CARDPAL, JBLUE, DARKBLUE
 
 
 class CardLabel(QWidget):
@@ -68,7 +67,7 @@ class QuestionCard(CardLabel):
         self.setText(self.__moneytext())
 
     def startFontSize(self):
-        return self.height() * 0.8
+        return self.height() * 0.5
 
     def inactive(self):
         return self.question is None or self.question.complete
@@ -121,9 +120,9 @@ class BoardWidget(QWidget):
         self.resizeEvent(None)
 
         for x in range(Board.size[0]):
-            self.grid_layout.setRowStretch(x, 1.0)
+            self.grid_layout.setRowStretch(x, 1)
         for y in range(Board.size[1] + 1):
-            self.grid_layout.setColumnStretch(y, 1.0)
+            self.grid_layout.setColumnStretch(y, 1)
 
         for x in range(Board.size[0]):
             for y in range(Board.size[1] + 1):

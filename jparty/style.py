@@ -39,3 +39,22 @@ class MyLabel(DynamicLabel):
         self.setPalette(palette)
 
         self.show()
+
+
+WINDOWPAL = QPalette()
+WINDOWPAL.setColor(QPalette.ColorRole.Base, QColor("white"))
+WINDOWPAL.setColor(QPalette.ColorRole.WindowText, QColor("black"))
+WINDOWPAL.setColor(QPalette.ColorRole.Text, QColor("black"))
+WINDOWPAL.setColor(QPalette.ColorRole.Window, QColor("#fefefe"))
+WINDOWPAL.setColor(QPalette.ColorRole.Button, QColor("#e6e6e6"))
+WINDOWPAL.setColor(QPalette.ColorRole.Button, QColor("#e6e6e6"))
+WINDOWPAL.setColor(QPalette.ColorRole.ButtonText, QColor("black"))
+WINDOWPAL.setColor(
+    QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor("#d0d0d0")
+)
+
+JBLUE = QColor("#1010a1")
+DARKBLUE = QColor("#0b0b74")
+CARDPAL = QPalette()
+CARDPAL.setColor(QPalette.ColorRole.Window, JBLUE)
+CARDPAL.setColor(QPalette.ColorRole.WindowText, QColor("#ffffff"))

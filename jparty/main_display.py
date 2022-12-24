@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 )
 
 from jparty.board_widget import BoardWidget
-from jparty.scoreboard import ScoreBoard
+from jparty.scoreboard import ScoreBoard, HostScoreBoard
 from jparty.borders import Borders, HostBorders
 from jparty.question_widget import (
     QuestionWidget,
@@ -38,7 +38,7 @@ class DisplayWindow(QMainWindow):
         self.question_widget = None
 
         self.board_widget = BoardWidget(game, self)
-        self.scoreboard = ScoreBoard(game, self)
+        self.scoreboard = self.create_score_board()
         self.borders = self.create_border_widget()
 
         self.board_layout = QHBoxLayout()
@@ -78,6 +78,9 @@ class DisplayWindow(QMainWindow):
 
     def create_start_menu(self):
         return QRWidget(self.game.buzzer_controller.host(), self)
+
+    def create_score_board(self):
+        return ScoreBoard(self.game, self)
 
     def create_question_widget(self, q):
         if q.dd:
@@ -166,6 +169,9 @@ class HostDisplayWindow(DisplayWindow):
     def create_start_menu(self):
         return Welcome(self.game, self)
 
+    def create_score_board(self):
+        return HostScoreBoard(self.game, self)
+
     def create_border_widget(self):
         return HostBorders(self)
 
@@ -180,3 +186,7 @@ class HostDisplayWindow(DisplayWindow):
 
     def keyPressEvent(self, event):
         self.game.keystroke_manager.call(event.key())
+
+    def hide_welcome_widgets(self):
+        super().hide_welcome_widgets()
+        self.scoreboard.hide_close_buttons()
