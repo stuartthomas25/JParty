@@ -1,7 +1,6 @@
-
 @font-face {
-    font-family: gyparody;
-    src: url(gyparody/gyparodyhv.ttf);
+  font-family: 'gyparody';
+  src: url('https://www.fontsaddict.com/fontface/gyparody.ttf');
 }
 body {
     background-image: url(background.jpg);
