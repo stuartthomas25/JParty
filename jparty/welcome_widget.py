@@ -234,7 +234,7 @@ class Welcome(StartWidget):
         self.textbox.setText(text)
 
     def show_summary(self, text=None):
-        self.summary_label.emit("Loading...")
+        self.summary_trigger.emit("Loading...")
         t = Thread(target=self.__show_summary)
         t.start()
 
