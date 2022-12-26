@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QLabel,
 )
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, pyqtSignal
 
 import qrcode
 import time
@@ -57,6 +57,9 @@ class StartWidget(QWidget):
 
 
 class Welcome(StartWidget):
+    gameid_trigger = pyqtSignal(str)
+    summary_trigger = pyqtSignal(str)
+
     def __init__(self, game, parent=None):
         super().__init__(parent)
         self.game = game
@@ -157,6 +160,9 @@ class Welcome(StartWidget):
         main_layout.addLayout(footer_layout, 3)
         main_layout.addStretch(3)
 
+        self.gameid_trigger.connect(self.set_gameid)
+        self.summary_trigger.connect(self.set_summary)
+
         self.setLayout(main_layout)
 
         self.show()
@@ -190,19 +196,20 @@ class Welcome(StartWidget):
         self.textbox.setFont(f)
 
     def __random(self):
-        complete = False
-        while not complete:
+        while True:
             game_id = get_random_game()
             logging.info(f"GAMEID {game_id}")
             self.game.data = get_game(game_id)
-            complete = self.game.valid_game()
-            time.sleep(0.25)
+            if self.game.valid_game():
+                break
+            else:
+                time.sleep(0.25)
 
-        self.textbox.setText(str(game_id))
-        self.textbox.show()
+        self.gameid_trigger.emit(str(game_id))
+        self.summary_trigger.emit(self.game.data.date + "\n" + self.game.data.comments)
 
     def random(self, checked):
-        self.summary_label.setText("Loading...")
+        self.summary_trigger.emit("Loading...")
         t = Thread(target=self.__random)
         t.start()
 
@@ -211,19 +218,23 @@ class Welcome(StartWidget):
         try:
             self.game.data = get_game(game_id)
             if self.game.valid_game():
-                gamedata = self.game.data
-                self.summary_label.setText(gamedata.date + "\n" + gamedata.comments)
+                self.summary_trigger.emit(self.game.data.date + "\n" + self.game.data.comments)
             else:
-                self.summary_label.setText("Game has blank questions")
+                self.summary_trigger.emit("Game has blank questions")
 
         except Exception as e:
-            self.summary_label.setText("Cannot get game")
-            raise e
+            self.summary_trigger.emit("Cannot get game")
 
         self.check_start()
 
+    def set_summary(self, text):
+        self.summary_label.setText(text)
+
+    def set_gameid(self, text):
+        self.textbox.setText(text)
+
     def show_summary(self, text=None):
-        self.summary_label.setText("Loading...")
+        self.summary_label.emit("Loading...")
         t = Thread(target=self.__show_summary)
         t.start()
 
