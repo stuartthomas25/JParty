@@ -218,11 +218,13 @@ class Welcome(StartWidget):
         try:
             self.game.data = get_game(game_id)
             if self.game.valid_game():
-                self.summary_trigger.emit(self.game.data.date + "\n" + self.game.data.comments)
+                self.summary_trigger.emit(
+                    self.game.data.date + "\n" + self.game.data.comments
+                )
             else:
                 self.summary_trigger.emit("Game has blank questions")
 
-        except Exception as e:
+        except Exception:
             self.summary_trigger.emit("Cannot get game")
 
         self.check_start()
