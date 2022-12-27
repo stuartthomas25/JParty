@@ -1,19 +1,11 @@
+
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function lights_on(i) {
-    for (l of document.getElementsByClassName("l" + i.toString())){
-        l.classList.add("lit");
-    };
-}
-
-function lights_off(i) {
-    for (l of document.getElementsByClassName("l" + i.toString())){
-        l.classList.remove("lit");
-    };
-}
 var last_buzz = new Date().getTime();
+
 async function buzz() {
     var now = new Date().getTime();
     // if (now - window.last_buzz > 250) {
@@ -29,7 +21,7 @@ async function buzz() {
 
 }
 
-var current_page = "name";
+var current_page = "";
 function load_page(pagename) {
     try {
         if (pagename !== null && pagename != "null") {
@@ -45,20 +37,6 @@ function load_page(pagename) {
     return 0;
 }
 
-/*async function yourturn() {*/
-
-    ////var secs = 5;
-    ////var buzzer_obj = document.getElementById("buzzer");
-    ////buzzer_obj.classList.add('answering');
-    ////for (let i = 0; i < secs; i++) {
-        ////lights_on(i);
-    ////}
-    ////for (let i = 0; i < secs; i++) {
-        ////await sleep(1000);
-        ////lights_off(i);
-    ////}
-    //[>buzzer_obj.classList.remove('answering');<]
-/*}*/
 function setToken(token) {
   var d = new Date();
   d.setTime(d.getTime() + (24*60*60*1000)); // lasts 24 hour
@@ -97,32 +75,101 @@ function wagerForm() {
 function answerForm() {
     var answer = $("input[name='answer']").val();
     send("ANSWER",answer);
+    document.activeElement.blur();
     load_page(null);
     return false;
 }
 
-function nameForm() {
-    var name = $("input[name='playername']").val();
-    if (name != "") {
-        console.log(name);
-        send("NAME",name);
-        load_page("buzz");
-    }
-    return false;
+function nameForm(name) {
+    console.log(name);
+    send("NAME",name);
 }
+
+function set_max_wager(score) {
+    $(".wager_input").attr("max", score);
+    $(".wager_input").attr("min",0);
+    console.log("Max wager:" + $(".wager_input").attr("max"));
+}
+
+const padding = 2;
+const canvasratio = 1.3422;
+
+var signaturePad;
+
+function resizeCanvas() {
+    const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+    const canvas = document.querySelector("canvas");
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.width / canvasratio;
+    canvas.getContext("2d").scale(ratio, ratio);
+    signaturePad.clear(); // otherwise isEmpty() might return incorrect value
+}
+
 
 $(document).ready(function() {
     if (!window.console) window.console = {};
     if (!window.console.log) window.console.log = function() {};
+    // load_page("name");
+
     updater.start();
+
+    const canvas = document.querySelector("canvas");
+    canvas.style.width = "100%";
+
+    signaturePad = new SignaturePad(canvas, {
+        penColor: "#ffffff",
+        backgroundColor: "#1010a1"
+    });
+
+
+    window.addEventListener("resize", resizeCanvas);
+    // resizeCanvas();
+
     var cookie = getToken();
     if (cookie != "") {
         console.log("checking token "+cookie)
         updater.socket.onopen = function (event) {
             updater.socket.send(JSON.stringify({message:"CHECK_IF_EXISTS", text:cookie}));
         };
+    } else {
+        load_page("name");
+        resizeCanvas();
     };
+
+
+
+    $("#clear-button").on("click", function () {
+        signaturePad.clear()
+    });
+
+    $("#undo-button").on("click", function () {
+        const data = signaturePad.toData();
+
+        if (data) {
+            data.pop(); // remove the last dot or line
+            signaturePad.fromData(data);
+        }
+    });
+
+    $("#prompt-button").on("click", function () {
+        let name = prompt("Enter name", "");
+        if (name != null) {
+            nameForm(name);
+        };
+    });
+
+    $("#submit-button").on("click", function () {
+        if (!signaturePad.isEmpty()) {
+            let image = signaturePad.toDataURL();
+            console.log(image);
+            nameForm(image);
+        };
+    });
 });
+
+
+
+
 
 var updater = {
     socket: null,
@@ -137,30 +184,41 @@ var updater = {
             switch (jsondata.message) {
                 case "GAMEFULL":
                     //alert((Date.now()-last_buzz) % 1000);
-                    alert("This game already has three players!")
-                    break;
-                case "NAMETAKEN":
-                    alert("That name is already taken");
+                    alert("Game has too many players!")
                     window.location.reload()
                     break;
+                case "GAMESTARTED":
+                    //alert((Date.now()-last_buzz) % 1000);
+                    alert("Game has started!")
+                    break;
                 case "TOKEN":
+                    load_page("buzz");
                     setToken(jsondata.text);
                     break;
+                case "NEW":
+                    load_page("name");
+                    resizeCanvas();
+                    break;
                 case "EXISTS":
-                    console.log("Already exists");
-                    load_page(jsondata.text);
+                    console.log("Already exists" + jsondata.text);
+                    state = JSON.parse(jsondata.text);
+                    set_max_wager(state.score);
+                    load_page(state.page);
                     break;
                 case "PROMPTWAGER":
+                    set_max_wager(jsondata.text);
                     load_page("wager");
-                    $(".wager_input").attr("max",jsondata.text);
-                    $(".wager_input").attr("min",0);
-                    console.log("Max wager:" + $(".wager_input").attr("max"));
                     break;
                 case "PROMPTANSWER":
                     load_page("answer");
-                    setInterval(answerForm, 31000);
+                    break;
+                case "TOOLATE":
+                    answerForm();
                     break;
             }
         }
     }
 };
+
+
+

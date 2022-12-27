@@ -6,18 +6,12 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QMessageBox, QApplication
 import webbrowser
 from urllib.parse import quote
-from .version import version
-from .constants import DEBUG
-
-from .environ import root
+from jparty.version import version
+from jparty.environ import root
 
 log_filename = os.path.join(root, "latest.log")
 logging.basicConfig(filename=log_filename, encoding="utf-8", level=logging.DEBUG)
-
-# basic logger functionality
 log = logging.getLogger(__name__)
-# handler = logging.StreamHandler(stream=sys.stdout)
-# log.addHandler(handler)
 
 
 def mailto(recipients, subject, body):
@@ -53,7 +47,7 @@ Platform: {os.uname()}
 {logdata}
 """
 
-            mailto("me@stuartthomas.us", f"JParty Error Report", message)
+            mailto("me@stuartthomas.us", "JParty Error Report", message)
     else:
         log.debug("No QApplication instance available.")
 
@@ -92,7 +86,4 @@ class UncaughtHook(QObject):
 
 
 # create a global instance of our class to register the hook
-if DEBUG:
-    qt_exception_hook = None
-else:
-    qt_exception_hook = UncaughtHook()
+qt_exception_hook = UncaughtHook()

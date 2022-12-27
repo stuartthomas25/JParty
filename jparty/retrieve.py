@@ -1,16 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-from threading import Thread
-from queue import Queue
-from jparty.game import Question, Board, Game
+from jparty.game import Question, Board, FinalBoard, GameData
 import logging
 import csv
+from jparty.constants import MONIES
 
-
-import pickle
-
-monies = [[200, 400, 600, 800, 1000], [400, 800, 1200, 1600, 2000]]
 
 def list_to_game(s):
     # Template link: https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing
@@ -18,10 +13,10 @@ def list_to_game(s):
     boards = []
     # gets single and double jeopardy rounds
     for n1 in [1, 14]:
-        categories = s[n1-1][1:7]
+        categories = s[n1 - 1][1:7]
         questions = []
         for row in range(5):
-            for col in range(6):
+            for col, cat in enumerate(categories):
                 address = alpha[col] + str(row + n1 + 1)
                 index = (col, row)
                 text = s[row + n1][col + 1]
@@ -30,30 +25,29 @@ def list_to_game(s):
                 dd = address in s[n1 - 1][-1]
                 questions.append(Question(index, text, answer, value, dd))
                 print(index, text, answer, value, dd)
-        boards.append(Board(categories, questions, final=False, dj=(n1 == 14)))
+        boards.append(Board(categories, questions, dj=(n1 == 14)))
     # gets final jeopardy round
     fj = s[-1]
     index = (0, 0)
     text = fj[2]
     answer = fj[3]
-    questions = [Question(index, text, answer, None, False)]
-    categories = [fj[1]]
-    boards.append(Board(categories, questions, final=True, dj=False))
+    category = fj[1]
+    question = Question(index, text, answer, category)
+    boards.append(FinalBoard(category, question))
     date = fj[5]
     comments = fj[7]
-    return Game(boards, date, comments)
+    return GameData(boards, date, comments)
 
 
 def get_Gsheet_game(file_id):
-    csv_url = f'https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv'
+    csv_url = f"https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv"
     with requests.get(csv_url, stream=True) as r:
-        lines = (line.decode('utf-8') for line in r.iter_lines())
+        lines = (line.decode("utf-8") for line in r.iter_lines())
         r3 = csv.reader(lines)
         return list_to_game(list(r3))
 
 
 def get_game(game_id):
-    print("getting game")
     if len(str(game_id)) < 7:
         return get_JArchive_Game(game_id)
     else:
@@ -63,98 +57,65 @@ def get_game(game_id):
 def get_JArchive_Game(game_id, soup=None):
     logging.info(f"getting game {game_id}")
 
-    # boards = pickle.load(open("board_download.dat",'rb'))
-    # return Game(boards)
-
     r = requests.get(f"http://www.j-archive.com/showgame.php?game_id={game_id}")
     soup = BeautifulSoup(r.text, "html.parser")
-    date = re.search(
+    datesearch = re.search(
         r"- \w+, (.*?)$", soup.select("#game_title > h1")[0].contents[0]
-    ).groups()[0]
+    )
+    if datesearch is None:
+        return None
+    date = datesearch.groups()[0]
     comments = soup.select("#game_comments")[0].contents
     comments = comments[0] if len(comments) > 0 else ""
 
-    rounds = soup.find_all(class_="round") + soup.find_all(class_="final_round")
+    # Normal Rounds
     boards = []
+    rounds = soup.find_all(class_="round")
     for i, ro in enumerate(rounds):
-        final = ro["class"][0] == "final_round"
         categories_objs = ro.find_all(class_="category")
         categories = [c.find(class_="category_name").text for c in categories_objs]
         questions = []
         for clue in ro.find_all(class_="clue"):
             text_obj = clue.find(class_="clue_text")
             if text_obj is None:
-                # logging.info("this game is incomplete")
-                continue
-            # else:
-            # logging.info("complete")
+                logging.info("this game is incomplete")
+                return None
+
             text = text_obj.text
             index_key = text_obj["id"]
-            if not final:
-                index = (int(index_key[-3]) - 1, int(index_key[-1]) - 1)
-                js = clue.find("div")["onmouseover"]
-                dd = clue.find(class_="clue_value_daily_double") is not None
-                value = monies[i][index[1]]
-            else:
-                index = (0, 0)
-                js = list(clue.parents)[1].find("div")["onmouseover"]
-                value = None
-                dd = False
+            index = (
+                int(index_key[-3]) - 1,
+                int(index_key[-1]) - 1,
+            )  # get index from id string
+            js = clue.find("div")["onmouseover"]
+            dd = clue.find(class_="clue_value_daily_double") is not None
+            value = MONIES[i][index[1]]
             answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
-            questions.append(Question(index, text, answer, value, dd))
-        boards.append(Board(categories, questions, final=final, dj=(i == 1)))
-    logging.info(f"Boards {len(boards)}")
+            questions.append(
+                Question(index, text, answer, categories[index[0]], value, dd)
+            )
 
-    return Game(boards, date, comments)
+        boards.append(Board(categories, questions, dj=(i == 1)))
 
-    # def get_all_games():
-    #     r = requests.get("http://j-archive.com/listseasons.php")
-    #     soup = BeautifulSoup(r.text, "html.parser")
-    #     seasons = soup.find_all("tr")
+    # Final Jeopardy
+    fro = soup.find_all(class_="final_round")[0]
+    category_obj = fro.find_all(class_="category")[0]
+    category = category_obj.find(class_="category_name").text
+    clue = fro.find_all(class_="clue")[0]
+    text_obj = clue.find(class_="clue_text")
+    if text_obj is None:
+        logging.info("this game is incomplete")
+        return None
 
-    #     # Using Queue
-    #     concurrent = 40
-    #     game_ids = []
+    text = text_obj.text
+    index_key = text_obj["id"]
+    js = list(clue.parents)[1].find("div")["onmouseover"]
+    answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
+    question = Question((0, 0), text, answer, category)
 
-    #     def send_requests():
-    #         while True:
-    #             url = q.get()
-    #             season_r = requests.get("http://j-archive.com/" + url)
-    #             season_soup = BeautifulSoup(season_r.text, "html.parser")
-    #             for game in season_soup.find_all("tr"):
-    #                 if game:
-    #                     game_id = int(
-    #                         re.search(r"(\d+)\s*$", game.find("a")["href"]).groups()[0]
-    #                     )
-    #                     game_ids.append(game_id)
-    #             q.task_done()
+    boards.append(FinalBoard(category, question))
 
-    #     q = Queue(concurrent * 2)
-    #     for _ in range(concurrent):
-    #         t = Thread(target=send_requests)
-    #         t.daemon = True
-    #         t.start()
-    #     for season in seasons:
-    #         link = season.find("a")["href"]
-    #         q.put(link)
-    #     q.join()
-    #     games_info = {}
-    # game_ids = []
-    # for season in seasons:
-    # link = season.find('a')['href']
-    # print(link)
-    # season_r = requests.get("http://j-archive.com/"+link)
-    # season_soup = BeautifulSoup(season_r.text, 'html.parser')
-    # for game in season_soup.find_all("tr"):
-    # if game:
-    # game_id = int(re.search(r'(\d+)\s*$', game.find('a')['href']).groups()[0])
-    # game_ids.append(game_id)
-    # #                 game_date = re.search(r'([\-\d]*)$', str(game.find('a').contents[0])).groups()[0]
-    # # summary = re.search(r'^\s+(.*)\s+$', game.find_all('td')[-1].contents[0])
-    # # stripped_summary = '' if summary is None else summary.groups()[0]
-    # # games_info[game_id] = game_date + ': ' + stripped_summary
-
-    # return game_ids
+    return GameData(boards, date, comments)
 
 
 def get_game_sum(soup):
@@ -172,13 +133,3 @@ def get_random_game():
 
     link = soup.find_all(class_="splash_clue_footer")[1].find("a")["href"]
     return int(link[21:])
-
-# def getStatus(ourl):
-# try:
-# url = urlparse(ourl)
-# conn = httplib.HTTPConnection(url.netloc)
-# conn.request("HEAD", url.path)
-# res = conn.getresponse()
-# return res.status, ourl
-# except:
-# return "error", ourl
