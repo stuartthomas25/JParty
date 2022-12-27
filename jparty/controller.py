@@ -1,26 +1,20 @@
-#!/usr/bin/env python
-
 import logging
 import tornado.escape
 import tornado.ioloop
-import tornado.options
 import tornado.web
 import tornado.websocket
-
-# import tornado.speedups
-import os
-import uuid
-import time
-from threading import Thread
-import socket
-from .environ import root
-from .game import Player
-
-from PyQt6.QtWidgets import QApplication
-
 from tornado.options import define, options
 
-define("port", default=8080, help="run on the given port", type=int)
+import os
+from threading import Thread
+import socket
+
+from jparty.environ import root
+from jparty.game import Player
+from jparty.constants import MAXPLAYERS, PORT
+
+
+define("port", default=PORT, help="run on the given port", type=int)
 
 
 class Application(tornado.web.Application):
@@ -48,26 +42,17 @@ class WelcomeHandler(tornado.web.RequestHandler):
 
 class BuzzerHandler(tornado.web.RequestHandler):
     def post(self):
-        # self.set_header("Content-Type", "text/html")
-        playername = self.get_body_argument("playername")
         if not self.get_cookie("test"):
             self.set_cookie("test", "test_val")
             logging.info("set cookie")
         else:
             logging.info(f"cookie: {self.get_cookie('test')}")
-        # global playernames
-        # playernames[self.request.remote_ip] = playername
         self.render("play.html", messages=BuzzerSocketHandler.cache)
 
 
-max_waiters = 8
-
-
 class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
-    # waiters = set()
     cache = []
     cache_size = 400
-    # player_names = {}
 
     def initialize(self):
         # self.name = None
@@ -80,21 +65,31 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
 
     def open(self):
         self.set_nodelay(True)
-        # self.controller.connected_players.add(self)
+
+    def send(self, msg, text=""):
+        data = {"message": msg, "text": text}
+        try:
+            self.write_message(data)
+            logging.info(f"Sent {data}")
+        except:
+            logging.error(f"Error sending message {msg}", exc_info=True)
 
     def check_if_exists(self, token):
+
         p = self.controller.player_with_token(token)
-        if p is not None:
-            logging.info(f"Reconnected as {p.name}")
+        if p is None:
+            logging.info("NEW")
+            self.send("NEW")
+        else:
+            logging.info(f"Reconnected {p}")
             self.player = p
             p.connected = True
             p.waiter = self
-            self.send("EXISTS", p.page)
+            self.send("EXISTS", tornado.escape.json_encode(p.state()))
 
     def on_message(self, message):
         # do this first to kill latency
         if "BUZZ" in message:
-            # logging.info("buzz")
             self.buzz()
             return
         parsed = tornado.escape.json_decode(message)
@@ -103,7 +98,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         if msg == "NAME":
             self.init_player(text)
         elif msg == "CHECK_IF_EXISTS":
-            logging.info(f"Checking if {parsed['text']} exists")
+            logging.info(f"Checking if {text} exists")
             self.check_if_exists(text)
         elif msg == "WAGER":
             self.wager(text)
@@ -115,26 +110,21 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
 
     def init_player(self, name):
 
-        if len(self.controller.connected_players) >= 8:
-            logging.info("Game full!")
-            self.send("GAMEFULL")
+        if not self.controller.accepting_players:
+            logging.info("Game started!")
+            self.send("GAMESTARTED")
             return
 
-        for p in self.controller.connected_players:
-            if p.name == name:
-                logging.info("Name taken!")
-                self.send("NAMETAKEN")
-                return
-            elif name == "":
-                return
+        if len(self.controller.connected_players) >= MAXPLAYERS:
+            self.send("FULL")
+            return
 
         self.player = Player(name, self)
         self.application.controller.new_player(self.player)
         logging.info(
-            f"New Player: {name} {self.request.remote_ip} {self.player.token.hex()}"
+            f"New Player: {self.player} {self.request.remote_ip} {self.player.token.hex()}"
         )
         self.send("TOKEN", self.player.token.hex())
-        # self.send("PROMPTWAGER", 69)
 
     def buzz(self):
         self.application.controller.buzz(self.player)
@@ -143,30 +133,24 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         self.application.controller.wager(self.player, int(text))
         self.player.page = "null"
 
-    def send(self, msg, text=""):
-        data = {"message": msg, "text": text}
-        try:
-            self.write_message(data)
-            logging.info(f"Sent {data} to {self.player.name}")
-        except:
-            logging.error(f"Error sending message {msg}", exc_info=True)
+    def toolate(self):
+        self.send("TOOLATE")
 
     def on_close(self):
         pass
-        # self.application.controller.buzzer_disconnected(self.player)
 
 
 class BuzzerController:
-    def __init__(self):
+    def __init__(self, game):
         self.thread = None
-        self.game = None
-        self.welcome_window = None
+        self.game = game
         tornado.options.parse_command_line()
         self.app = Application(
             self
         )  # this is to remove sleep mode on Macbook network card
         self.port = options.port
         self.connected_players = []
+        self.accepting_players = True
 
     def start(self, threaded=True):
         self.app.listen(self.port)
@@ -181,7 +165,7 @@ class BuzzerController:
         for p in self.connected_players:
             p.waiter.close()
         self.connected_players = []
-        self.game = None
+        self.accepting_players = True
 
     def buzz(self, player):
         if self.game:
@@ -189,10 +173,9 @@ class BuzzerController:
             self.game.buzz_trigger.emit(i_player)
         else:
             i_player = self.connected_players.index(player)
-            self.welcome_window.buzz_hint_trigger.emit(i_player)
+            self.game.buzz_hint_trigger.emit(i_player)
 
     def wager(self, player, amount):
-        # self.game.wager(player, amount)
         i_player = self.game.players.index(player)
         self.game.wager_trigger.emit(i_player, amount)
 
@@ -203,43 +186,13 @@ class BuzzerController:
 
     def new_player(self, player):
         self.connected_players.append(player)
-        self.welcome_window.new_player(player)
-
-    # def activate_buzzer(self, name):
-    # BuzzerSocketHandler.activate_buzzer(name)
+        self.game.new_player_trigger.emit()
 
     @classmethod
     def localip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", options.port))
         return s.getsockname()[0]
-
-    # hostname = socket.gethostname()
-    # try:
-    # ip = socket.gethostbyname(hostname)
-    # if ip.startswith("127."):
-    # raise Exception()
-    # return ip
-    # except:
-    # return hostname
-
-    # return [
-    # l
-    # for l in (
-    # [
-    # ip
-    # for ip in socket.gethostbyname_ex(socket.gethostname())[2]
-    # if not ip.startswith("127.")
-    # ][:1],
-    # [
-    # [
-    # (s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close())
-    # for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]
-    # ][0][1]
-    # ],
-    # )
-    # if l
-    # ][0][0]
 
     def host(self):
         localip = BuzzerController.localip()
@@ -272,7 +225,3 @@ class BuzzerController:
     def toolate(self):
         for p in self.connected_players:
             p.waiter.send("TOOLATE")
-
-        # self.welcome_window.buzzer_disconnected(player.name)
-        # QApplication.instance().thread().finished.connect(self.welcome_window.buzzer_disconnected)
-        # self.welcome_window.signal.connect(self.welcomeb
