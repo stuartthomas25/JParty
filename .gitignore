@@ -1,7 +1,3 @@
 build/**
-dist_arm/**
-dist_x86/**
-.idea/**
 jparty/__pycache__/**
-.DS_Store
 latest.log
