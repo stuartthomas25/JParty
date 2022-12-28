@@ -24,8 +24,9 @@ def list_to_game(s):
                 value = int(s[row + n1][0])
                 dd = address in s[n1 - 1][-1]
                 questions.append(Question(index, text, answer, value, dd))
-                print(index, text, answer, value, dd)
+
         boards.append(Board(categories, questions, dj=(n1 == 14)))
+
     # gets final jeopardy round
     fj = s[-1]
     index = (0, 0)
