@@ -7,18 +7,14 @@ function sleep(ms) {
 var last_buzz = new Date().getTime();
 
 async function buzz() {
-    var now = new Date().getTime();
-    // if (now - window.last_buzz > 250) {
-        // window.last_buzz = now;
-        console.log("BUZZ");
+    if (!$("#buzzer").prop("disabled")) {
         send("BUZZ");
-
         $("#buzzer").prop("disabled", true);
+
         setTimeout(function () {
             $("#buzzer").prop("disabled", false);
-        }, 250)
-    // };
-
+        }, 250);
+    };
 }
 
 var current_page = "";
@@ -179,16 +175,13 @@ var updater = {
         updater.socket = new WebSocket(url);
         updater.socket.onclose = function(event) { location.reload(true); };
         updater.socket.onmessage = function(event) {
-            //console.log("MSG RECIEVED: "+event.data);
             jsondata = JSON.parse(event.data);
             switch (jsondata.message) {
                 case "GAMEFULL":
-                    //alert((Date.now()-last_buzz) % 1000);
                     alert("Game has too many players!")
                     window.location.reload()
                     break;
                 case "GAMESTARTED":
-                    //alert((Date.now()-last_buzz) % 1000);
                     alert("Game has started!")
                     break;
                 case "TOKEN":
