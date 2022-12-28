@@ -78,6 +78,7 @@ class KeystrokeManager(object):
         events_to_call = []
         for ident, event in self.__events.items():
             if event.active and event.key == key:
+                logging.info(f"Calling {ident}")
                 events_to_call.append(event)
                 if not event.persistent:
                     self._deactivate(ident)
@@ -86,6 +87,7 @@ class KeystrokeManager(object):
             event.func()
 
     def _activate(self, ident):
+        logging.info(f"Activating {ident}")
         e = self.__events[ident]
         e.active = True
         e.hint_setter(True)
@@ -197,33 +199,47 @@ class Game(QObject):
 
         self.keystroke_manager = KeystrokeManager()
         self.keystroke_manager.addEvent(
-            "CORRECT_RESPONSE",
+            "CORRECT_ANSWER",
             Qt.Key.Key_Left,
             self.correct_answer,
             self.arrowhints,
         )
         self.keystroke_manager.addEvent(
-            "INCORRECT_RESPONSE",
+            "INCORRECT_ANSWER",
             Qt.Key.Key_Right,
             self.incorrect_answer,
             self.arrowhints,
         )
         self.keystroke_manager.addEvent(
-            "BACK_TO_BOARD", Qt.Key.Key_Space, self.back_to_board, self.spacehints
+            "BACK_TO_BOARD",
+            Qt.Key.Key_Space,
+            self.back_to_board,
+            self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "OPEN_RESPONSES", Qt.Key.Key_Space, self.open_responses, self.spacehints
+            "OPEN_RESPONSES",
+            Qt.Key.Key_Space,
+            self.open_responses,
+            self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "NEXT_ROUND", Qt.Key.Key_Space, self.next_round, self.spacehints
+            "NEXT_ROUND",
+            Qt.Key.Key_Space,
+            self.next_round,
+            self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "OPEN_FINAL", Qt.Key.Key_Space, self.open_final, self.spacehints
+            "OPEN_FINAL",
+            Qt.Key.Key_Space,
+            self.open_final,
+            self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "CLOSE_GAME", Qt.Key.Key_Space, self.close_game, self.spacehints
+            "CLOSE_GAME",
+            Qt.Key.Key_Space,
+            self.close_game,
+            self.spacehints
         )
-
         self.keystroke_manager.addEvent(
             "FINAL_OPEN_RESPONSES",
             Qt.Key.Key_Space,
@@ -243,13 +259,13 @@ class Game(QObject):
             self.spacehints,
         )
         self.keystroke_manager.addEvent(
-            "FINAL_CORRECT_RESPONSE",
+            "FINAL_CORRECT_ANSWER",
             Qt.Key.Key_Left,
             self.final_correct_answer,
             self.arrowhints,
         )
         self.keystroke_manager.addEvent(
-            "FINAL_INCORRECT_RESPONSE",
+            "FINAL_INCORRECT_ANSWER",
             Qt.Key.Key_Right,
             self.final_incorrect_answer,
             self.arrowhints,
@@ -325,7 +341,7 @@ class Game(QObject):
             self.dc.player_widget(player).run_lights()
 
             self.answering_player = player
-            self.keystroke_manager.activate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
+            self.keystroke_manager.activate("CORRECT_ANSWER", "INCORRECT_ANSWER")
             self.dc.borders.lights(False)
         elif self.active_question is None:
             self.dc.player_widget(player).buzz_hint()
@@ -333,8 +349,8 @@ class Game(QObject):
             pass
 
     def answer_given(self):
+        self.keystroke_manager.deactivate("CORRECT_ANSWER", "INCORRECT_ANSWER")
         self.dc.player_widget(self.answering_player).stop_lights()
-        self.keystroke_manager.deactivate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
         self.answering_player = None
 
     def back_to_board(self):
@@ -419,7 +435,7 @@ class Game(QObject):
 
         self.dc.final_window.guess_label.setText(answer)
         self.keystroke_manager.activate(
-            "FINAL_CORRECT_RESPONSE", "FINAL_INCORRECT_RESPONSE"
+            "FINAL_CORRECT_ANSWER", "FINAL_INCORRECT_ANSWER"
         )
 
     def final_correct_answer(self):
@@ -433,11 +449,13 @@ class Game(QObject):
         self.final_judgement_given()
 
     def final_judgement_given(self):
+        self.keystroke_manager.deactivate("FINAL_CORRECT_ANSWER", "FINAL_INCORRECT_ANSWER")
         self.dc.final_window.wager_label.setText(str(self.answering_player.wager))
         self.keystroke_manager.activate("FINAL_NEXT_PLAYER")
         self.__judgement_round += 1
 
     def final_finished_song(self):
+        logging.info("Final song ended")
         self.toolate_trigger.emit()
         self.accepting_responses = False
         self.dc.borders.flash()
@@ -461,6 +479,8 @@ class Game(QObject):
         self.buzzer_controller.restart()
         self.players = []
         self.current_round = None
+        self.answering_player = None
+        self.timer = None
         self.data = None
         self.__judgement_round = 0
         self.dc.restart()
@@ -485,7 +505,7 @@ class Game(QObject):
         wager = wager_res[0]
         self.active_question.value = wager
 
-        self.keystroke_manager.activate("CORRECT_RESPONSE", "INCORRECT_RESPONSE")
+        self.keystroke_manager.activate("CORRECT_ANSWER", "INCORRECT_ANSWER")
         self.dc.question_widget.show_question()
 
     def load_question(self, q):
