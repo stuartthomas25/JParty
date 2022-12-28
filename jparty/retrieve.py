@@ -9,7 +9,7 @@ from jparty.constants import MONIES
 
 def list_to_game(s):
     # Template link: https://docs.google.com/spreadsheets/d/1_vBBsWn-EVc7npamLnOKHs34Mc2iAmd9hOGSzxHQX0Y/edit?usp=sharing
-    alpha = "BCDEFG"
+    alpha = "BCDEFG" #columns
     boards = []
     # gets single and double jeopardy rounds
     for n1 in [1, 14]:
@@ -23,7 +23,7 @@ def list_to_game(s):
                 answer = s[row + n1 + 6][col + 1]
                 value = int(s[row + n1][0])
                 dd = address in s[n1 - 1][-1]
-                questions.append(Question(index, text, answer, value, dd))
+                questions.append(Question(index, text, answer, cat, value, dd))
 
         boards.append(Board(categories, questions, dj=(n1 == 14)))
 
