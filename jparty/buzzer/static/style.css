@@ -60,22 +60,11 @@ button:active {
     padding: 14px 28px;
 }
 
-#buzzer:disabled {
+#buzzer:active {
     background-color: #a6a6a6;
 }
-
-#buzzer.answering{
-    background-color: white;
-}
-
-#buzzer.toolate{
-    background-color: white;
-}
-
-
-#buzzer:active {
-    background-color: white;
-    color: black;
+#buzzer:disabled {
+    background-color: #a6a6a6;
 }
 
 .footer {
