@@ -198,47 +198,27 @@ class Game(QObject):
         self.buzzer_controller = None
 
         self.keystroke_manager = KeystrokeManager()
+
         self.keystroke_manager.addEvent(
-            "CORRECT_ANSWER",
-            Qt.Key.Key_Left,
-            self.correct_answer,
-            self.arrowhints,
+            "CORRECT_ANSWER", Qt.Key.Key_Left, self.correct_answer, self.arrowhints
         )
         self.keystroke_manager.addEvent(
-            "INCORRECT_ANSWER",
-            Qt.Key.Key_Right,
-            self.incorrect_answer,
-            self.arrowhints,
+            "INCORRECT_ANSWER", Qt.Key.Key_Right, self.incorrect_answer, self.arrowhints
         )
         self.keystroke_manager.addEvent(
-            "BACK_TO_BOARD",
-            Qt.Key.Key_Space,
-            self.back_to_board,
-            self.spacehints
+            "BACK_TO_BOARD", Qt.Key.Key_Space, self.back_to_board, self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "OPEN_RESPONSES",
-            Qt.Key.Key_Space,
-            self.open_responses,
-            self.spacehints
+            "OPEN_RESPONSES", Qt.Key.Key_Space, self.open_responses, self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "NEXT_ROUND",
-            Qt.Key.Key_Space,
-            self.next_round,
-            self.spacehints
+            "NEXT_ROUND", Qt.Key.Key_Space, self.next_round, self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "OPEN_FINAL",
-            Qt.Key.Key_Space,
-            self.open_final,
-            self.spacehints
+            "OPEN_FINAL", Qt.Key.Key_Space, self.open_final, self.spacehints
         )
         self.keystroke_manager.addEvent(
-            "CLOSE_GAME",
-            Qt.Key.Key_Space,
-            self.close_game,
-            self.spacehints
+            "CLOSE_GAME", Qt.Key.Key_Space, self.close_game, self.spacehints
         )
         self.keystroke_manager.addEvent(
             "FINAL_OPEN_RESPONSES",
@@ -449,7 +429,9 @@ class Game(QObject):
         self.final_judgement_given()
 
     def final_judgement_given(self):
-        self.keystroke_manager.deactivate("FINAL_CORRECT_ANSWER", "FINAL_INCORRECT_ANSWER")
+        self.keystroke_manager.deactivate(
+            "FINAL_CORRECT_ANSWER", "FINAL_INCORRECT_ANSWER"
+        )
         self.dc.final_window.wager_label.setText(str(self.answering_player.wager))
         self.keystroke_manager.activate("FINAL_NEXT_PLAYER")
         self.__judgement_round += 1

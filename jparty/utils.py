@@ -14,7 +14,7 @@ def resource_path(relative_path):
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
-        print("USING MEIPASS")
+
     except Exception:
         base_path = os.path.abspath(".")
 
@@ -148,9 +148,6 @@ class AutosizeWidget(object):
                 newrect = fullrect(font)
                 if rect.contains(newrect):
                     return font.pixelSize()
-
-            # logging.warn(f"Nothing fit! (text='{text}')")
-            # print(f"Nothing fit! (text='{text}')")
 
         return size
 

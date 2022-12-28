@@ -96,7 +96,6 @@ class FinalJeopardyWidget(QuestionWidget):
         self.category_label = MyLabel(
             question.category, self.startCategoryFontSize, self
         )
-        print("replace w cat")
         self.main_layout.replaceWidget(self.question_label, self.category_label)
 
     def startCategoryFontSize(self):
@@ -119,7 +118,6 @@ class HostFinalJeopardyWidget(FinalJeopardyWidget, HostQuestionWidget):
             "Waiting for all players to wager...", self.startFontSize, self
         )
         self.main_layout.replaceWidget(self.answer_label, self.hint_label)
-        print("replace w hint")
         self.main_layout.setStretchFactor(self.hint_label, 1)
 
     def hide_hint(self):
