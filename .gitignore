@@ -1,3 +1,4 @@
 build/**
 jparty/__pycache__/**
 latest.log
+dist/**
