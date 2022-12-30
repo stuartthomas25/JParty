@@ -19,15 +19,19 @@ async function buzz() {
 
 var current_page = "";
 function load_page(pagename) {
+    console.log("loading page "+pagename);
+    if (!!current_page) {
+        console.log("hiding page "+current_page);
+        $("."+current_page+"-page").hide();
+    }
     try {
         if (pagename !== null && pagename != "null") {
+            console.log("showing page "+pagename);
             $("."+pagename+"-page").show();
         }
     } catch {
+        console.log("failed");
         return 1;
-    }
-    if (!!current_page) {
-        $("."+current_page+"-page").hide();
     }
     current_page = pagename;
     return 0;
@@ -105,7 +109,6 @@ function resizeCanvas() {
 $(document).ready(function() {
     if (!window.console) window.console = {};
     if (!window.console.log) window.console.log = function() {};
-    // load_page("name");
 
     updater.start();
 
@@ -128,10 +131,10 @@ $(document).ready(function() {
             updater.socket.send(JSON.stringify({message:"CHECK_IF_EXISTS", text:cookie}));
         };
     } else {
+        console.log("no cookie")
         load_page("name");
         resizeCanvas();
     };
-
 
 
     $("#clear-button").on("click", function () {
