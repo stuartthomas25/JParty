@@ -30,10 +30,15 @@
 * DONE dont show sign-in screen on buzzer refresh
 * DONE ties
 
-* TODO big refactor
+* DONE big refactor
 * DONE fix initial two monitors
 * DONE fix scoreboard restart
 * DONE Hint for wagers finished
 * DONE Hint for drawing name
 
 * DONE flash hints
+* DONE make buzzer on touch down
+* TODO fix name too small with text
+* TODO fix buzzer starting blank
+* DONE second round incorrect error
+* DONE add logo to QRWidget screen
