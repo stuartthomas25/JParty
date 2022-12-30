@@ -132,7 +132,7 @@ $(document).ready(function() {
         };
     } else {
         console.log("no cookie")
-        setTimeout(function () {load_page("name");}, 10);
+        load_page("name");
         resizeCanvas();
     };
 

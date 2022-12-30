@@ -39,6 +39,6 @@
 * DONE flash hints
 * DONE make buzzer on touch down
 * TODO fix name too small with text
-* TODO fix buzzer starting blank
+* DONE fix buzzer starting blank
 * DONE second round incorrect error
 * DONE add logo to QRWidget screen
