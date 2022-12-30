@@ -49,11 +49,35 @@ class Image(qrcode.image.base.BaseImage):
 
 
 class StartWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.icon = QPixmap(resource_path("icon.png"))
+        self.icon_label = DynamicLabel("", 0, self)
+
+        add_shadow(self, radius=0.2)
+        self.setPalette(WINDOWPAL)
+
+        self.icon_layout = QHBoxLayout()
+        self.icon_layout.addStretch()
+        self.icon_layout.addWidget(self.icon_label)
+        self.icon_layout.addStretch()
+
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
         qp.setBrush(QBrush(WINDOWPAL.color(QPalette.ColorRole.Window)))
         qp.drawRect(self.rect())
+
+    def resizeEvent(self, event):
+        icon_size = self.icon_label.height()
+        self.icon_label.setPixmap(
+            self.icon.scaled(
+                icon_size,
+                icon_size,
+                transformMode=Qt.TransformationMode.SmoothTransformation,
+            )
+        )
+        self.icon_label.setMaximumWidth(icon_size)
 
 
 class Welcome(StartWidget):
@@ -64,22 +88,9 @@ class Welcome(StartWidget):
         super().__init__(parent)
         self.game = game
 
-        self.setPalette(WINDOWPAL)
-
-        add_shadow(self, radius=0.2)
-
-        self.background_img = QPixmap(resource_path("welcome_background.png"))
-
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.icon = QPixmap(resource_path("icon.png"))
-        self.icon_label = DynamicLabel("", 0, self)
-
-        icon_layout = QHBoxLayout()
-        icon_layout.addStretch()
-        icon_layout.addWidget(self.icon_label)
-        icon_layout.addStretch()
 
         self.title_font = QFont()
         self.title_font.setBold(True)
@@ -150,7 +161,7 @@ class Welcome(StartWidget):
         footer_layout.addStretch(5)
 
         main_layout.addStretch(3)
-        main_layout.addLayout(icon_layout, 6)
+        main_layout.addLayout(self.icon_layout, 6)
         main_layout.addWidget(self.title_label, 3)
         main_layout.addWidget(self.version_label, 1)
         main_layout.addStretch(1)
@@ -179,15 +190,7 @@ class Welcome(StartWidget):
         msgbox.exec()
 
     def resizeEvent(self, event):
-        icon_size = self.icon_label.height()
-        self.icon_label.setPixmap(
-            self.icon.scaled(
-                icon_size,
-                icon_size,
-                transformMode=Qt.TransformationMode.SmoothTransformation,
-            )
-        )
-        self.icon_label.setMaximumWidth(icon_size)
+        super().resizeEvent(event)
 
         textbox_height = int(self.gameid_label.height() * 0.8)
         self.textbox.setMinimumSize(QSize(0, textbox_height))
@@ -256,16 +259,10 @@ class QRWidget(StartWidget):
     def __init__(self, host, parent=None):
         super().__init__(parent)
 
-        self.setPalette(WINDOWPAL)
-
         self.font = QFont()
         self.font.setPointSize(30)
 
-        add_shadow(self, radius=0.2)
-
         main_layout = QVBoxLayout()
-
-        self.background_img = QPixmap(resource_path("welcome_background.png"))
 
         self.hint_label = DynamicLabel("Scan for Buzzer:", self.start_fontsize, self)
         self.hint_label.setFont(self.font)
@@ -280,8 +277,9 @@ class QRWidget(StartWidget):
         self.url_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         main_layout.addStretch(1)
+        main_layout.addLayout(self.icon_layout, 5)
         main_layout.addWidget(self.hint_label, 2)
-        main_layout.addWidget(self.qrlabel, 9)
+        main_layout.addWidget(self.qrlabel, 5)
         main_layout.addWidget(self.url_label, 2)
         main_layout.addStretch(1)
 
@@ -293,9 +291,10 @@ class QRWidget(StartWidget):
         return 0.1 * self.width()
 
     def resizeEvent(self, event):
+        super().resizeEvent(event)
         self.qrlabel.setPixmap(
             qrcode.make(
-                self.url, image_factory=Image, box_size=max(self.height() / 40, 1)
+                self.url, image_factory=Image, box_size=max(self.height() / 50, 1)
             ).pixmap()
         )
 
