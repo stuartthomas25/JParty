@@ -91,7 +91,6 @@ class Welcome(StartWidget):
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-
         self.title_font = QFont()
         self.title_font.setBold(True)
 

@@ -3,6 +3,7 @@ sys.path.append('')
 from jparty.version import version
 
 uname = platform.uname()
+arch = uname.machine
 
 a = Analysis(['run.py'],
              pathex=['.'],
@@ -32,7 +33,7 @@ exe = EXE(pyz,
           name='JParty',
           debug=False,
           bootloader_ignore_signals=False,
-          target_arch='arm64',
+          target_arch=arch,
           strip=False,
           upx=True,
           upx_exclude=[],
@@ -45,3 +46,5 @@ if uname.system == "Darwin":
                  version=version,
                  icon='resources/icon.icns',
                  bundle_identifier='us.stuartthomas.jparty')
+
+print(f"Built for {uname.system} with architecture {arch}")
