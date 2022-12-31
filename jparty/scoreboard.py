@@ -26,11 +26,13 @@ class NameLabel(MyLabel):
             self.setText(name)
 
         self.setGraphicsEffect(None)
+        self.setAutosizeMargins(0.05)
 
     def startNameFontSize(self):
-        return self.height() * 0.2
+        return self.height() * 1
 
     def resizeEvent(self, event):
+        super().resizeEvent(event)
         if self.signature is not None:
             self.setPixmap(
                 self.signature.scaled(

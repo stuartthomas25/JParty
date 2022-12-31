@@ -4,6 +4,8 @@ from threading import Thread
 import re
 import os
 import sys
+
+
 from PyQt6.QtGui import QColor, QFontMetrics
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QPushButton, QSizePolicy
 from PyQt6.QtCore import Qt, QSize
@@ -94,11 +96,12 @@ def add_shadow(widget, radius=0.1, offset=3):
 
 
 class AutosizeWidget(object):
-    def getInitialSize(self):
-        if callable(self.initialSize):
-            return self.initialSize()
-        else:
-            return self.initialSize
+    """This class is a mixin which must be inherited with a QWidget with a `text()` method."""
+
+    def __init__(self, *args, **kwargs):
+        self.autosize_margins = (0.0, 0.0, 0.0, 0.0)  # as percentage of size
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.autoresize()
 
     def sizeHint(self):
         return QSize()
@@ -127,13 +130,38 @@ class AutosizeWidget(object):
         text = re.sub("<[^>]*>", "", text)
         return text
 
+    def setAutosizeMargins(self, *args):
+        """
+        set the dynamic sizing margins.
+        ---
+        if 1 arg, set all margins,
+        if 2 args, set width and height margins
+        if 4 args, set left, top, right and bottom margins
+        """
+        if len(args) == 1:
+            self.autosize_margins = (args[0], args[0], args[0], args[0])
+        elif len(args) == 2:
+            self.autosize_margins = (args[0], args[1], args[0], args[1])
+        elif len(args) == 4:
+            self.autosize_margins = (args[0], args[1], args[2], args[3])
+        else:
+            raise Exception("Need 1, 2, or 4 arguments")
+
     def autofitsize(self, stepsize=1):
 
         font = self.font()
-        rect = self.rect()
+
+        ml, mt, mr, md = self.autosize_margins
+        rect = self.rect().adjusted(
+            int(self.width() * ml),
+            int(self.height() * mt),
+            int(-self.width() * mr),
+            int(-self.height() * mt),
+        )
+
         text = self.plaintext()
 
-        font.setPixelSize(int(self.getInitialSize()))
+        font.setPixelSize(int(self.initialSize()))
         size = font.pixelSize()
 
         def fullrect(font):
@@ -154,10 +182,8 @@ class AutosizeWidget(object):
 
 class DynamicLabel(QLabel, AutosizeWidget):
     def __init__(self, text, initialSize, parent=None):
+        self.__initialSize = initialSize
         super().__init__(text, parent)
-        self.initialSize = initialSize
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.autoresize()
 
     def flags(self):
         flags = 0
@@ -168,15 +194,29 @@ class DynamicLabel(QLabel, AutosizeWidget):
 
         return flags
 
+    def resizeEvent(self, event):
+        AutosizeWidget.resizeEvent(self, event)
+
     def setText(self, text):
         super().setText(text)
         self.autoresize()
+
+    def initialSize(self):
+        if callable(self.__initialSize):
+            return self.__initialSize()
+        else:
+            return self.__initialSize
 
 
 class DynamicButton(QPushButton, AutosizeWidget):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    def resizeEvent(self, event):
+        AutosizeWidget.resizeEvent(self, event)
+
+    def setText(self, text):
+        super().setText(text)
         self.autoresize()
 
     def initialSize(self):
