@@ -223,7 +223,7 @@ class ScoreBoard(QWidget):
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
-        qp.drawPixmap(self.rect(), QPixmap(resource_path("pedestal.png")))
+        qp.drawPixmap(self.rect(), QPixmap(resource_path("podium.png")))
         qp.end()
 
 
