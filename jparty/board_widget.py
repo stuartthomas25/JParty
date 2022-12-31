@@ -7,37 +7,31 @@ from jparty.style import MyLabel, CARDPAL, JBLUE, DARKBLUE
 
 
 class CardLabel(QWidget):
-    margin = 0.1
-
     def __init__(self, text, parent=None):
         super().__init__(parent)
 
         self.label = MyLabel(text, self.startFontSize, parent=self)
-
+        self.label.setAutosizeMargins(0.1)
         self.setPalette(CARDPAL)
-
         self.setAutoFillBackground(True)
 
     def startFontSize(self):
         return self.height() * 0.6
 
-    def labelRect(self):
-        wmargin = int(CardLabel.margin * self.width())
-        hmargin = int(CardLabel.margin * self.height())
-        return self.rect().adjusted(wmargin, hmargin, -wmargin, -hmargin)
-
     def setText(self, text):
         self.label.setText(text)
+
+    # def labelRect(self):
+    #     wmargin = int(CardLabel.margin * self.width())
+    #     hmargin = int(CardLabel.margin * self.height())
+    #     return self.rect().adjusted(wmargin, hmargin, -wmargin, -hmargin)
 
     @property
     def text(self):
         return self.label.text()
 
     def resizeEvent(self, event):
-        if self.height() == 0:
-            return None
-
-        self.label.setGeometry(self.labelRect())
+        self.label.setGeometry(self.rect())
 
 
 class CategoryCard(CardLabel):
@@ -50,6 +44,7 @@ class QuestionCard(CardLabel):
         self.__question = question
         super().__init__(self.__moneytext())
         self.label.setStyleSheet("color: #ffcc00")
+        self.label.setAutosizeMargins(0.2)
 
     @property
     def question(self):

@@ -23,6 +23,8 @@ from jparty.style import WINDOWPAL
 
 
 class Image(qrcode.image.base.BaseImage):
+    """QR code image widget"""
+
     def __init__(self, border, width, box_size):
         self.border = border
         self.width = width
