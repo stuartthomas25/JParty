@@ -4,6 +4,7 @@ from jparty.version import version
 
 uname = platform.uname()
 arch = uname.machine
+iconfile = "resources/icon.icns" if uname.system=="Darwin" else "resources/icon.ico"
 
 a = Analysis(['run.py'],
              pathex=['.'],
@@ -38,13 +39,13 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=False , icon='resources/icon.icns')
+          console=False , icon=iconfile)
 
 if uname.system == "Darwin":
     app = BUNDLE(exe,
                  name='JParty.app',
                  version=version,
-                 icon='resources/icon.icns',
+                 icon=iconfile,
                  bundle_identifier='us.stuartthomas.jparty')
 
 print(f"Built for {uname.system} with architecture {arch}")
