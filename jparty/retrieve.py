@@ -94,7 +94,6 @@ def get_JArchive_Game(game_id, soup=None, is_wayback=False, wayback_url=None):
             dd = clue.find(class_="clue_value_daily_double") is not None
             value = MONIES[i][index[1]]
             answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
-            print(text)
             questions.append(
                 Question(index, text, answer, categories[index[0]], value, dd)
             )
