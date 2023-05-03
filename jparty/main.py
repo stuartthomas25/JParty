@@ -1,8 +1,10 @@
-import sys
 from PyQt6.QtGui import QFontDatabase, QFont
 from PyQt6.QtWidgets import QApplication, QMessageBox
+
+import sys
 import requests
 import logging
+from simpleaudio._simpleaudio import SimpleaudioError
 
 
 from jparty.game import Game
@@ -40,6 +42,15 @@ def permission_error():
         defaultButton=QMessageBox.StandardButton.Abort,
     )
 
+def audio_error():
+    logging.error(f"Cannot access audio device")
+    QMessageBox.critical(
+        None,
+        "Audio error Error",
+        f"JParty cannot access an audio device.",
+        buttons=QMessageBox.StandardButton.Abort,
+        defaultButton=QMessageBox.StandardButton.Abort,
+    )
 
 def check_second_monitor():
     if len(QApplication.instance().screens()) < 2:
@@ -56,9 +67,6 @@ def check_second_monitor():
 
 def main():
 
-    song_player = None
-    r = 1  # default return code
-
     QApplication.setStyle(JPartyStyle())
     app = QApplication(sys.argv)
 
@@ -66,31 +74,38 @@ def main():
     check_internet()
     app.setFont(QFont("Verdana"))
 
+    QFontDatabase.addApplicationFont(
+        resource_path("itc-korinna-std/ITC Korinna Regular.otf")
+    )
+
+    game = Game()
+
+    socket_controller = BuzzerController(game)
+
+    game.setBuzzerController(socket_controller)
+
+    main_window = DisplayWindow(game)
+    host_window = HostDisplayWindow(game)
+    game.setDisplays(host_window, main_window)
+    
     try:
-        QFontDatabase.addApplicationFont(
-            resource_path("ITC Korinna Regular.otf")
-        )
-
-        game = Game()
-
-        socket_controller = BuzzerController(game)
-        game.setBuzzerController(socket_controller)
-
-        main_window = DisplayWindow(game)
-        host_window = HostDisplayWindow(game)
-        game.setDisplays(host_window, main_window)
-
         game.begin()
-        song_player = game.song_player
+    except SimpleaudioError as e:
+        audio_error()
+        exit(1)
 
-        try:
-            socket_controller.start()
-        except PermissionError as e:
-            permission_error()
-            raise e
+    song_player = game.song_player
 
+    try:
+        socket_controller.start()
+    except PermissionError as e:
+        permission_error()
+        exit(1)
+
+
+    r=1 # fail by default
+    try:
         r = app.exec()
-
     finally:
         logging.info("terminated")
         if song_player:
