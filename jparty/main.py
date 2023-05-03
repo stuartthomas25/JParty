@@ -68,7 +68,7 @@ def main():
 
     try:
         QFontDatabase.addApplicationFont(
-            resource_path("itc-korinna-std/ITC Korinna Regular.otf")
+            resource_path("ITC Korinna Regular.otf")
         )
 
         game = Game()
