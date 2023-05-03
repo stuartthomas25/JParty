@@ -90,14 +90,12 @@ def get_JArchive_Game(game_id, soup=None, is_wayback=False, wayback_url=None):
                 int(index_key[-3]) - 1,
                 int(index_key[-1]) - 1,
             )  # get index from id string
-            js = clue.find("div")["onmouseover"]
             dd = clue.find(class_="clue_value_daily_double") is not None
             value = MONIES[i][index[1]]
-            answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
+            answer = re.findall(r'correct_response">(.*?)</em', str(clue))[0]
             questions.append(
                 Question(index, text, answer, categories[index[0]], value, dd)
             )
-
         boards.append(Board(categories, questions, dj=(i == 1)))
 
     # Final Jeopardy
@@ -111,15 +109,12 @@ def get_JArchive_Game(game_id, soup=None, is_wayback=False, wayback_url=None):
         return None
 
     text = text_obj.text
-    index_key = text_obj["id"]
-    js = list(clue.parents)[1].find("div")["onmouseover"]
-    answer = re.findall(r'correct_response">(.*?)</em', js.replace("\\", ""))[0]
+    answer = re.findall(r'correct_response">(.*)</em', str(clue))[0]
     question = Question((0, 0), text, answer, category)
 
     boards.append(FinalBoard(category, question))
 
     return GameData(boards, date, comments)
-
 
 def get_wayback_jarchive_game(game_id):
     # kudos to Abhi Kumbar: https://medium.com/analytics-vidhya/the-wayback-machine-scraper-63238f6abb66
@@ -144,7 +139,7 @@ def get_wayback_jarchive_game(game_id):
         url_list.append(final_url)
     latest_url = url_list[-1]
     return get_JArchive_Game(game_id, None, True, latest_url)
-
+    
 def get_game_sum(soup):
     date = re.search(
         r"- \w+, (.*?)$", soup.select("#game_title > h1")[0].contents[0]
