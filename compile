@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+case $(arch) in
+    "arm64")
+        pyinstaller -y JParty.spec --distpath ./dist_arm
+        cd dist_arm
+        zip -r JParty_macos_arm.zip JParty.app/
+        cd ..
+        ;;
+    "i386")
+        pyinstaller -y JParty.spec --distpath ./dist_x86
+        cd dist_x86
+        zip -r JParty_macos_x86.zip JParty.app/
+        cd ..
+esac
+
+echo "Compiled for $(arch)"
