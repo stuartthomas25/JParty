@@ -86,7 +86,7 @@ function nameForm(name) {
 }
 
 function set_max_wager(score) {
-    $(".wager_input").attr("max", score);
+    $(".wager_input").attr("max", Math.max(0, score));
     $(".wager_input").attr("min",0);
     console.log("Max wager:" + $(".wager_input").attr("max"));
 }
