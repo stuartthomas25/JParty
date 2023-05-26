@@ -152,8 +152,16 @@ class BuzzerController:
         self.connected_players = []
         self.accepting_players = True
 
-    def start(self, threaded=True):
-        self.app.listen(self.port)
+    def start(self, threaded=True, tries=0):
+        try:
+            self.app.listen(self.port)
+        except OSError as e:
+            if tries>10:
+                raise Exception("Cannot find open port")
+            self.port += 1
+            self.start(threaded, tries+1)
+            return
+
         if threaded:
             self.thread = Thread(target=tornado.ioloop.IOLoop.current().start)
             self.thread.setDaemon(True)
