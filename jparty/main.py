@@ -84,6 +84,12 @@ def main():
 
     game.setBuzzerController(socket_controller)
 
+    try:
+        socket_controller.start()
+    except PermissionError as e:
+        permission_error()
+        exit(1)
+
     main_window = DisplayWindow(game)
     host_window = HostDisplayWindow(game)
     game.setDisplays(host_window, main_window)
@@ -96,11 +102,6 @@ def main():
 
     song_player = game.song_player
 
-    try:
-        socket_controller.start()
-    except PermissionError as e:
-        permission_error()
-        exit(1)
 
 
     r=1 # fail by default
