@@ -21,11 +21,6 @@ class CardLabel(QWidget):
     def setText(self, text):
         self.label.setText(text)
 
-    # def labelRect(self):
-    #     wmargin = int(CardLabel.margin * self.width())
-    #     hmargin = int(CardLabel.margin * self.height())
-    #     return self.rect().adjusted(wmargin, hmargin, -wmargin, -hmargin)
-
     @property
     def text(self):
         return self.label.text()

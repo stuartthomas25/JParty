@@ -74,8 +74,8 @@ def main():
     check_internet()
     app.setFont(QFont("Verdana"))
 
-    QFontDatabase.addApplicationFont(
-        resource_path("itc-korinna-std/ITC Korinna Regular.otf")
+    i = QFontDatabase.addApplicationFont(
+        resource_path("itc-korinna-std/ITC_ Korinna Normal.ttf")
     )
 
     game = Game()
