@@ -1,6 +1,6 @@
 <img src="resources/icon.png" align="right" height="100"/>
 
-# JParty
+# JParty!
 ![](https://img.shields.io/github/v/release/stuartthomas25/JParty)
 ![](https://img.shields.io/github/downloads/stuartthomas25/JParty/total)
 ![](https://img.shields.io/github/stars/stuartthomas25/JParty?style=social)
@@ -9,7 +9,7 @@ _The Jeopardy! Party Game_
 
 Homepage: https://www.stuartthomas.us/jparty/
 
-Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full _Jeopardy!_ simulator complete with real questions from actual games. This game is perfect for parties and supports 3-8 players plus a host. Typically, _Jeopardy!_ has three contestants which is recommended for the best experience; JParty supports up to 8 players for larger groups (warning: may cause many complaints about buzzer races). For ideal usage, plug a laptop into a TV, setting the laptop as the main monitor. Note that connecting wirelessly using AirPlay does work, but may cause some latency in the buzzer. Then, instruct contestants to join the same Wifi network as the computer and scan the QR code on the screen. The person with the laptop is the host and runs the game by reading the questions and running the buzzers.
+Ever wanted to play the game show Jeopardy? This Python-based application aims to provide a full _Jeopardy!_ simulator complete with real questions from actual games. This game is perfect for parties and supports 3-8 players plus a host. Typically, _Jeopardy!_ has three contestants which is recommended for the best experience; JParty supports up to 8 players for larger groups (warning: may cause many complaints about buzzer races). For ideal usage, plug a laptop into a TV, setting the laptop as the main monitor. Note that connecting wirelessly using AirPlay works but may cause latency in the buzzer. Instruct contestants to join the same Wifi network as the computer and scan the QR code on the screen. The person with the laptop is the host and runs the game by reading the questions and running the buzzers.
 
 ## Download
 See <a href="https://github.com/stuartthomas25/JParty/releases">Releases</a> page.
@@ -83,3 +83,6 @@ To use the extension:
 4. The questions will download as a csv (spreadsheet) in the style of the template. 
 5. Copy the questions into your Google Sheet template
 6. Paste the Google Sheet file ID into the "Game ID" box in JParty.
+
+### The QR code doesn't work!
+First, make sure you are on the same wireless network as the computer. If this still doesn't work, it may be an issue with allowing local devices on the network. In this case, you can try another network or try tethering both the phones and the computer to another phone.
