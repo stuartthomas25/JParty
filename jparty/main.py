@@ -75,7 +75,7 @@ def main():
     app.setFont(QFont("Verdana"))
 
     i = QFontDatabase.addApplicationFont(
-        resource_path("itc-korinna-std/ITC_ Korinna Normal.ttf")
+        resource_path("ITC_ Korinna Normal.ttf")
     )
 
     game = Game()
