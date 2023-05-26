@@ -48,10 +48,10 @@ class HostBorders(Borders):
         while self.__active_thread == current_thread():
             for b in self:
                 b.show_hints(key)
-            #time.sleep(0.5)
-            #for b in self:
-             #   b.hide_hints(key)
-            #time.sleep(0.5)
+            time.sleep(0.5)
+            for b in self:
+               b.hide_hints(key)
+            time.sleep(0.5)
 
     def buzz_hint(self):
         self.__buzz_hint_thread = Thread(target=self.__buzz_hint, name="buzz_hint")
