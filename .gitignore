@@ -1,5 +1,5 @@
 build/**
 jparty/__pycache__/**
 latest.log
-dist_arm/**
+dist**
 .idea/**
