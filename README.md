@@ -38,19 +38,19 @@ The host sees the answer on the laptop screen and can adjudicate with the arrow 
 
 ## Requirements:
 ### For running the app (binary)
-- macOS or Windows
+- macOS, Windows or Linux
 - Two monitors
 - A device with web access for each player
 
 ### For compiling from source code
-- Python [>=3.8]
+- Python [>=3.9]
 - PyQt6
 - requests
 - simpleaudio
 - tornado
 - BeautifulSoup4
 - qrcode
-- pyinstaller [>=5.0] (this is currently in development but is required for PyQt6)
+- pyinstaller [>=5.0]
 
 To debug, run 
 
