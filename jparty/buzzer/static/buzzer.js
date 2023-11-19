@@ -7,14 +7,19 @@ function sleep(ms) {
 var last_buzz = new Date().getTime();
 
 async function buzz() {
+    console.log("Buzzer was pressed.")
     if (!$("#buzzer").prop("disabled")) {
+        console.log("Buzzer is not disabled.")
         send("BUZZ");
         $("#buzzer").prop("disabled", true);
 
         setTimeout(function () {
+            console.log("Re-enabling buzzer.")
             $("#buzzer").prop("disabled", false);
         }, 250);
-    };
+    } else {
+        console.log("Buzzer IS DISABLED.")
+    }
 }
 
 var current_page = "";
@@ -60,8 +65,12 @@ function getToken() {
   return "";
 }
 
-function send(msg, text="") {
-    var message = {message:msg, text: text};
+function send(msg, text="", buzzerColor) {
+    var message = {
+        message:msg,
+        text: text,
+        buzzerColor: buzzerColor
+    };
     updater.socket.send(JSON.stringify(message));
 }
 function wagerForm() {
@@ -80,9 +89,9 @@ function answerForm() {
     return false;
 }
 
-function nameForm(name) {
+function nameForm(name, buzzerColor) {
     console.log(name);
-    send("NAME",name);
+    send("NAME",name, buzzerColor);
 }
 
 function set_max_wager(score) {
@@ -159,9 +168,12 @@ $(document).ready(function() {
 
     $("#submit-button").on("click", function () {
         if (!signaturePad.isEmpty()) {
+            let buzzerColor = $("#buzzers").find(":selected").val()
+            console.log("Selected buzzer color: " + buzzerColor)
+            $("#buzzer").css("background-color", buzzerColor)
             let image = signaturePad.toDataURL();
             console.log(image);
-            nameForm(image);
+            nameForm(image, buzzerColor);
         };
     });
 });

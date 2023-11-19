@@ -559,7 +559,9 @@ class Game(QObject):
 
 
 class Player(object):
-    def __init__(self, name, waiter):
+    def __init__(self, name, buzzerColor, waiter):
+        logging.info(f"Player init received buzzerColor: {buzzerColor}")
+        self.buzzercolor = buzzerColor
         self.name = name
         self.token = os.urandom(15)
         self.score = 0

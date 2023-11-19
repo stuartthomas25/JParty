@@ -16,7 +16,7 @@
   <body>
 
   <div class="w3-container buzz-page noselect" style="margin-top:90px">
-      <button id="buzzer" class="jparty-button" ontouchstart="buzz()">BUZZ!</button>
+      <button id="buzzer" class="jparty-button" onmousedown="buzz()">BUZZ!</button>
       <div class="hints buzz-hint">
         Hint:</br> Turn off Auto-Lock and Low Power Mode so your buzzer doesn't go dark!
       </div>
@@ -35,6 +35,12 @@
         <button type="button" class="jparty-button canvas-button" id="prompt-button">Keyboard</button>
         <button type="button" class="jparty-button submit-button" id="submit-button">Play!</button>
       </div>
+      <select name="buzzers" id="buzzers">
+        <option value="red">Red</option>
+        <option value="yellow">Yellow</option>
+        <option value="green">Green</option>
+        <option value="blue">Blue</option>
+      </select>
 
       <!-- <form onsubmit="nameForm('hi');" action="javascript:void(0);" class="name_form"> -->
 

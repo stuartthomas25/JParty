@@ -74,10 +74,15 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         except:
             logging.error(f"Error sending message {msg}", exc_info=True)
 
-    def check_if_exists(self, token):
+    def check_if_exists(self, token, buzzerColor):
+        logging.info(f"buzzer color 1: {buzzerColor}")
 
-        p = self.controller.player_with_token(token)
+        p = self.controller.player_with_token(token, buzzerColor)
         if p is None:
+            if token == "":
+                logging.info("Buzzer pressed but no associated player")
+                self.send("UNUSED_BUZZER")
+                return
             logging.info("NEW")
             self.send("NEW")
         else:
@@ -90,16 +95,27 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         # do this first to kill latency
         if "BUZZ" in message:
+            logging.info(f"received buzzer press")
+            if self.player == None:
+                logging.info(f"no player associated with this buzzer; skipping")
+                self.send("UNUSED_BUZZER")
+                return
             self.buzz()
             return
+        logging.info(f"received json message: {message}")
         parsed = tornado.escape.json_decode(message)
         msg = parsed["message"]
         text = parsed["text"]
         if msg == "NAME":
-            self.init_player(text)
+            buzzerColor = parsed["buzzerColor"]
+            logging.info(f"received NAME: {text}")
+            self.init_player(text, buzzerColor)
         elif msg == "CHECK_IF_EXISTS":
             logging.info(f"Checking if {text} exists")
-            self.check_if_exists(text)
+            buzzerColor = None
+            if "buzzerColor" in parsed:
+                buzzerColor = parsed["buzzerColor"]
+            self.check_if_exists(text, buzzerColor)
         elif msg == "WAGER":
             self.wager(text)
         elif msg == "ANSWER":
@@ -108,7 +124,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         else:
             raise Exception("Unknown message")
 
-    def init_player(self, name):
+    def init_player(self, name, buzzerColor):
 
         if not self.controller.accepting_players:
             logging.info("Game started!")
@@ -119,7 +135,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
             self.send("FULL")
             return
 
-        self.player = Player(name, self)
+        self.player = Player(name, buzzerColor, self)
         self.application.controller.new_player(self.player)
         logging.info(
             f"New Player: {self.player} {self.request.remote_ip} {self.player.token.hex()}"
@@ -209,11 +225,14 @@ class BuzzerController:
         else:
             return f"{localip}:{self.port}"
 
-    def player_with_token(self, token):
+    def player_with_token(self, token, buzzerColor):
         for p in self.connected_players:
             logging.info(f"{p.token}, {token}")
             if p.token.hex() == token:
-                logging.info("MATCH")
+                logging.info("PLAYER MATCH")
+                return p
+            if buzzerColor != None and p.buzzercolor == buzzerColor:
+                logging.info("PLAYER MATCH by buzzer color")
                 return p
         return None
 
