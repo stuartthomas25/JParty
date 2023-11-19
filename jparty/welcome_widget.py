@@ -1,4 +1,12 @@
-from PyQt6.QtGui import QPainter, QBrush, QImage, QFont, QPalette, QPixmap
+from PyQt6.QtGui import (
+    QPainter,
+    QBrush,
+    QImage,
+    QFont,
+    QPalette,
+    QPixmap,
+    QColor, 
+)
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -7,6 +15,9 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QMessageBox,
     QLabel,
+    QDialog,
+    QComboBox,
+    QPushButton,
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal
 
@@ -154,11 +165,16 @@ class Welcome(StartWidget):
         self.help_button = DynamicButton("Show help", self)
         self.help_button.clicked.connect(self.show_help)
 
+        self.settings_button = DynamicButton("Settings", self)
+        self.settings_button.clicked.connect(self.show_settings)
+
         footer_layout = QHBoxLayout()
         footer_layout.addStretch(5)
         footer_layout.addWidget(self.quit_button, 3)
         footer_layout.addStretch(1)
         footer_layout.addWidget(self.help_button, 3)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(self.settings_button, 3)
         footer_layout.addStretch(5)
 
         main_layout.addStretch(3)
@@ -189,6 +205,11 @@ class Welcome(StartWidget):
             self,
         )
         msgbox.exec()
+
+    def show_settings(self):
+        logging.info("Showing settings")
+        settings_menu = SettingsMenu(self)
+        settings_menu.exec()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -301,3 +322,70 @@ class QRWidget(StartWidget):
 
     def restart(self):
         pass
+
+class SettingsMenu(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Settings")
+        self.setGeometry(100, 100, 400, 200)
+
+        layout = QVBoxLayout()
+
+        # Add a label for the "Theme" section
+        theme_label = QLabel("Theme:", self)
+
+        # Add a combo box for theme selection
+        theme_combobox = QComboBox(self)
+        theme_combobox.addItem("Default")
+        theme_combobox.addItem("Christmas")
+
+        # Set the font to bold and text color to white
+        font = theme_combobox.font()
+        font.setBold(True)
+        theme_combobox.setFont(font)
+        palette = theme_combobox.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        theme_combobox.setPalette(palette)
+
+        # Add a white border around the dropdown menu
+        theme_combobox.setStyleSheet("QComboBox { border: 2px solid white; }")
+
+        # Create a horizontal layout for the label and combo box
+        theme_layout = QHBoxLayout()
+        theme_layout.addWidget(theme_label)
+        theme_layout.addWidget(theme_combobox)
+
+        # Add the horizontal layout to the main layout
+        layout.addLayout(theme_layout)
+
+        # Other settings components as needed go here:
+
+        # Add space before the Apply button
+        layout.addSpacing(10)
+
+        # Add an "Apply" button
+        apply_button = QPushButton("Apply", self)
+        apply_button.setStyleSheet("QPushButton { border: 2px solid black; }")
+        apply_button.clicked.connect(self.accept)  # Close the dialog when Apply is pressed
+        apply_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        apply_button.setMinimumSize(100, 30)
+        layout.addWidget(apply_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # Add space after the Apply button
+        layout.addSpacing(10)
+
+        # Set the font to bold for all widgets in the layout
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget is not None:
+                font = widget.font()
+                font.setBold(True)
+                widget.setFont(font)
+
+        self.setLayout(layout)
+
+    def save_settings(self):
+        # Add code to save settings here:
+        print("Saving settings...")
+        self.accept()  # Close the dialog when Apply is pressed
