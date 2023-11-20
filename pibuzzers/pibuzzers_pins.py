@@ -1,5 +1,5 @@
 from websocket import create_connection
-from functools import partial
+import functools
 import RPi.GPIO as GPIO
 import json
 import time
@@ -51,7 +51,11 @@ def sendBuzz(color):
 
 def main():
   for buzzer in buzzers:
-    GPIO.add_event_detect(buzzer["button_pin"], GPIO.RISING, callback=functools.partial(sendBuzz, buzzer["color"]))
+    GPIO.setup(buzzer["button_pin"], GPIO.IN)
+    GPIO.add_event_detect(buzzer["button_pin"], GPIO.RISING, callback=functools.partial(sendBuzz, color=buzzer["color"]))
 
   while True:
     time.sleep(10)
+
+if __name__ == "__main__":
+  main()
