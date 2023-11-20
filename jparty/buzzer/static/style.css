@@ -52,6 +52,49 @@ button:active {
     background-color: #a6a6a6;
 }
 
+#buzzers {
+  grid-column-start: 1;
+  grid-column-end: 4;
+  font-size: 24px;
+  text-align: center;
+}
+
+#buzzers option[value="red"] {
+  background-color: red;
+}
+
+#buzzers option[value="green"] {
+  background-color: green;
+}
+
+#buzzers option[value="blue"] {
+  background-color: blue;
+}
+
+#buzzers option[value="yellow"] {
+  background-color: yellow;
+}
+
+#buzzers .phone-only {
+  background-color: white;
+}
+
+#buzzers:has(> option[value="red"]:checked) {
+  background-color: red;
+}
+
+#buzzers:has(> option[value="green"]:checked) {
+  background-color: green;
+}
+
+#buzzers:has(> option[value="blue"]:checked) {
+  background-color: blue;
+}
+
+#buzzers:has(> option[value="yellow"]:checked) {
+  background-color: yellow;
+}
+
 
 #buzzer {
     display: block;
