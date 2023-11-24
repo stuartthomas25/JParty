@@ -3,7 +3,6 @@ import json
 import pygame
 
 host_ip = "localhost"
-sockets = {}
 websocket.setdefaulttimeout(2)
 
 buzzers = [
@@ -15,22 +14,18 @@ buzzers = [
   
 def sendBuzz(color):
   try:
-    if color not in sockets:
-      ws = websocket.create_connection("ws://" + host_ip + ":8080/buzzersocket")
-      connectPayload = json.dumps({'buzzerColor': color, 'message': 'CHECK_IF_EXISTS', 'text': ''})
-      ws.send(connectPayload)
-      server_res = ws.recv()
-      print("server res: " + server_res)
-      res_json = json.loads(server_res)
-      if res_json["message"] == "EXISTS":
-        sockets[color] = ws # Successfully connected for this buzzer color
-
-
-    if color in sockets:
+    ws = websocket.create_connection("ws://" + host_ip + ":8080/buzzersocket")
+    connectPayload = json.dumps({'buzzerColor': color, 'message': 'CHECK_IF_EXISTS', 'text': ''})
+    ws.send(connectPayload)
+    server_res = ws.recv()
+    print("server res: " + server_res)
+    res_json = json.loads(server_res)
+    if res_json["message"] == "EXISTS":
       print("Sending " + color + " buzz...")
       value = json.dumps({'buzzerColor': color, 'message': 'BUZZ', 'text': ''})
-      sockets[color].send(value)
+      ws.send(value)
       print("Done.")
+    ws.close()
   except Exception as e:
     print("failed to buzz: ", e)
 
