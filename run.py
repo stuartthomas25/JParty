@@ -4,6 +4,6 @@ import os
 
 if __name__ == "__main__":
     print(os.getcwd())
-    os.startfile("..\pibuzzers\pibuzzers_pins_2.py")
+    os.startfile("..\\pibuzzers\\physicalbuzzers.py")
     time.sleep(1)
     main()
