@@ -26,6 +26,8 @@ import time
 from threading import Thread
 import logging
 import json
+import os
+import sys
 
 from jparty.version import version
 from jparty.retrieve import get_game, get_random_game
@@ -329,17 +331,32 @@ class SettingsMenu(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle("Settings")
-        self.setGeometry(100, 100, 400, 200)
+        self.setFixedSize(400, 200)
 
         layout = QVBoxLayout()
 
         # Add a label for the "Theme" section
         theme_label = QLabel("Theme:", self)
 
+        # Add info about theme change auto-restarting the game
+        theme_info = QLabel("Theme change auto-restarts the game.", self)
+        theme_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        theme_info.setFixedWidth(self.width())
+        palette = theme_info.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(128, 128, 128))
+        theme_info.setPalette(palette)
+
+        # Read the current theme from the configuration file
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+
+        current_theme = config.get('theme', 'default')
+
         # Add a combo box for theme selection
         self.theme_combobox = QComboBox(self)
         self.theme_combobox.addItem("Default")
         self.theme_combobox.addItem("Christmas")
+        self.theme_combobox.setCurrentText(current_theme.capitalize())
 
         # Set the font to bold and text color to white
         font = self.theme_combobox.font()
@@ -387,8 +404,15 @@ class SettingsMenu(QDialog):
         self.setLayout(layout)
 
     def save_settings(self):
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        old_theme = config.get('theme', 'default')
         print("save_settings method called")  # Debugging line
         theme = self.theme_combobox.currentText()
+
+        if theme == old_theme:
+            return # theme was not changed
+
         self.change_theme(theme)
         print("Saving settings...")
         self.accept()  # Close the dialog when Apply is pressed
@@ -401,3 +425,6 @@ class SettingsMenu(QDialog):
             json.dump({'theme': theme}, f)
 
         print(f"Theme changed to {theme}")
+
+        # Restart the application
+        os.execv(sys.executable, ['python'] + sys.argv)
