@@ -4,7 +4,7 @@ from threading import Thread
 import re
 import os
 import sys
-
+import json
 
 from PyQt6.QtGui import QColor, QFontMetrics
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QPushButton, QSizePolicy
@@ -12,7 +12,6 @@ from PyQt6.QtCore import Qt, QSize
 
 
 def resource_path(relative_path):
-    """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
@@ -20,7 +19,13 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
 
-    return os.path.join(base_path, "data", relative_path)
+    # Read the current theme from the configuration file
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+
+    theme = config.get('theme', 'default')
+
+    return os.path.join(base_path, "data", theme, relative_path)
 
 
 class SongPlayer(object):
