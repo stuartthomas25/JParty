@@ -25,6 +25,7 @@ import qrcode
 import time
 from threading import Thread
 import logging
+import json
 
 from jparty.version import version
 from jparty.retrieve import get_game, get_random_game
@@ -336,25 +337,25 @@ class SettingsMenu(QDialog):
         theme_label = QLabel("Theme:", self)
 
         # Add a combo box for theme selection
-        theme_combobox = QComboBox(self)
-        theme_combobox.addItem("Default")
-        theme_combobox.addItem("Christmas")
+        self.theme_combobox = QComboBox(self)
+        self.theme_combobox.addItem("Default")
+        self.theme_combobox.addItem("Christmas")
 
         # Set the font to bold and text color to white
-        font = theme_combobox.font()
+        font = self.theme_combobox.font()
         font.setBold(True)
-        theme_combobox.setFont(font)
-        palette = theme_combobox.palette()
+        self.theme_combobox.setFont(font)
+        palette = self.theme_combobox.palette()
         palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
-        theme_combobox.setPalette(palette)
+        self.theme_combobox.setPalette(palette)
 
         # Add a white border around the dropdown menu
-        theme_combobox.setStyleSheet("QComboBox { border: 2px solid white; }")
+        self.theme_combobox.setStyleSheet("QComboBox { border: 2px solid white; }")
 
         # Create a horizontal layout for the label and combo box
         theme_layout = QHBoxLayout()
         theme_layout.addWidget(theme_label)
-        theme_layout.addWidget(theme_combobox)
+        theme_layout.addWidget(self.theme_combobox)
 
         # Add the horizontal layout to the main layout
         layout.addLayout(theme_layout)
@@ -365,12 +366,12 @@ class SettingsMenu(QDialog):
         layout.addSpacing(10)
 
         # Add an "Apply" button
-        apply_button = QPushButton("Apply", self)
-        apply_button.setStyleSheet("QPushButton { border: 2px solid black; }")
-        apply_button.clicked.connect(self.accept)  # Close the dialog when Apply is pressed
-        apply_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        apply_button.setMinimumSize(100, 30)
-        layout.addWidget(apply_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+        self.apply_button = QPushButton("Apply")
+        self.apply_button.clicked.connect(self.save_settings)  # Connect the button's clicked signal to the save_settings method
+        self.apply_button.setStyleSheet("QPushButton { border: 2px solid black; }")
+        self.apply_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.apply_button.setMinimumSize(100, 30)
+        layout.addWidget(self.apply_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Add space after the Apply button
         layout.addSpacing(10)
@@ -386,6 +387,17 @@ class SettingsMenu(QDialog):
         self.setLayout(layout)
 
     def save_settings(self):
-        # Add code to save settings here:
+        print("save_settings method called")  # Debugging line
+        theme = self.theme_combobox.currentText()
+        self.change_theme(theme)
         print("Saving settings...")
         self.accept()  # Close the dialog when Apply is pressed
+
+    def change_theme(self, theme):
+        print("change_theme method called")  # Debugging line
+        print(f"change_theme called with theme: {theme}")  # Debugging line
+        # Write the new theme to a configuration file
+        with open('config.json', 'w') as f:
+            json.dump({'theme': theme}, f)
+
+        print(f"Theme changed to {theme}")
