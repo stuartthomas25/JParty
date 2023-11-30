@@ -1,4 +1,12 @@
-from PyQt6.QtGui import QPainter, QBrush, QImage, QFont, QPalette, QPixmap
+from PyQt6.QtGui import (
+    QPainter,
+    QBrush,
+    QImage,
+    QFont,
+    QPalette,
+    QPixmap,
+    QColor, 
+)
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -7,6 +15,9 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QMessageBox,
     QLabel,
+    QDialog,
+    QComboBox,
+    QPushButton,
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal
 
@@ -14,6 +25,9 @@ import qrcode
 import time
 from threading import Thread
 import logging
+import json
+import os
+import sys
 
 from jparty.version import version
 from jparty.retrieve import get_game, get_random_game
@@ -154,11 +168,16 @@ class Welcome(StartWidget):
         self.help_button = DynamicButton("Show help", self)
         self.help_button.clicked.connect(self.show_help)
 
+        self.settings_button = DynamicButton("Settings", self)
+        self.settings_button.clicked.connect(self.show_settings)
+
         footer_layout = QHBoxLayout()
         footer_layout.addStretch(5)
         footer_layout.addWidget(self.quit_button, 3)
         footer_layout.addStretch(1)
         footer_layout.addWidget(self.help_button, 3)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(self.settings_button, 3)
         footer_layout.addStretch(5)
 
         main_layout.addStretch(3)
@@ -189,6 +208,11 @@ class Welcome(StartWidget):
             self,
         )
         msgbox.exec()
+
+    def show_settings(self):
+        logging.info("Showing settings")
+        settings_menu = SettingsMenu(self)
+        settings_menu.exec()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -301,3 +325,106 @@ class QRWidget(StartWidget):
 
     def restart(self):
         pass
+
+class SettingsMenu(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Settings")
+        self.setFixedSize(400, 200)
+
+        layout = QVBoxLayout()
+
+        # Add a label for the "Theme" section
+        theme_label = QLabel("Theme:", self)
+
+        # Add info about theme change auto-restarting the game
+        theme_info = QLabel("Theme change auto-restarts the game.", self)
+        theme_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        theme_info.setFixedWidth(self.width())
+        palette = theme_info.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(128, 128, 128))
+        theme_info.setPalette(palette)
+
+        # Read the current theme from the configuration file
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+
+        current_theme = config.get('theme', 'default')
+
+        # Add a combo box for theme selection
+        self.theme_combobox = QComboBox(self)
+        self.theme_combobox.addItem("Default")
+        self.theme_combobox.addItem("Christmas")
+        self.theme_combobox.setCurrentText(current_theme.capitalize())
+
+        # Set the font to bold and text color to white
+        font = self.theme_combobox.font()
+        font.setBold(True)
+        self.theme_combobox.setFont(font)
+        palette = self.theme_combobox.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        self.theme_combobox.setPalette(palette)
+
+        # Add a white border around the dropdown menu
+        self.theme_combobox.setStyleSheet("QComboBox { border: 2px solid white; }")
+
+        # Create a horizontal layout for the label and combo box
+        theme_layout = QHBoxLayout()
+        theme_layout.addWidget(theme_label)
+        theme_layout.addWidget(self.theme_combobox)
+
+        # Add the horizontal layout to the main layout
+        layout.addLayout(theme_layout)
+
+        # Other settings components as needed go here:
+
+        # Add space before the Apply button
+        layout.addSpacing(10)
+
+        # Add an "Apply" button
+        self.apply_button = QPushButton("Apply")
+        self.apply_button.clicked.connect(self.save_settings)  # Connect the button's clicked signal to the save_settings method
+        self.apply_button.setStyleSheet("QPushButton { border: 2px solid black; }")
+        self.apply_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.apply_button.setMinimumSize(100, 30)
+        layout.addWidget(self.apply_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # Add space after the Apply button
+        layout.addSpacing(10)
+
+        # Set the font to bold for all widgets in the layout
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget is not None:
+                font = widget.font()
+                font.setBold(True)
+                widget.setFont(font)
+
+        self.setLayout(layout)
+
+    def save_settings(self):
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        old_theme = config.get('theme', 'default')
+        print("save_settings method called")  # Debugging line
+        theme = self.theme_combobox.currentText()
+
+        if theme == old_theme:
+            return # theme was not changed
+
+        self.change_theme(theme)
+        print("Saving settings...")
+        self.accept()  # Close the dialog when Apply is pressed
+
+    def change_theme(self, theme):
+        print("change_theme method called")  # Debugging line
+        print(f"change_theme called with theme: {theme}")  # Debugging line
+        # Write the new theme to a configuration file
+        with open('config.json', 'w') as f:
+            json.dump({'theme': theme}, f)
+
+        print(f"Theme changed to {theme}")
+
+        # Restart the application
+        os.execv(sys.executable, ['python'] + sys.argv)
