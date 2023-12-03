@@ -596,7 +596,7 @@ class WagerDialog(QDialog):
         self.spinBox.setRange(0, max_wager)
         self.layout.addWidget(self.spinBox)
 
-        self.true_daily_double_button = QPushButton("True Daily Double", self)
+        self.true_daily_double_button = QPushButton("True Daily Double (Max Wager)", self)
         self.true_daily_double_button.clicked.connect(self.set_max_wager)
         self.layout.addWidget(self.true_daily_double_button)
 
