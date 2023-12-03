@@ -9,6 +9,7 @@ from functools import partial
 
 from jparty.style import MyLabel
 from jparty.utils import resource_path
+from jparty.constants import EARLY_TIMEOUT_MS
 
 
 class NameLabel(MyLabel):
@@ -54,6 +55,7 @@ class PlayerWidget(QWidget):
         self.__buzz_hint_thread = None
         self.__flash_thread = None
         self.__light_thread = None
+        self.__timeout_thread = None
 
         self.name_label = NameLabel(player.name, self)
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
@@ -65,6 +67,7 @@ class PlayerWidget(QWidget):
 
         self.main_background = QPixmap(resource_path("player.png"))
         self.active_background = QPixmap(resource_path("player_active.png"))
+        self.timeout_background = QPixmap(resource_path("player_timed_out.png"))
         self.lights_backgrounds = [
             QPixmap(resource_path(f"player_lights{i}.png")) for i in range(1, 6)
         ]
@@ -140,6 +143,19 @@ class PlayerWidget(QWidget):
                 return None
 
         self.set_lights(True)
+        self.update()
+    
+    def run_timeout_lights(self):
+        self.player.istimedout = True
+        self.__timeout_thread = Thread(target=self.__timeout_lights, name="timeout_lights")
+        self.__timeout_thread.start()
+    
+    def __timeout_lights(self):
+        self.background = self.timeout_background
+        self.update()
+        time.sleep(EARLY_TIMEOUT_MS / 1000)
+        self.player.istimedout = False
+        self.set_lights(False)
         self.update()
 
     def mousePressEvent(self, event):
