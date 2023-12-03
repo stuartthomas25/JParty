@@ -187,7 +187,7 @@ class Game(QObject):
         self.active_question = None
         self.accepting_responses = False
         self.answering_player = None
-        self.previous_answerer = None
+        self.previous_answerer = []
         self.timer = None
         self.soliciting_player = False  # part of selecting who found a daily double
 
@@ -313,11 +313,17 @@ class Game(QObject):
 
     def buzz(self, i_player):
         player = self.players[i_player]
-        if self.accepting_responses and player is not self.previous_answerer:
+
+        already_answered = False
+        for prev_player in self.previous_answerer:
+            if prev_player is player:
+                already_answered = True
+
+        if self.accepting_responses and not already_answered:
             logging.info(f"buzz ({time.time():.6f} s)")
             self.accepting_responses = False
             self.timer.pause()
-            self.previous_answerer = player
+            self.previous_answerer.append(player)
             self.dc.player_widget(player).run_lights()
 
             self.answering_player = player
@@ -339,7 +345,7 @@ class Game(QObject):
         self.timer = None
         self.active_question.complete = True
         self.active_question = None
-        self.previous_answerer = None
+        self.previous_answerer = []
         if all(q.complete for q in self.current_round.questions):
             logging.info("NEXT ROUND")
             self.keystroke_manager.activate("NEXT_ROUND")
