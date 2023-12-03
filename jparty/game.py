@@ -12,7 +12,7 @@ from collections.abc import Iterable
 import logging
 
 from jparty.utils import SongPlayer, resource_path, CompoundObject
-from jparty.constants import FJTIME, QUESTIONTIME
+from jparty.constants import FJTIME, QUESTIONTIME, EARLY_TIMEOUT_MS
 
 
 class QuestionTimer(object):
@@ -314,12 +314,26 @@ class Game(QObject):
     def buzz(self, i_player):
         player = self.players[i_player]
 
+        if self.active_question is None:
+            self.dc.player_widget(player).buzz_hint()
+            return
+
         already_answered = False
+        player_already_timed_out = player.istimedout
+
+        if player_already_timed_out == True:
+            logging.info(f"player is timed out")
+            return
+
+        # Check if player already answered incorrectly
         for prev_player in self.previous_answerer:
             if prev_player is player:
                 already_answered = True
 
-        if self.accepting_responses and not already_answered:
+        if not self.accepting_responses:
+            logging.info(f"player buzzed early")
+            self.dc.player_widget(player).run_timeout_lights()
+        elif not already_answered:
             logging.info(f"buzz ({time.time():.6f} s)")
             self.accepting_responses = False
             self.timer.pause()
@@ -329,8 +343,6 @@ class Game(QObject):
             self.answering_player = player
             self.keystroke_manager.activate("CORRECT_ANSWER", "INCORRECT_ANSWER")
             self.dc.borders.lights(False)
-        elif self.active_question is None:
-            self.dc.player_widget(player).buzz_hint()
         else:
             pass
 
@@ -578,6 +590,7 @@ class Player(object):
         self.wager = None
         self.finalanswer = ""
         self.page = "buzz"
+        self.istimedout = False
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)
