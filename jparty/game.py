@@ -477,8 +477,11 @@ class Game(QObject):
     def get_dd_wager(self, player):
         self.answering_player = player
         self.soliciting_player = False
-
-        max_wager = max(self.answering_player.score, 1000)
+        if self.current_round is self.data.rounds[0]:
+            max_wager = max(self.answering_player.score, 1000)
+        else:
+            max_wager = max(self.answering_player.score, 2000)
+            
         wager_res = QInputDialog.getInt(
             self.host_display,
             "Wager",
