@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
-from PyQt6.QtWidgets import QInputDialog, QApplication
+from PyQt6.QtWidgets import QInputDialog, QApplication, QDialog, QVBoxLayout, QPushButton, QSpinBox, QLabel
 
 
 import threading
@@ -489,23 +489,19 @@ class Game(QObject):
     def get_dd_wager(self, player):
         self.answering_player = player
         self.soliciting_player = False
+
         if self.current_round is self.data.rounds[0]:
             max_wager = max(self.answering_player.score, 1000)
         else:
             max_wager = max(self.answering_player.score, 2000)
-            
-        wager_res = QInputDialog.getInt(
-            self.host_display,
-            "Wager",
-            f"How much do they wager? (max: ${max_wager})",
-            min=0,
-            max=max_wager,
-        )
-        if not wager_res[1]:
+
+        wager_dialog = WagerDialog(max_wager, self.host_display)
+
+        if wager_dialog.exec() == QDialog.DialogCode.Rejected:
             self.soliciting_player = True
             return False
 
-        wager = wager_res[0]
+        wager = wager_dialog.get_wager()
         self.active_question.value = wager
 
         self.keystroke_manager.activate("CORRECT_ANSWER", "INCORRECT_ANSWER")
@@ -597,3 +593,32 @@ class Player(object):
 
     def state(self):
         return {"page": self.page, "score": self.score}
+
+class WagerDialog(QDialog):
+    def __init__(self, max_wager, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Wager")
+
+        self.layout = QVBoxLayout(self)
+
+        self.prompt_label = QLabel(f"Enter the players wager, the player can wager up to ${max_wager}", self)
+        self.layout.addWidget(self.prompt_label)
+
+        self.spinBox = QSpinBox(self)
+        self.spinBox.setRange(0, max_wager)
+        self.layout.addWidget(self.spinBox)
+
+        self.true_daily_double_button = QPushButton("True Daily Double (Max Wager)", self)
+        self.true_daily_double_button.clicked.connect(self.set_max_wager)
+        self.layout.addWidget(self.true_daily_double_button)
+
+        self.submit_button = QPushButton("Submit Wager", self)
+        self.submit_button.clicked.connect(self.accept)
+        self.layout.addWidget(self.submit_button)
+
+    def set_max_wager(self):
+        self.spinBox.setValue(self.spinBox.maximum())
+
+    def get_wager(self):
+        return self.spinBox.value()
