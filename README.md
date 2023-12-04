@@ -14,6 +14,11 @@ Ever wanted to play the game show Jeopardy? This Python-based application aims t
 ## Download
 See <a href="https://github.com/stuartthomas25/JParty/releases">Releases</a> page.
 
+## Recent Updates:
+- Added ability to use up to 4 physical buzzers (With the possibility to add more)! (Currently Only Confirmed Working On Windows Computers)
+    - With some new updates by Ross and Garrett JParty! now supports physical buzzers. More information on making these can be found farther down in the README file. [See Building the Physical Buzzers README](pibuzzers\PHYSICALBUZZERSREADME.md)
+- Added ability to change theme within the game. Current theme options are default and christmas.
+
 ## Screenshots:
 
 Welcome screen:
