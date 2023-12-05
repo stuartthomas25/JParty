@@ -14,7 +14,7 @@ if not os.path.exists('config.json'):
 if __name__ == "__main__":
     print(os.getcwd())
     # Start the process and get the process object
-    process = subprocess.Popen(["python", "..\\pibuzzers\\physicalbuzzers.py"])
+    process = subprocess.Popen(["python", "..\\physicalbuzzers\\physicalbuzzers.py"])
     time.sleep(1)
     try:
         main()
