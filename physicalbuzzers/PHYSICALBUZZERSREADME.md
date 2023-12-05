@@ -15,7 +15,7 @@ To build the physical buzzers you will need the following items (Amazon Links In
 - Wire Cutters (If you don't already have) ([Amazon Link - Any Other Choice Works Of Course](https://www.amazon.com/IGAN-P6-Precision-Clippers-Spring-loaded-Handmade/dp/B087P191LP))
 - Wire Strippers ([Amazon Link - Any Other Choice Works Of Course](https://www.amazon.com/VISE-GRIP-Stripping-Cutter-8-Inch-2078309/dp/B000JNNWQ2))
 - 3D Printer: A 3D Printer is used to print the case/body for the physical buzzers. If you don't have one feel free to contact us and we can point you in the right direction for getting the case/body printed for you.
-- 3D Printed case/body for the buzzers. (**ADD LINK TO STL FILES HERE**)
+- 3D Printed case/body for the buzzers. ([Physical Buzzer Body and Lid STL files](other-physical-buzzer-files/physical-buzzer-body-lid-stl-files))
     - Each case/body is comprised of the handheld case/body part and a lid that holds the arcade button into the main case/body part.
 - Optional Parts:
     - USB Extension Cable (For Getting The Game Controller Closer To The Contestants) (If you don't already have) (We have tested an extension cable up to 6 feet, we will most likely test a 20-foot extender soon and make an edit here) ([Amazon Link - Any Other Choice Works Of Course](https://www.amazon.com/Extension-Material-ITANDA-Playstation-Keyboard/dp/B08FJ88BP2))
