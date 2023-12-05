@@ -1,3 +1,7 @@
+<div style="display: flex; justify-content: center;">
+    <img src="physical-buzzer-pictures\step7-picture2.PNG" alt="image" width="400" height="auto">
+</div>
+
 ### Building The Physical Buzzers: 
 - [What You Need (Parts List)](#what-you-need)
 - [Preparing The Materials To Build A Physical Buzzer](#preparing-the-materials-to-build-a-buzzer)
