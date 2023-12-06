@@ -2,8 +2,9 @@ import websocket
 import json
 import pygame
 
+from websocket import create_connection
+
 host_ip = "localhost"
-websocket.setdefaulttimeout(2)
 
 buzzers = [
   "red",
@@ -14,7 +15,7 @@ buzzers = [
   
 def sendBuzz(color):
   try:
-    ws = websocket.create_connection("ws://" + host_ip + ":8080/buzzersocket")
+    ws = websocket.create_connection("ws://" + host_ip + ":8080/buzzersocket", timeout=2)
     connectPayload = json.dumps({'buzzerColor': color, 'message': 'CHECK_IF_EXISTS', 'text': ''})
     ws.send(connectPayload)
     server_res = ws.recv()
