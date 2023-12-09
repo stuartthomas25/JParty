@@ -110,8 +110,6 @@ class BoardWidget(QWidget):
         self.questionwidget = None
         self.question_labels = []
 
-        self.__board_fill_sound = sa.WaveObject.from_wave_file(resource_path("board_fill.wav"))
-
         self.grid_layout = QGridLayout()
 
         self.resizeEvent(None)
@@ -140,7 +138,7 @@ class BoardWidget(QWidget):
     def load_round(self, round):
         gl = self.grid_layout
 
-        threading.Thread(target=self.board_fill_music, args=(BEFORE_REVEAL_WAIT_TIME)).start()
+        sa.WaveObject.from_wave_file(resource_path("board_fill.wav")).play()
 
         category_delay = BEFORE_REVEAL_WAIT_TIME + 8 * QUESTION_REVEAL_TIME
 
@@ -156,10 +154,6 @@ class BoardWidget(QWidget):
 
     def resizeEvent(self, event):
         self.grid_layout.setSpacing(self.width() // 150)
-
-    def board_fill_music(self, delay):
-        time.sleep(delay)
-        self.__board_fill_sound.play()
 
     def set_category(self, x, y, text, delay):
         time.sleep(delay)
