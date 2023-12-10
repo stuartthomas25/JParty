@@ -409,13 +409,18 @@ class SettingsMenu(QDialog):
         old_theme = config.get('theme', 'default')
         print("save_settings method called")  # Debugging line
         theme = self.theme_combobox.currentText()
+        requires_restart = False
 
-        if theme == old_theme:
-            return # theme was not changed
+        if theme != old_theme:
+            self.change_theme(theme)
+            requires_restart = True
 
-        self.change_theme(theme)
         print("Saving settings...")
         self.accept()  # Close the dialog when Apply is pressed
+
+        if requires_restart:
+            # Restart the application
+            os.execv(sys.executable, ['python'] + sys.argv)
 
     def change_theme(self, theme):
         print("change_theme method called")  # Debugging line
@@ -425,6 +430,3 @@ class SettingsMenu(QDialog):
             json.dump({'theme': theme}, f)
 
         print(f"Theme changed to {theme}")
-
-        # Restart the application
-        os.execv(sys.executable, ['python'] + sys.argv)
