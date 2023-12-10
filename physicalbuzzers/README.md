@@ -1,7 +1,9 @@
 <div style="display: flex; justify-content: center;">
     <img src="physical-buzzer-pictures/step7-picture2.png" alt="image" width="400" height="auto">
 </div>
+&nbsp;
 
+# This is a tutorial for making buzzers to use with [JParty! with Buzzers](../README.md)
 ### Building The Physical Buzzers: 
 - [What You Need (Parts List)](#what-you-need)
 - [Preparing The Materials To Build A Physical Buzzer](#preparing-the-materials-to-build-a-buzzer)
@@ -125,6 +127,7 @@ Before Connecting the USB Controller to JParty! it is important to understand wh
 <img src="physical-buzzer-pictures/usb-controller-picture.png" alt="image" width="400" height="auto">
 
 You can plug them into each port as shown below:
+
 <img src="physical-buzzer-pictures/connected-buzzer-to-usb-encoder.png" alt="image" width="400" height="auto">
 
 Once all five are plugged in you can connect the USB cable to the USB-B interface on the USB controller and the other USB-A end to your computer. After you have this you can start up JParty! and it should all be connected. 
