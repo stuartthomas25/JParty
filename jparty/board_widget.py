@@ -1,9 +1,14 @@
 from PyQt6.QtWidgets import QWidget, QGridLayout
 from PyQt6.QtGui import QPalette
-
+import time
+import threading
+import random
+import simpleaudio as sa
 
 from jparty.game import Board
 from jparty.style import MyLabel, CARDPAL, JBLUE, DARKBLUE
+from jparty.constants import CATEGORY_REVEAL_TIME, QUESTION_REVEAL_TIME, BEFORE_REVEAL_WAIT_TIME
+from jparty.utils import resource_path
 
 
 class CardLabel(QWidget):
@@ -132,18 +137,35 @@ class BoardWidget(QWidget):
 
     def load_round(self, round):
         gl = self.grid_layout
+
+        sa.WaveObject.from_wave_file(resource_path("board_fill.wav")).play()
+
+        category_delay = BEFORE_REVEAL_WAIT_TIME + 8 * QUESTION_REVEAL_TIME
+
         for x in range(Board.size[0]):
-            for y in range(Board.size[1] + 1):
+            for y in range(Board.size[1], -1, -1):
                 if y == 0:
                     # Categories
-                    gl.itemAtPosition(y, x).widget().setText(round.categories[x])
+                    gl.itemAtPosition(y, x).widget().setText("")
+                    threading.Thread(target=self.set_category, args=(x, y, round.categories[x], category_delay + x * CATEGORY_REVEAL_TIME)).start()
                 else:
                     # Questions
                     q = round.get_question(x, y - 1)
-                    gl.itemAtPosition(y, x).widget().question = q
+                    gl.itemAtPosition(y, x).widget().question = None
+                    threading.Thread(target=self.set_question, args=(x, y, q, random.randint(0, 5) * QUESTION_REVEAL_TIME + BEFORE_REVEAL_WAIT_TIME)).start()
 
     def resizeEvent(self, event):
         self.grid_layout.setSpacing(self.width() // 150)
+
+    def set_category(self, x, y, text, delay):
+        time.sleep(delay)
+        gl = self.grid_layout
+        gl.itemAtPosition(y, x).widget().setText(text)
+    
+    def set_question(self, x, y, question, delay):
+        time.sleep(delay)
+        gl = self.grid_layout
+        gl.itemAtPosition(y, x).widget().question = question
 
     @property
     def board(self):
