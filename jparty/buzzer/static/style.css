@@ -62,37 +62,36 @@ button:active {
 #buzzers option[value="red"] {
   background-color: red;
 }
-
-#buzzers option[value="green"] {
-  background-color: green;
+#buzzers:has(> option[value="red"]:checked) {
+  background-color: red;
 }
 
 #buzzers option[value="blue"] {
+  background-color: blue;
+}
+#buzzers:has(> option[value="blue"]:checked) {
   background-color: blue;
 }
 
 #buzzers option[value="yellow"] {
   background-color: yellow;
 }
-
-#buzzers .phone-only {
-  background-color: white;
+#buzzers:has(> option[value="yellow"]:checked) {
+  background-color: yellow;
 }
 
-#buzzers:has(> option[value="red"]:checked) {
-  background-color: red;
+#buzzers option[value="green"] {
+  background-color: green;
 }
-
 #buzzers:has(> option[value="green"]:checked) {
   background-color: green;
 }
 
-#buzzers:has(> option[value="blue"]:checked) {
-  background-color: blue;
+#buzzers .phone-only {
+  background-color: white;
 }
-
-#buzzers:has(> option[value="yellow"]:checked) {
-  background-color: yellow;
+#buzzers:has(> option[value="white"]:checked) {
+  background-color: white;
 }
 
 
