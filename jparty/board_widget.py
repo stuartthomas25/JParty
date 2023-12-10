@@ -146,10 +146,12 @@ class BoardWidget(QWidget):
             for y in range(Board.size[1], -1, -1):
                 if y == 0:
                     # Categories
+                    gl.itemAtPosition(y, x).widget().setText("")
                     threading.Thread(target=self.set_category, args=(x, y, round.categories[x], category_delay + x * CATEGORY_REVEAL_TIME)).start()
                 else:
                     # Questions
                     q = round.get_question(x, y - 1)
+                    gl.itemAtPosition(y, x).widget().question = None
                     threading.Thread(target=self.set_question, args=(x, y, q, random.randint(0, 5) * QUESTION_REVEAL_TIME + BEFORE_REVEAL_WAIT_TIME)).start()
 
     def resizeEvent(self, event):
