@@ -12,6 +12,7 @@ a = Analysis(['run.py'],
              datas=[
                  ("jparty/data/default/*", "data/default"),
                  ("jparty/data/christmas/*", "data/christmas"),
+                 ("jparty/data/eightiessynthwave/*", "data/eightiessynthwave"),
                  ("jparty/buzzer", "buzzer"),
              ],
              hiddenimports=["qrcode"],
