@@ -90,6 +90,18 @@ def get_JArchive_Game(game_id, wayback_url=None):
                 return None
 
             text = text_obj.text
+
+            # Extract image link
+            text_to_re = str(text_obj)
+            image_link_pattern = r'(\bhttps:\/\/www\.j-archive\.com\b[^"]*)'
+            image_link = re.findall(image_link_pattern, text_to_re)
+            if image_link:
+                image_link = image_link[0]  # Take the first link if there are multiple
+                logging.info(f"Question with image: {text_obj}, image_link: {image_link}")
+            else:
+                image_link = None
+                logging.info(f"Question: {text_obj}, image_link: {image_link}")
+
             index_key = text_obj["id"]
             index = (
                 int(index_key[-3]) - 1,
