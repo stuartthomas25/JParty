@@ -30,9 +30,10 @@ class QuestionWidget(QWidget):
             self.image = QPixmap()
             try:
                 request = requests.get(question.image_link)
-                self.image.loadFromData(request.content)
-                self.image = self.image.scaledToWidth(self.width() * 12)
-                self.question_label.setPixmap(self.image)
+                if b"Not Found" not in request.content:
+                    self.image.loadFromData(request.content)
+                    self.image = self.image.scaledToWidth(self.width() * 12)
+                    self.question_label.setPixmap(self.image)
             except requests.exceptions.RequestException as e:
                 logging.info(f"failed to load image: {question.image_link}")
 
