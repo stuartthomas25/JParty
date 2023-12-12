@@ -25,7 +25,7 @@ def list_to_game(s):
                 answer = s[row + n1 + 6][col + 1]
                 value = int(s[row + n1][0])
                 dd = address in s[n1 - 1][-1]
-                questions.append(Question(index, text, answer, cat, value, dd))
+                questions.append(Question(index, text, answer, cat, None, value, dd)) # TODO: Allow images
 
         boards.append(Board(categories, questions, dj=(n1 == 14)))
 
@@ -111,7 +111,7 @@ def get_JArchive_Game(game_id, wayback_url=None):
             value = MONIES[i][index[1]]
             answer = findanswer(clue)
             questions.append(
-                Question(index, text, answer, categories[index[0]], value, dd)
+                Question(index, text, answer, categories[index[0]], image_link, value, dd)
             )
         boards.append(Board(categories, questions, dj=(i == 1)))
 

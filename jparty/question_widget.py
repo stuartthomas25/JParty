@@ -3,7 +3,10 @@ from PyQt6.QtGui import (
     QPen,
     QColor,
     QFont,
+    QPixmap,
 )
+import requests
+import logging
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
 from jparty.style import MyLabel, CARDPAL
@@ -16,10 +19,23 @@ class QuestionWidget(QWidget):
         self.setAutoFillBackground(True)
 
         self.main_layout = QVBoxLayout()
-        self.question_label = MyLabel(question.text.upper(), self.startFontSize, self)
 
+        # Question text
+        self.question_label = MyLabel(question.text.upper(), self.startFontSize, self)
         self.question_label.setFont(QFont("ITC_ Korinna"))
         self.main_layout.addWidget(self.question_label)
+
+        if question.image_link is not None:
+            logging.info(f"question has image: {question.image_link}")
+            self.image = QPixmap()
+            try:
+                request = requests.get(question.image_link)
+                self.image.loadFromData(request.content)
+                self.image = self.image.scaledToWidth(self.width() * 12)
+                self.question_label.setPixmap(self.image)
+            except requests.exceptions.RequestException as e:
+                logging.info(f"failed to load image: {question.image_link}")
+
         self.setLayout(self.main_layout)
 
         self.setPalette(CARDPAL)
