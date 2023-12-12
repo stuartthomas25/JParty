@@ -25,7 +25,7 @@ def list_to_game(s):
                 answer = s[row + n1 + 6][col + 1]
                 value = int(s[row + n1][0])
                 dd = address in s[n1 - 1][-1]
-                questions.append(Question(index, text, answer, cat, value, dd))
+                questions.append(Question(index, text, answer, cat, None, value, dd)) # TODO: Allow images
 
         boards.append(Board(categories, questions, dj=(n1 == 14)))
 
@@ -90,6 +90,18 @@ def get_JArchive_Game(game_id, wayback_url=None):
                 return None
 
             text = text_obj.text
+
+            # Extract image link
+            text_to_re = str(text_obj)
+            image_link_pattern = r'(\bhttps:\/\/www\.j-archive\.com\b[^"]*)'
+            image_link = re.findall(image_link_pattern, text_to_re)
+            if image_link:
+                image_link = image_link[0]  # Take the first link if there are multiple
+                logging.info(f"Question with image: {text_obj}, image_link: {image_link}")
+            else:
+                image_link = None
+                logging.info(f"Question: {text_obj}, image_link: {image_link}")
+
             index_key = text_obj["id"]
             index = (
                 int(index_key[-3]) - 1,
@@ -99,7 +111,7 @@ def get_JArchive_Game(game_id, wayback_url=None):
             value = MONIES[i][index[1]]
             answer = findanswer(clue)
             questions.append(
-                Question(index, text, answer, categories[index[0]], value, dd)
+                Question(index, text, answer, categories[index[0]], image_link, value, dd)
             )
         boards.append(Board(categories, questions, dj=(i == 1)))
 

@@ -121,9 +121,11 @@ class Question:
     text: str
     answer: str
     category: str
+    image_link: str = None
     value: int = -1
     dd: bool = False
     complete: bool = False
+    
 
 
 class Board(object):
