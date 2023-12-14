@@ -25,7 +25,23 @@ def list_to_game(s):
                 answer = s[row + n1 + 6][col + 1]
                 value = int(s[row + n1][0])
                 dd = address in s[n1 - 1][-1]
-                questions.append(Question(index, text, answer, cat, None, value, dd)) # TODO: Allow images
+                # Getting the image link:
+                image_link = None
+                # Extract image link
+                image_link_pattern = r'\bhttps?:\/\/\S+?\.(?:png|jpe?g|bmp)\b'
+                image_link = re.findall(image_link_pattern, text)
+                if image_link:
+                    image_link = image_link[0]  # Take the first link if there are multiple
+                    logging.info(f"Question with image: {text}, image_link: {image_link}")
+                else:
+                    image_link = None
+                    logging.info(f"Question: {text}, image_link: {image_link}")
+
+                # Remove image link from text:
+                text_extract_pattern = r'https?:\/\/\S+?\.(?:png|jpe?g|gif|bmp)\b'
+                text = re.sub(text_extract_pattern, '', text)
+
+                questions.append(Question(index, text, answer, cat, image_link, value, dd))
 
         boards.append(Board(categories, questions, dj=(n1 == 14)))
 
