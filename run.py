@@ -7,9 +7,13 @@ import signal
 
 # Check if config.json exists
 if not os.path.exists('config.json'):
-    # If not, create it with a default theme
+    # If not, create it with a default settings
     with open('config.json', 'w') as f:
-        json.dump({'theme': 'default'}, f)
+        data = {
+            'theme': 'default',
+            'showtextwithimages': 'false'
+        }
+        json.dump(data, f)
 
 if __name__ == "__main__":
     print(os.getcwd())

@@ -330,9 +330,15 @@ class SettingsMenu(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        # Read the current theme from the configuration file
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+
+        current_theme = config.get('theme', 'default')
+        current_showtextwithimages = config.get('showtextwithimages', 'false')
+
         self.setWindowTitle("Settings")
         self.setFixedSize(400, 200)
-
         layout = QVBoxLayout()
 
         # Add a label for the "Theme" section
@@ -345,12 +351,6 @@ class SettingsMenu(QDialog):
         palette = theme_info.palette()
         palette.setColor(QPalette.ColorRole.WindowText, QColor(128, 128, 128))
         theme_info.setPalette(palette)
-
-        # Read the current theme from the configuration file
-        with open('config.json', 'r') as f:
-            config = json.load(f)
-
-        current_theme = config.get('theme', 'default')
 
         # Add a combo box for theme selection
         self.theme_combobox = QComboBox(self)
@@ -375,10 +375,34 @@ class SettingsMenu(QDialog):
         theme_layout.addWidget(theme_label)
         theme_layout.addWidget(self.theme_combobox)
 
+        # Add a label for the "showtextwithimages" section
+        showtextwithimages_label = QLabel("Show text with images:", self)
+
+        # Add a combo box for showtextwithimages selection
+        self.showtextwithimages_combobox = QComboBox(self)
+        self.showtextwithimages_combobox.addItem("True")
+        self.showtextwithimages_combobox.addItem("False")
+        self.showtextwithimages_combobox.setCurrentText(current_showtextwithimages.capitalize())
+
+        # Set the font to bold and text color to white
+        font = self.showtextwithimages_combobox.font()
+        font.setBold(True)
+        self.showtextwithimages_combobox.setFont(font)
+        palette = self.showtextwithimages_combobox.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        self.showtextwithimages_combobox.setPalette(palette)
+
+        # Add a white border around the dropdown menu
+        self.showtextwithimages_combobox.setStyleSheet("QComboBox { border: 2px solid white; }")
+
+        # Create a horizontal layout for the label and combo box
+        showtextwithimages_layout = QHBoxLayout()
+        showtextwithimages_layout.addWidget(showtextwithimages_label)
+        showtextwithimages_layout.addWidget(self.showtextwithimages_combobox)
+
         # Add the horizontal layout to the main layout
         layout.addLayout(theme_layout)
-
-        # Other settings components as needed go here:
+        layout.addLayout(showtextwithimages_layout)
 
         # Add space before the Apply button
         layout.addSpacing(10)
@@ -405,29 +429,32 @@ class SettingsMenu(QDialog):
         self.setLayout(layout)
 
     def save_settings(self):
-        with open('config.json', 'r') as f:
-            config = json.load(f)
-        old_theme = config.get('theme', 'default')
-        print("save_settings method called")  # Debugging line
-        theme = self.theme_combobox.currentText()
+        logging.info("save_settings method called")  # Debugging line
+        new_settings = {}
         requires_restart = False
 
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        
+        # Theme setting
+        old_theme = config.get('theme', 'default')
+        theme = self.theme_combobox.currentText()
         if theme != old_theme:
             self.change_theme(theme)
             requires_restart = True
 
-        print("Saving settings...")
-        self.accept()  # Close the dialog when Apply is pressed
+        # Show text with images setting
+        showtextwithimages = self.showtextwithimages_combobox.currentText()
+
+        # Save config
+        logging.info("Saving settings...")
+        with open('config.json', 'w') as f:
+            json.dump({
+                'theme': theme,
+                'showtextwithimages': showtextwithimages,
+            }, f)
 
         if requires_restart:
             # Restart the application
             os.execv(sys.executable, ['python'] + sys.argv)
-
-    def change_theme(self, theme):
-        print("change_theme method called")  # Debugging line
-        print(f"change_theme called with theme: {theme}")  # Debugging line
-        # Write the new theme to a configuration file
-        with open('config.json', 'w') as f:
-            json.dump({'theme': theme}, f)
-
-        print(f"Theme changed to {theme}")
+        self.accept()  # Close the dialog
