@@ -7,6 +7,7 @@ from PyQt6.QtGui import (
 )
 import requests
 import logging
+import json
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
 from jparty.style import MyLabel, CARDPAL
@@ -17,13 +18,17 @@ class QuestionWidget(QWidget):
         super().__init__(parent)
         self.question = question
         self.setAutoFillBackground(True)
-
         self.main_layout = QVBoxLayout()
+
+        # Read the config.json file
+        with open('config.json', 'r') as f:
+            self.config = json.load(f)
 
         # Question text
         self.question_label = MyLabel(question.text.upper(), self.startFontSize, self)
         self.question_label.setFont(QFont("ITC_ Korinna"))
         self.main_layout.addWidget(self.question_label)
+        self.main_layout.setContentsMargins(0, 50, 0, 50)
 
         if question.image_link is not None:
             logging.info(f"question has image: {question.image_link}")
@@ -32,8 +37,15 @@ class QuestionWidget(QWidget):
                 request = requests.get(question.image_link)
                 if b"Not Found" not in request.content:
                     self.image.loadFromData(request.content)
-                    self.image = self.image.scaledToWidth(self.width() * 12)
-                    self.question_label.setPixmap(self.image)
+                    self.image = self.image.scaledToHeight(self.height() * 12)
+                    if self.config['showtextwithimages'] == 'true':
+                        # Create a QLabel for the image
+                        self.image_label = MyLabel("", self.startFontSize, self)
+                        self.image_label.setPixmap(self.image)
+                        self.main_layout.addWidget(self.image_label)
+                    else:
+                        self.question_label.setPixmap(self.image)
+
             except requests.exceptions.RequestException as e:
                 logging.info(f"failed to load image: {question.image_link}")
 
