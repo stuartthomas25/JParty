@@ -9,7 +9,7 @@ from functools import partial
 
 from jparty.style import MyLabel
 from jparty.utils import resource_path
-from jparty.constants import EARLY_TIMEOUT_MS
+from jparty.constants import DEFAULT_CONFIG
 
 
 class NameLabel(MyLabel):
@@ -153,7 +153,7 @@ class PlayerWidget(QWidget):
     def __timeout_lights(self):
         self.background = self.timeout_background
         self.update()
-        time.sleep(EARLY_TIMEOUT_MS / 1000)
+        time.sleep(self.game.config.get('earlybuzztimeout', DEFAULT_CONFIG['earlybuzztimeout']) / 1000)
         self.player.istimedout = False
         self.set_lights(False)
         self.update()
