@@ -4,15 +4,13 @@ import os
 import json
 import subprocess
 import signal
+from jparty.constants import DEFAULT_CONFIG
 
 # Check if config.json exists
 if not os.path.exists('config.json'):
     # If not, create it with a default settings
     with open('config.json', 'w') as f:
-        data = {
-            'theme': 'default',
-            'showtextwithimages': 'false'
-        }
+        data = DEFAULT_CONFIG
         json.dump(data, f)
 
 if __name__ == "__main__":
