@@ -37,13 +37,16 @@ class QuestionWidget(QWidget):
                 request = requests.get(question.image_link)
                 if b"Not Found" not in request.content:
                     self.image.loadFromData(request.content)
-                    self.image = self.image.scaledToHeight(self.height() * 12)
-                    if self.config['showtextwithimages'] == 'true':
+                    
+                    if self.config.get('showtextwithimages', 'False') == 'True':
+                        self.image = self.image.scaledToHeight(self.height() * 12)
+
                         # Create a QLabel for the image
                         self.image_label = MyLabel("", self.startFontSize, self)
                         self.image_label.setPixmap(self.image)
                         self.main_layout.addWidget(self.image_label)
                     else:
+                        self.image = self.image.scaledToWidth(self.width() * 12)
                         self.question_label.setPixmap(self.image)
 
             except requests.exceptions.RequestException as e:
