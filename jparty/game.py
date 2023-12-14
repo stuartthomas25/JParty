@@ -10,9 +10,10 @@ import sys
 import simpleaudio as sa
 from collections.abc import Iterable
 import logging
+import json
 
 from jparty.utils import SongPlayer, resource_path, CompoundObject
-from jparty.constants import FJTIME, QUESTIONTIME, EARLY_TIMEOUT_MS
+from jparty.constants import FJTIME, QUESTIONTIME
 
 
 class QuestionTimer(object):
@@ -177,6 +178,9 @@ class Game(QObject):
     def __init__(self):
         super().__init__()
 
+        with open('config.json', 'r') as f:
+            self.config = json.load(f)
+
         self.host_display = None
         self.main_display = None
         self.dc = None
@@ -270,6 +274,9 @@ class Game(QObject):
         self.dc.board_widget.load_round(self.current_round)
         self.buzzer_controller.accepting_players = False
         self.song_player.stop()
+        # Update config when game starts in case host made some settings changes
+        with open('config.json', 'r') as f:
+            self.config = json.load(f)
 
     def setDisplays(self, host_display, main_display):
         self.host_display = host_display

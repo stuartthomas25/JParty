@@ -34,6 +34,7 @@ from jparty.retrieve import get_game, get_random_game
 from jparty.utils import resource_path, add_shadow, DynamicLabel, DynamicButton
 from jparty.helpmsg import helpmsg
 from jparty.style import WINDOWPAL
+from jparty.constants import DEFAULT_CONFIG
 
 
 class Image(qrcode.image.base.BaseImage):
@@ -334,23 +335,25 @@ class SettingsMenu(QDialog):
         with open('config.json', 'r') as f:
             config = json.load(f)
 
-        current_theme = config.get('theme', 'default')
-        current_showtextwithimages = config.get('showtextwithimages', 'false')
+        current_theme = config.get('theme', DEFAULT_CONFIG['theme'])
+        current_showtextwithimages = config.get('showtextwithimages', DEFAULT_CONFIG['showtextwithimages'])
+        current_earlybuzztimeout = config.get('earlybuzztimeout', DEFAULT_CONFIG['earlybuzztimeout'])
 
         self.setWindowTitle("Settings")
         self.setFixedSize(400, 200)
         layout = QVBoxLayout()
 
+        # Add info about theme change auto-restarting the game
+        settings_info = QLabel("Theme change auto-restarts the game.", self)
+        settings_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        settings_info.setFixedWidth(self.width())
+        palette = settings_info.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(128, 128, 128))
+        settings_info.setPalette(palette)
+        settings_info_layout = QHBoxLayout()
+
         # Add a label for the "Theme" section
         theme_label = QLabel("Theme:", self)
-
-        # Add info about theme change auto-restarting the game
-        theme_info = QLabel("Theme change auto-restarts the game.", self)
-        theme_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        theme_info.setFixedWidth(self.width())
-        palette = theme_info.palette()
-        palette.setColor(QPalette.ColorRole.WindowText, QColor(128, 128, 128))
-        theme_info.setPalette(palette)
 
         # Add a combo box for theme selection
         self.theme_combobox = QComboBox(self)
@@ -400,9 +403,35 @@ class SettingsMenu(QDialog):
         showtextwithimages_layout.addWidget(showtextwithimages_label)
         showtextwithimages_layout.addWidget(self.showtextwithimages_combobox)
 
-        # Add the horizontal layout to the main layout
+        # Add a label for the "earlybuzztimeout" section
+        earlybuzztimeout_label = QLabel("Early buzz timeout (ms):", self)
+
+        # Add a combo box for earlybuzztimeout selection
+        self.earlybuzztimeout_combobox = QLineEdit(self)
+        self.earlybuzztimeout_combobox.setText(str(current_earlybuzztimeout))
+
+        # Set the font to bold and text color to white
+        font = self.earlybuzztimeout_combobox.font()
+        font.setBold(True)
+        self.earlybuzztimeout_combobox.setFont(font)
+        palette = self.earlybuzztimeout_combobox.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        self.earlybuzztimeout_combobox.setPalette(palette)
+
+        # Add a white border around the dropdown menu
+        self.earlybuzztimeout_combobox.setStyleSheet("QComboBox { border: 2px solid white; }")
+
+        # Create a horizontal layout for the label and combo box
+        earlybuzztimeout_layout = QHBoxLayout()
+        earlybuzztimeout_layout.addWidget(earlybuzztimeout_label)
+        earlybuzztimeout_layout.addWidget(self.earlybuzztimeout_combobox)
+
+        # Add the horizontal layouts to the main layout
+        layout.addLayout(settings_info_layout)
+        layout.addSpacing(20)
         layout.addLayout(theme_layout)
         layout.addLayout(showtextwithimages_layout)
+        layout.addLayout(earlybuzztimeout_layout)
 
         # Add space before the Apply button
         layout.addSpacing(10)
@@ -446,12 +475,16 @@ class SettingsMenu(QDialog):
         # Show text with images setting
         showtextwithimages = self.showtextwithimages_combobox.currentText()
 
+        # Early buzz timeout setting
+        earlybuzztimeout = int(self.earlybuzztimeout_combobox.text())
+
         # Save config
         logging.info("Saving settings...")
         with open('config.json', 'w') as f:
             json.dump({
                 'theme': theme,
                 'showtextwithimages': showtextwithimages,
+                'earlybuzztimeout': earlybuzztimeout
             }, f)
 
         if requires_restart:
