@@ -545,10 +545,19 @@ class Game(QObject):
         self.back_to_board()
 
     def incorrect_answer(self):
-        self.set_score(
-            self.answering_player,
-            self.answering_player.score - self.active_question.value,
-        )
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        if self.config.get('allownegative', 'True') == 'True':
+            self.set_score(
+                self.answering_player,
+                self.answering_player.score - self.active_question.value,
+            )
+        else:
+            self.set_score(
+                self.answering_player,
+                self.answering_player.score - 0,
+            )
+
         self.answer_given()
         if self.active_question.dd:
             self.back_to_board()
