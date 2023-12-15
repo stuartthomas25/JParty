@@ -469,7 +469,6 @@ class SettingsMenu(QDialog):
         old_theme = config.get('theme', 'default')
         theme = self.theme_combobox.currentText()
         if theme != old_theme:
-            self.change_theme(theme)
             requires_restart = True
 
         # Show text with images setting
