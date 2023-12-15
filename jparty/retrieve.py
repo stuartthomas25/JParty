@@ -41,7 +41,7 @@ def list_to_game(s):
                 text_extract_pattern = r'https?:\/\/\S+?\.(?:png|jpe?g|gif|bmp)\b'
                 text = re.sub(text_extract_pattern, '', text)
 
-                questions.append(Question(index, text, answer, cat, image_link, value, dd))
+                questions.append(Question(index, text, answer, cat, image_link, None, value, dd))
 
         boards.append(Board(categories, questions, dj=(n1 == 14)))
 
@@ -127,7 +127,7 @@ def get_JArchive_Game(game_id, wayback_url=None):
             value = MONIES[i][index[1]]
             answer = findanswer(clue)
             questions.append(
-                Question(index, text, answer, categories[index[0]], image_link, value, dd)
+                Question(index, text, answer, categories[index[0]], image_link, None, value, dd)
             )
         boards.append(Board(categories, questions, dj=(i == 1)))
 
