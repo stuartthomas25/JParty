@@ -338,9 +338,10 @@ class SettingsMenu(QDialog):
         current_theme = config.get('theme', DEFAULT_CONFIG['theme'])
         current_showtextwithimages = config.get('showtextwithimages', DEFAULT_CONFIG['showtextwithimages'])
         current_earlybuzztimeout = config.get('earlybuzztimeout', DEFAULT_CONFIG['earlybuzztimeout'])
+        current_allownegative = config.get('allownegative', DEFAULT_CONFIG['allownegative'])
 
         self.setWindowTitle("Settings")
-        self.setFixedSize(400, 200)
+        self.setFixedSize(400, 400)
         layout = QVBoxLayout()
 
         # Add info about theme change auto-restarting the game
@@ -426,12 +427,38 @@ class SettingsMenu(QDialog):
         earlybuzztimeout_layout.addWidget(earlybuzztimeout_label)
         earlybuzztimeout_layout.addWidget(self.earlybuzztimeout_combobox)
 
+        # Add a label for the "allownegative" section
+        allownegative_label = QLabel("Allow Negatives:", self)
+
+        # Add a combo box for allownegative selection
+        self.allownegative_combobox = QComboBox(self)
+        self.allownegative_combobox.addItem("True")
+        self.allownegative_combobox.addItem("False")
+        self.allownegative_combobox.setCurrentText(current_allownegative.capitalize())
+
+        # Set the font to bold and text color to white
+        font = self.allownegative_combobox.font()
+        font.setBold(True)
+        self.allownegative_combobox.setFont(font)
+        palette = self.allownegative_combobox.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        self.allownegative_combobox.setPalette(palette)
+
+        # Add a white border around the dropdown menu
+        self.allownegative_combobox.setStyleSheet("QComboBox { border: 2px solid white; }")
+
+        # Create a horizontal layout for the label and combo box
+        allownegative_layout = QHBoxLayout()
+        allownegative_layout.addWidget(allownegative_label)
+        allownegative_layout.addWidget(self.allownegative_combobox)
+
         # Add the horizontal layouts to the main layout
         layout.addLayout(settings_info_layout)
         layout.addSpacing(20)
         layout.addLayout(theme_layout)
         layout.addLayout(showtextwithimages_layout)
         layout.addLayout(earlybuzztimeout_layout)
+        layout.addLayout(allownegative_layout)
 
         # Add space before the Apply button
         layout.addSpacing(10)
@@ -477,13 +504,17 @@ class SettingsMenu(QDialog):
         # Early buzz timeout setting
         earlybuzztimeout = int(self.earlybuzztimeout_combobox.text())
 
+        # Show allow negative setting
+        allownegative = self.allownegative_combobox.currentText()
+
         # Save config
         logging.info("Saving settings...")
         with open('config.json', 'w') as f:
             json.dump({
                 'theme': theme,
                 'showtextwithimages': showtextwithimages,
-                'earlybuzztimeout': earlybuzztimeout
+                'earlybuzztimeout': earlybuzztimeout,
+                'allownegative': allownegative
             }, f)
 
         if requires_restart:
