@@ -545,8 +545,6 @@ class Game(QObject):
         self.back_to_board()
 
     def incorrect_answer(self):
-        with open('config.json', 'r') as f:
-            config = json.load(f)
         if self.config.get('allownegative', 'True') == 'True':
             self.set_score(
                 self.answering_player,
