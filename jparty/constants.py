@@ -9,7 +9,7 @@ QUESTION_REVEAL_TIME = 0.4
 
 DEFAULT_CONFIG = {
   'theme': 'Default',
-  'showtextwithimages': 'False',
-  'earlybuzztimeout': 200,
+  'showtextwithimages': 'Show both',
+  'earlybuzztimeout': 500,
   'allownegative': 'True'
 }

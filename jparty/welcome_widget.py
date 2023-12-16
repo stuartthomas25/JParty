@@ -380,12 +380,13 @@ class SettingsMenu(QDialog):
         theme_layout.addWidget(self.theme_combobox)
 
         # Add a label for the "showtextwithimages" section
-        showtextwithimages_label = QLabel("Show text with images:", self)
+        showtextwithimages_label = QLabel("Question display mode:", self)
 
         # Add a combo box for showtextwithimages selection
         self.showtextwithimages_combobox = QComboBox(self)
-        self.showtextwithimages_combobox.addItem("True")
-        self.showtextwithimages_combobox.addItem("False")
+        self.showtextwithimages_combobox.addItem("Only show text")
+        self.showtextwithimages_combobox.addItem("Only show image")
+        self.showtextwithimages_combobox.addItem("Show both")
         self.showtextwithimages_combobox.setCurrentText(current_showtextwithimages)
 
         # Set the font to bold and text color to white

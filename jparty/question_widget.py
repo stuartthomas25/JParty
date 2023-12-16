@@ -11,6 +11,7 @@ import json
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
 from jparty.style import MyLabel, CARDPAL
+from jparty.constants import DEFAULT_CONFIG
 
 
 class QuestionWidget(QWidget):
@@ -39,18 +40,22 @@ class QuestionWidget(QWidget):
                 except requests.exceptions.RequestException as e:
                     logging.info(f"failed to load image: {question.image_link}")
             
-            if question.image_content is not None and b"Not Found" not in question.image_content:
+            disable_images = self.config.get('showtextwithimages', DEFAULT_CONFIG['showtextwithimages']) == 'Only show text'
+
+            if not disable_images and question.image_content is not None and b"Not Found" not in question.image_content:
                 self.image = QPixmap()
                 self.image.loadFromData(question.image_content)
                 
-                if self.config.get('showtextwithimages', 'False') == 'True':
+                if self.config.get('showtextwithimages', DEFAULT_CONFIG['showtextwithimages']) == 'Show both':
+                    # Show both text and image
                     self.image = self.image.scaledToHeight(self.height() * 12)
 
                     # Create a QLabel for the image
                     self.image_label = MyLabel("", self.startFontSize, self)
                     self.image_label.setPixmap(self.image)
                     self.main_layout.addWidget(self.image_label)
-                else:
+                elif self.config.get('showtextwithimages', DEFAULT_CONFIG['showtextwithimages']) == 'Only show image':
+                    # Show image only
                     self.image = self.image.scaledToWidth(self.width() * 12)
                     self.question_label.setPixmap(self.image)
 
