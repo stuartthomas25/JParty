@@ -361,7 +361,7 @@ class SettingsMenu(QDialog):
         self.theme_combobox.addItem("Default")
         self.theme_combobox.addItem("Christmas")
         self.theme_combobox.addItem("EightiesSynthwave")
-        self.theme_combobox.setCurrentText(current_theme.capitalize())
+        self.theme_combobox.setCurrentText(current_theme)
 
         # Set the font to bold and text color to white
         font = self.theme_combobox.font()
@@ -386,7 +386,7 @@ class SettingsMenu(QDialog):
         self.showtextwithimages_combobox = QComboBox(self)
         self.showtextwithimages_combobox.addItem("True")
         self.showtextwithimages_combobox.addItem("False")
-        self.showtextwithimages_combobox.setCurrentText(current_showtextwithimages.capitalize())
+        self.showtextwithimages_combobox.setCurrentText(current_showtextwithimages)
 
         # Set the font to bold and text color to white
         font = self.showtextwithimages_combobox.font()
@@ -434,7 +434,7 @@ class SettingsMenu(QDialog):
         self.allownegative_combobox = QComboBox(self)
         self.allownegative_combobox.addItem("True")
         self.allownegative_combobox.addItem("False")
-        self.allownegative_combobox.setCurrentText(current_allownegative.capitalize())
+        self.allownegative_combobox.setCurrentText(current_allownegative)
 
         # Set the font to bold and text color to white
         font = self.allownegative_combobox.font()
