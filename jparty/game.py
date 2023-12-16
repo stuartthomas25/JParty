@@ -11,6 +11,7 @@ import simpleaudio as sa
 from collections.abc import Iterable
 import logging
 import json
+import requests
 
 from jparty.utils import SongPlayer, resource_path, CompoundObject
 from jparty.constants import FJTIME, QUESTIONTIME
@@ -123,6 +124,7 @@ class Question:
     answer: str
     category: str
     image_link: str = None
+    image_content: str = None
     value: int = -1
     dd: bool = False
     complete: bool = False
@@ -278,6 +280,10 @@ class Game(QObject):
         with open('config.json', 'r') as f:
             self.config = json.load(f)
 
+        # preload images for first round
+        logging.info(f"Start game -> triggering image loading")
+        threading.Thread(target=self.preload_images, args=(self.current_round,)).start()
+
     def setDisplays(self, host_display, main_display):
         self.host_display = host_display
         self.main_display = main_display
@@ -377,6 +383,9 @@ class Game(QObject):
         logging.info(f"ROUND {i}")
         self.current_round = self.data.rounds[i + 1]
 
+        # Start preloading images in a separate thread
+        threading.Thread(target=self.preload_images, args=(self.current_round,)).start()
+
         if isinstance(self.current_round, FinalBoard):
             self.dc.load_final(self.current_round.question)
             self.start_final()
@@ -389,6 +398,25 @@ class Game(QObject):
             self.dc.player_widget(player).set_lights(True)
 
         self.buzzer_controller.open_wagers()
+    
+    def preload_images(self, round):
+        logging.info(f"Starting to pre-load images")
+        for question in round.questions:
+            if question.image_link is not None:
+                self.load_image(question)
+                # Delay to avoid rate limit from website
+                time.sleep(2)
+
+    def load_image(self, question):
+        try:
+            logging.info(f"pre-loading image: {question.image_link}")
+            request = requests.get(question.image_link)
+            if b"Not Found" not in request.content:
+                logging.info(f"pre-loading image SUCCESSFUL: {request.content}")
+            question.image_content = request.content
+
+        except requests.exceptions.RequestException as e:
+            logging.info(f"failed to load image: {question.image_link}")
 
     def wager(self, i_player, amount):
         player = self.players[i_player]

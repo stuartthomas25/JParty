@@ -25,23 +25,13 @@ def list_to_game(s):
                 answer = s[row + n1 + 6][col + 1]
                 value = int(s[row + n1][0])
                 dd = address in s[n1 - 1][-1]
-                # Getting the image link:
-                image_link = None
-                # Extract image link
-                image_link_pattern = r'\bhttps?:\/\/\S+?\.(?:png|jpe?g|bmp)\b'
-                image_link = re.findall(image_link_pattern, text)
-                if image_link:
-                    image_link = image_link[0]  # Take the first link if there are multiple
-                    logging.info(f"Question with image: {text}, image_link: {image_link}")
-                else:
-                    image_link = None
-                    logging.info(f"Question: {text}, image_link: {image_link}")
+                
+                # Extract image link from text
+                process_values = get_image_link(text)
+                text = process_values['text']
+                image_link = process_values['image_link']
 
-                # Remove image link from text:
-                text_extract_pattern = r'https?:\/\/\S+?\.(?:png|jpe?g|gif|bmp)\b'
-                text = re.sub(text_extract_pattern, '', text)
-
-                questions.append(Question(index, text, answer, cat, image_link, value, dd))
+                questions.append(Question(index, text, answer, cat, image_link, None, value, dd))
 
         boards.append(Board(categories, questions, dj=(n1 == 14)))
 
@@ -49,14 +39,42 @@ def list_to_game(s):
     fj = s[-1]
     index = (0, 0)
     text = fj[2]
+    
+    # Extract image link from text
+    process_values = get_image_link(text)
+    text = process_values['text']
+    image_link = process_values['image_link']
+
     answer = fj[3]
     category = fj[1]
-    question = Question(index, text, answer, category)
+    question = Question(index, text, answer, category, image_link)
     boards.append(FinalBoard(category, question))
     date = fj[5]
     comments = fj[7]
     return GameData(boards, date, comments)
 
+def get_image_link(text):
+    # Getting the image link:
+    image_link = None
+    # Extract image link
+    image_link_pattern = r'\bhttps?:\/\/\S+?\.(?:png|jpe?g|bmp)\b'
+    image_link = re.findall(image_link_pattern, text)
+    if image_link:
+        image_link = image_link[0]  # Take the first link if there are multiple
+        logging.info(f"Question with image: {text}, image_link: {image_link}")
+    else:
+        image_link = None
+        logging.info(f"Question: {text}, image_link: {image_link}")
+
+    # Remove image link from text:
+    text_extract_pattern = r'https?:\/\/\S+?\.(?:png|jpe?g|gif|bmp)\b'
+    text = re.sub(text_extract_pattern, '', text)
+
+    return_values = {
+        'text': text,
+        'image_link': image_link
+    }
+    return return_values
 
 def get_Gsheet_game(file_id):
     csv_url = f"https://docs.google.com/spreadsheet/ccc?key={file_id}&output=csv"
@@ -127,7 +145,7 @@ def get_JArchive_Game(game_id, wayback_url=None):
             value = MONIES[i][index[1]]
             answer = findanswer(clue)
             questions.append(
-                Question(index, text, answer, categories[index[0]], image_link, value, dd)
+                Question(index, text, answer, categories[index[0]], image_link, None, value, dd)
             )
         boards.append(Board(categories, questions, dj=(i == 1)))
 

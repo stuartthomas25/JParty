@@ -32,25 +32,27 @@ class QuestionWidget(QWidget):
 
         if question.image_link is not None:
             logging.info(f"question has image: {question.image_link}")
-            self.image = QPixmap()
-            try:
-                request = requests.get(question.image_link)
-                if b"Not Found" not in request.content:
-                    self.image.loadFromData(request.content)
-                    
-                    if self.config.get('showtextwithimages', 'False') == 'True':
-                        self.image = self.image.scaledToHeight(self.height() * 12)
+            if question.image_content is None:
+                try:
+                    request = requests.get(question.image_link)
+                    question.image_content = request.content
+                except requests.exceptions.RequestException as e:
+                    logging.info(f"failed to load image: {question.image_link}")
+            
+            if question.image_content is not None and b"Not Found" not in question.image_content:
+                self.image = QPixmap()
+                self.image.loadFromData(question.image_content)
+                
+                if self.config.get('showtextwithimages', 'False') == 'True':
+                    self.image = self.image.scaledToHeight(self.height() * 12)
 
-                        # Create a QLabel for the image
-                        self.image_label = MyLabel("", self.startFontSize, self)
-                        self.image_label.setPixmap(self.image)
-                        self.main_layout.addWidget(self.image_label)
-                    else:
-                        self.image = self.image.scaledToWidth(self.width() * 12)
-                        self.question_label.setPixmap(self.image)
-
-            except requests.exceptions.RequestException as e:
-                logging.info(f"failed to load image: {question.image_link}")
+                    # Create a QLabel for the image
+                    self.image_label = MyLabel("", self.startFontSize, self)
+                    self.image_label.setPixmap(self.image)
+                    self.main_layout.addWidget(self.image_label)
+                else:
+                    self.image = self.image.scaledToWidth(self.width() * 12)
+                    self.question_label.setPixmap(self.image)
 
         self.setLayout(self.main_layout)
 
