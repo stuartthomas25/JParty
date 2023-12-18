@@ -10,7 +10,7 @@ buzzers = [
   "red",
   "blue",
   "yellow",
-  "green"
+  "green",
   "white",
 ]
   
