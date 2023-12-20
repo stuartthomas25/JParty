@@ -87,11 +87,16 @@ button:active {
   background-color: green;
 }
 
-#buzzers .phone-only {
+#buzzers option[value="white"] {
   background-color: white;
 }
 #buzzers:has(> option[value="white"]:checked) {
   background-color: white;
+}
+
+#buzzers .phone-only {
+  background-color: black;
+  color: white;
 }
 
 
