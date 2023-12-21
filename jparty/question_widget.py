@@ -35,7 +35,7 @@ class QuestionWidget(QWidget):
             logging.info(f"question has image: {question.image_link}")
             if question.image_content is None:
                 try:
-                    request = requests.get(question.image_link)
+                    request = requests.get(question.image_link, timeout=1)
                     question.image_content = request.content
                 except requests.exceptions.RequestException as e:
                     logging.info(f"failed to load image: {question.image_link}")

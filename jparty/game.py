@@ -410,7 +410,7 @@ class Game(QObject):
     def load_image(self, question):
         try:
             logging.info(f"pre-loading image: {question.image_link}")
-            request = requests.get(question.image_link)
+            request = requests.get(question.image_link, timeout=1)
             question.image_content = request.content
 
         except requests.exceptions.RequestException as e:
