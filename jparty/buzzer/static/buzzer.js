@@ -167,13 +167,16 @@ $(document).ready(function() {
     });
 
     $("#submit-button").on("click", function () {
-        if (!signaturePad.isEmpty()) {
+        if (!signaturePad.isEmpty() && $("#buzzers").find(":selected").val() != "") {
             let buzzerColor = $("#buzzers").find(":selected").val()
             console.log("Selected buzzer color: " + buzzerColor)
             $("#buzzer").css("background-color", buzzerColor)
             let image = signaturePad.toDataURL();
             console.log(image);
             nameForm(image, buzzerColor);
+        }
+        else {
+            alert("Please make sure you signed your name and selected a buzzer")
         };
     });
 });
