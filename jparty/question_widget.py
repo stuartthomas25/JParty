@@ -91,6 +91,8 @@ class DailyDoubleWidget(QuestionWidget):
     def __init__(self, question, parent=None):
         super().__init__(question, parent)
         self.question_label.setVisible(False)
+        if hasattr(self, 'image_label'):
+            self.image_label.setVisible(False)
 
         self.dd_label = MyLabel("DAILY<br/>DOUBLE!", self.startDDFontSize, self)
         self.main_layout.replaceWidget(self.question_label, self.dd_label)
@@ -103,6 +105,8 @@ class DailyDoubleWidget(QuestionWidget):
         self.dd_label.deleteLater()
         self.dd_label = None
         self.question_label.setVisible(True)
+        if hasattr(self, 'image_label'):
+            self.image_label.setVisible(True)
 
 
 class HostDailyDoubleWidget(HostQuestionWidget, DailyDoubleWidget):

@@ -411,8 +411,6 @@ class Game(QObject):
         try:
             logging.info(f"pre-loading image: {question.image_link}")
             request = requests.get(question.image_link)
-            if b"Not Found" not in request.content:
-                logging.info(f"pre-loading image SUCCESSFUL: {request.content}")
             question.image_content = request.content
 
         except requests.exceptions.RequestException as e:
