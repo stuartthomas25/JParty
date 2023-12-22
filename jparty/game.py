@@ -284,6 +284,9 @@ class Game(QObject):
         logging.info(f"Start game -> triggering image loading")
         threading.Thread(target=self.preload_images, args=(self.current_round,)).start()
 
+        self.next_round()
+        self.next_round()
+
     def setDisplays(self, host_display, main_display):
         self.host_display = host_display
         self.main_display = main_display
@@ -512,6 +515,9 @@ class Game(QObject):
             self.dc.final_window.show_winner(winners[0])
         else:
             self.dc.final_window.show_tie()
+
+        wo = sa.WaveObject.from_wave_file(resource_path("applause.wav"))
+        wo.play()
 
         print("activate close game")
         self.keystroke_manager.activate("CLOSE_GAME")
