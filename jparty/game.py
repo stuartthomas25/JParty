@@ -258,6 +258,13 @@ class Game(QObject):
             self.final_incorrect_answer,
             self.arrowhints,
         )
+        self.keystroke_manager.addEvent(
+            "ADMIN_SKIP_ROUND",
+            Qt.Key.Key_F5,
+            self.admin_skip_round,
+            self.adminhints,
+        )
+        self.keystroke_manager.activate("ADMIN_SKIP_ROUND")
 
         self.wager_trigger.connect(self.wager)
         self.buzz_trigger.connect(self.buzz)
@@ -297,6 +304,9 @@ class Game(QObject):
 
     def spacehints(self, val):
         self.host_display.borders.spacehints(val)
+    
+    def adminhints(self, val):
+        pass
 
     def new_player(self):
         self.players = self.buzzer_controller.connected_players
@@ -308,6 +318,12 @@ class Game(QObject):
         player.waiter.close()
         self.dc.scoreboard.refresh_players()
         self.host_display.welcome_widget.check_start()
+    
+    def admin_skip_round(self):
+        if isinstance(self.current_round, FinalBoard):
+            return
+        self.next_round()
+        self.keystroke_manager.activate("ADMIN_SKIP_ROUND")
 
     def valid_game(self):
         return self.data is not None and all(b.complete() for b in self.data.rounds)
