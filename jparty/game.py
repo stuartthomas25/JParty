@@ -12,6 +12,7 @@ from collections.abc import Iterable
 import logging
 import json
 import requests
+import datetime
 
 from jparty.utils import SongPlayer, resource_path, CompoundObject
 from jparty.constants import FJTIME, QUESTIONTIME
@@ -194,6 +195,7 @@ class Game(QObject):
 
         self.active_question = None
         self.accepting_responses = False
+        self.accepting_responses_time = None
         self.answering_player = None
         self.previous_answerer = []
         self.timer = None
@@ -331,6 +333,15 @@ class Game(QObject):
     def open_responses(self):
         self.dc.borders.lights(True)
         self.accepting_responses = True
+        self.accepting_responses_time = datetime.datetime.now()
+
+        # Set stats for players who buzzed early
+        for player in self.players:
+            if player.buzz_time is not None:
+                logging.info(f"GARRETT setting stats for early buzz")
+                time_elapsed = datetime.datetime.now() - player.buzz_time
+                self.dc.player_widget(player).update_stats(time_elapsed.total_seconds(), True)
+                player.buzz_time = None
 
         if not self.timer:
             self.timer = QuestionTimer(QUESTIONTIME, self.stumped)
@@ -355,6 +366,16 @@ class Game(QObject):
         if player_already_timed_out == True:
             logging.info(f"player is timed out")
             return
+
+        if self.accepting_responses:
+            # Buzzed in late (normal)
+            logging.info(f"GARRETT player buzzed late")
+            time_elapsed = datetime.datetime.now() - self.accepting_responses_time
+            self.dc.player_widget(player).update_stats(time_elapsed.total_seconds(), False)
+        else :
+            # Buzzed in too early
+            logging.info(f"GARRETT player buzzed too early")
+            player.buzz_time = datetime.datetime.now()
 
         # Check if player already answered incorrectly
         for prev_player in self.previous_answerer:
@@ -392,6 +413,10 @@ class Game(QObject):
         if all(q.complete for q in self.current_round.questions):
             logging.info("NEXT ROUND")
             self.keystroke_manager.activate("NEXT_ROUND")
+        
+        # clear stats
+        for player in self.players:
+            self.dc.player_widget(player).clear_stats()
 
     def next_round(self):
         logging.info("next round")
@@ -654,6 +679,7 @@ class Player(object):
         self.finalanswer = ""
         self.page = "buzz"
         self.istimedout = False
+        self.buzz_time = None
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)
