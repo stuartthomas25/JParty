@@ -410,11 +410,15 @@ class Game(QObject):
     def load_image(self, question):
         try:
             logging.info(f"pre-loading image: {question.image_link}")
-            request = requests.get(question.image_link)
-            if b"Not Found" not in request.content:
-                logging.info(f"pre-loading image SUCCESSFUL: {request.content}")
+            request = requests.get(question.image_link, timeout=1)
             question.image_content = request.content
+            logging.info(f"loaded image: {question.image_link}")
 
+        except requests.Timeout:
+            # Some websites always timeout and load forever, maybe because it detects that it's a bot
+            # Set the image content to "Not Found" to avoid trying to load it again
+            logging.info(f"timed out loading image: {question.image_link}")
+            question.image_content = b"Not Found"
         except requests.exceptions.RequestException as e:
             logging.info(f"failed to load image: {question.image_link}")
 

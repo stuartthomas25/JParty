@@ -35,8 +35,9 @@ class QuestionWidget(QWidget):
             logging.info(f"question has image: {question.image_link}")
             if question.image_content is None:
                 try:
-                    request = requests.get(question.image_link)
+                    request = requests.get(question.image_link, timeout=1)
                     question.image_content = request.content
+                    logging.info(f"loaded image: {question.image_link}")
                 except requests.exceptions.RequestException as e:
                     logging.info(f"failed to load image: {question.image_link}")
             
@@ -91,6 +92,8 @@ class DailyDoubleWidget(QuestionWidget):
     def __init__(self, question, parent=None):
         super().__init__(question, parent)
         self.question_label.setVisible(False)
+        if hasattr(self, 'image_label'):
+            self.image_label.setVisible(False)
 
         self.dd_label = MyLabel("DAILY<br/>DOUBLE!", self.startDDFontSize, self)
         self.main_layout.replaceWidget(self.question_label, self.dd_label)
@@ -103,6 +106,8 @@ class DailyDoubleWidget(QuestionWidget):
         self.dd_label.deleteLater()
         self.dd_label = None
         self.question_label.setVisible(True)
+        if hasattr(self, 'image_label'):
+            self.image_label.setVisible(True)
 
 
 class HostDailyDoubleWidget(HostQuestionWidget, DailyDoubleWidget):
