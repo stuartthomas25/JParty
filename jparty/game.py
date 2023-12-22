@@ -513,6 +513,9 @@ class Game(QObject):
         else:
             self.dc.final_window.show_tie()
 
+        wo = sa.WaveObject.from_wave_file(resource_path("applause.wav"))
+        wo.play()
+
         print("activate close game")
         self.keystroke_manager.activate("CLOSE_GAME")
 
