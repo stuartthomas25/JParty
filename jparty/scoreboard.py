@@ -61,7 +61,7 @@ class PlayerWidget(QWidget):
 
         self.name_label = NameLabel(player.name, self)
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
-        self.stats_label = MyLabel("Stats", self.height() * 0.8, self)
+        self.stats_label = MyLabel("", self.height() * 0.8, self)
         self.dummy_stats_label = MyLabel("", self.height() * 0.8, self)
 
         if self.parent().parent().parent().host():
@@ -87,11 +87,10 @@ class PlayerWidget(QWidget):
         self.highlighted = False
 
         layout = QVBoxLayout()
-        layout.addStretch(5)
+        layout.addStretch(6)
         layout.addWidget(self.score_label, 10)
-        layout.addStretch(22)
-        layout.addWidget(self.name_label, 46)
-        layout.addStretch(2)
+        layout.addStretch(15)
+        layout.addWidget(self.name_label, 40)
         layout.addWidget(self.stats_label, 10)
         layout.addWidget(self.dummy_stats_label, 10)
         layout.addStretch(2)
