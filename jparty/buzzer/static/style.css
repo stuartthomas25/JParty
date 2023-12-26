@@ -94,9 +94,16 @@ button:active {
   background-color: white;
 }
 
-#buzzers .phone-only {
+#buzzers option[value="black"] {
   background-color: black;
-  color: white;
+}
+#buzzers:has(> option[value="black"]:checked) {
+  background-color: black;
+}
+
+#buzzers .phone-only {
+  background-color: gray;
+  color: black;
 }
 
 

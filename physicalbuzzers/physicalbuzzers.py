@@ -12,6 +12,7 @@ buzzers = [
   "yellow",
   "green",
   "white",
+  "black",
 ]
   
 def sendBuzz(color):
