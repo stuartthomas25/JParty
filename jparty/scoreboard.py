@@ -8,7 +8,7 @@ from base64 import urlsafe_b64decode
 from functools import partial
 
 from jparty.style import MyLabel
-from jparty.utils import resource_path
+from jparty.utils import resource_path, add_shadow
 from jparty.constants import DEFAULT_CONFIG
 
 
@@ -56,9 +56,20 @@ class PlayerWidget(QWidget):
         self.__flash_thread = None
         self.__light_thread = None
         self.__timeout_thread = None
+        self.buzz_time = None # Keeps track of datetime when player buzzed in early
+        self.buzz_delay = None # Holds stats for buzz delay
 
         self.name_label = NameLabel(player.name, self)
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
+        self.stats_label = MyLabel("", self.height() * 0.8, self)
+        self.dummy_stats_label = MyLabel("", self.height() * 0.8, self)
+
+        if self.parent().parent().parent().host():
+            self.dummy_stats_label.setVisible(False)
+        else:
+            self.stats_label.setVisible(False)
+
+        add_shadow(self.stats_label, 10, 0)
 
         # self.resizeEvent(None)
         self.update_score()
@@ -76,11 +87,13 @@ class PlayerWidget(QWidget):
         self.highlighted = False
 
         layout = QVBoxLayout()
-        layout.addStretch(4)
+        layout.addStretch(6)
         layout.addWidget(self.score_label, 10)
-        layout.addStretch(11)
-        layout.addWidget(self.name_label, 31)
-        layout.addStretch(10)
+        layout.addStretch(15)
+        layout.addWidget(self.name_label, 40)
+        layout.addWidget(self.stats_label, 10)
+        layout.addWidget(self.dummy_stats_label, 10)
+        layout.addStretch(2)
 
         self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
         self.setLayout(layout)
@@ -124,6 +137,19 @@ class PlayerWidget(QWidget):
         self.score_label.setPalette(palette)
 
         self.score_label.setText(f"{score:,}")
+
+    def update_stats(self, delay, early=False):
+        if self.buzz_delay is not None:
+            return
+        self.buzz_delay = delay
+        if early:
+            self.stats_label.setText('{0:.2f}s early'.format(self.buzz_delay))
+        else:
+            self.stats_label.setText('{0:.2f}s late'.format(self.buzz_delay))
+    
+    def clear_stats(self):
+        self.buzz_delay = None
+        self.stats_label.setText('')
 
     def run_lights(self):
         self.__light_thread = Thread(target=self.__lights, name="lights")

@@ -97,9 +97,12 @@ class CompoundObject(object):
 """add shadow to widget. Radius is proportion of widget height"""
 
 
-def add_shadow(widget, radius=0.1, offset=3):
+def add_shadow(widget, radius=None, offset=3):
     shadow = QGraphicsDropShadowEffect(widget)
-    shadow.setBlurRadius(widget.height())
+    if radius is not None:
+        shadow.setBlurRadius(radius)
+    else:
+        shadow.setBlurRadius(widget.height())
     shadow.setColor(QColor("black"))
     shadow.setOffset(offset)
     widget.setGraphicsEffect(shadow)
