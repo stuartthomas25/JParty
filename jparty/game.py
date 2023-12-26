@@ -581,6 +581,8 @@ class Game(QObject):
 
     def open_final(self):
         self.dc.question_widget.show_question()
+        wo = sa.WaveObject.from_wave_file(resource_path("ding.wav"))
+        wo.play()
         self.keystroke_manager.activate("FINAL_OPEN_RESPONSES")
 
     def correct_answer(self):
