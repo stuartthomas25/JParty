@@ -123,7 +123,7 @@ class PlayerWidget(QWidget):
             palette.setColor(QPalette.ColorRole.WindowText, QColor("white"))
         self.score_label.setPalette(palette)
 
-        self.score_label.setText(f"{score:,}")
+        self.score_label.setText(f"{'-$' if score < 0 else '$'}{abs(score):,}")
 
     def run_lights(self):
         self.__light_thread = Thread(target=self.__lights, name="lights")
