@@ -149,6 +149,7 @@ class PlayerWidget(QWidget):
     
     def clear_stats(self):
         self.buzz_delay = None
+        self.player.buzz_time = None
         self.stats_label.setText('')
 
     def run_lights(self):
