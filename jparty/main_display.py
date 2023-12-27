@@ -159,6 +159,7 @@ class DisplayWindow(QMainWindow):
 class HostDisplayWindow(DisplayWindow):
     def __init__(self, game):
         super().__init__(game)
+        self.game = game
 
     def host(self):
         return True

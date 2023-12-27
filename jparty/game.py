@@ -16,6 +16,7 @@ import datetime
 
 from jparty.utils import SongPlayer, resource_path, CompoundObject
 from jparty.constants import FJTIME, QUESTIONTIME
+from jparty.stats import StatsBox
 
 
 class QuestionTimer(object):
@@ -267,11 +268,23 @@ class Game(QObject):
             self.adminhints,
         )
         self.keystroke_manager.activate("ADMIN_SKIP_ROUND")
+        self.keystroke_manager.addEvent(
+            "ADMIN_SHOW_STATS",
+            Qt.Key.Key_Tab,
+            self.show_stats,
+            self.adminhints,
+            persistent=True
+        )
+        self.keystroke_manager.activate("ADMIN_SHOW_STATS")
 
         self.wager_trigger.connect(self.wager)
         self.buzz_trigger.connect(self.buzz)
         self.new_player_trigger.connect(self.new_player)
         self.toolate_trigger.connect(self.__toolate)
+
+    def show_stats(self):
+        stats_box = StatsBox(self.host_display)
+        stats_box.exec()
 
     def startable(self):
         return self.valid_game() and len(self.buzzer_controller.connected_players) > 0
@@ -340,7 +353,7 @@ class Game(QObject):
             if player.buzz_time is not None:
                 logging.info(f"GARRETT setting stats for early buzz")
                 time_elapsed = datetime.datetime.now() - player.buzz_time
-                self.dc.player_widget(player).update_stats(time_elapsed.total_seconds(), True)
+                self.dc.player_widget(player).update_stats(time_elapsed.total_seconds(), "early")
                 player.buzz_time = None
 
         if not self.timer:
@@ -367,15 +380,17 @@ class Game(QObject):
             logging.info(f"player is timed out")
             return
 
-        if self.accepting_responses:
-            # Buzzed in late (normal)
-            logging.info(f"GARRETT player buzzed late")
+        if self.accepting_responses and self.answering_player is None:
+            # First buzz on time
             time_elapsed = datetime.datetime.now() - self.accepting_responses_time
-            self.dc.player_widget(player).update_stats(time_elapsed.total_seconds(), False)
-        else :
+            self.dc.player_widget(player).update_stats(time_elapsed.total_seconds(), "first")
+        elif not self.accepting_responses and self.answering_player is None:
             # Buzzed in too early
-            logging.info(f"GARRETT player buzzed too early")
             player.buzz_time = datetime.datetime.now()
+        else:
+            # Buzzed in after someone else
+            time_elapsed = datetime.datetime.now() - self.accepting_responses_time
+            self.dc.player_widget(player).update_stats(time_elapsed.total_seconds(), "late")
 
         # Check if player already answered incorrectly
         for prev_player in self.previous_answerer:
@@ -413,6 +428,7 @@ class Game(QObject):
         if all(q.complete for q in self.current_round.questions):
             logging.info("NEXT ROUND")
             self.keystroke_manager.activate("NEXT_ROUND")
+            self.keystroke_manager.activate("ADMIN_SHOW_STATS")
         
         # clear stats
         for player in self.players:
@@ -682,6 +698,7 @@ class Player(object):
         self.page = "buzz"
         self.istimedout = False
         self.buzz_time = None
+        self.buzz_delays = []
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)

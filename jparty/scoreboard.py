@@ -56,7 +56,6 @@ class PlayerWidget(QWidget):
         self.__flash_thread = None
         self.__light_thread = None
         self.__timeout_thread = None
-        self.buzz_time = None # Keeps track of datetime when player buzzed in early
         self.buzz_delay = None # Holds stats for buzz delay
 
         self.name_label = NameLabel(player.name, self)
@@ -138,14 +137,22 @@ class PlayerWidget(QWidget):
 
         self.score_label.setText(f"{'-$' if score < 0 else '$'}{abs(score):,}")
 
-    def update_stats(self, delay, early=False):
-        if self.buzz_delay is not None:
+    def update_stats(self, delay, timing="early"):
+        if self.buzz_delay is not None or not self.parent().parent().parent().host():
             return
         self.buzz_delay = delay
-        if early:
+        if timing == "early":
             self.stats_label.setText('{0:.2f}s early'.format(self.buzz_delay))
-        else:
+        elif timing == "late":
             self.stats_label.setText('{0:.2f}s late'.format(self.buzz_delay))
+        else:
+            self.stats_label.setText('{0:.2f}s first buzz'.format(self.buzz_delay))
+        
+        # Log stats for aggregation
+        self.player.buzz_delays.append({
+            "delay": self.buzz_delay,
+            "timing": timing
+        })
     
     def clear_stats(self):
         self.buzz_delay = None
