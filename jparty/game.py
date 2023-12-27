@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
-from PyQt6.QtWidgets import QInputDialog, QApplication, QDialog, QVBoxLayout, QPushButton, QSpinBox, QLabel
-
+from PyQt6.QtWidgets import QInputDialog, QApplication, QDialog, QVBoxLayout, QPushButton, QSpinBox, QLabel, QGraphicsDropShadowEffect
+from PyQt6.QtGui import QColor
 
 import threading
 import time
@@ -434,19 +434,37 @@ class Game(QObject):
         for player in self.players:
             self.dc.player_widget(player).clear_stats()
 
+    def set_player_in_control(self, new_player):
+        for player in self.players:
+            # Remove glow around player widget
+            self.host_display.player_widget(player).setGraphicsEffect(None)
+
+        if new_player is not None:
+            # Add white glow around player widget with offset 0, 0
+            effect = QGraphicsDropShadowEffect()
+            effect.setColor(QColor(255, 255, 255, 255))
+            effect.setBlurRadius(100)
+            effect.setOffset(0, 0)
+            self.host_display.player_widget(new_player).setGraphicsEffect(effect)
+
     def next_round(self):
         logging.info("next round")
         i = self.data.rounds.index(self.current_round)
-        logging.info(f"ROUND {i}")
         self.current_round = self.data.rounds[i + 1]
 
         # Start preloading images in a separate thread
         threading.Thread(target=self.preload_images, args=(self.current_round,)).start()
 
         if isinstance(self.current_round, FinalBoard):
+            self.set_player_in_control(None)
+
             self.dc.load_final(self.current_round.question)
             self.start_final()
         else:
+            # Highlight player with least money to have control
+            losing_player = min(self.players, key=lambda p: p.score)
+            self.set_player_in_control(losing_player)
+
             self.dc.board_widget.load_round(self.current_round)
 
     def start_final(self):
@@ -634,6 +652,9 @@ class Game(QObject):
             self.answering_player,
             self.answering_player.score + self.active_question.value,
         )
+        self.answering_player.stats["correct"] += 1
+        self.answering_player.stats["revenue"] += self.active_question.value
+        self.set_player_in_control(self.answering_player)
         self.dc.borders.lights(False)
         self.answer_given()
         self.back_to_board()
@@ -649,7 +670,9 @@ class Game(QObject):
                 self.answering_player,
                 self.answering_player.score - 0,
             )
-
+        
+        self.answering_player.stats["incorrect"] += 1
+        self.answering_player.stats["losses"] += self.active_question.value
         self.answer_given()
         if self.active_question.dd:
             self.back_to_board()
@@ -697,8 +720,16 @@ class Player(object):
         self.finalanswer = ""
         self.page = "buzz"
         self.istimedout = False
+        
+        # Stats
         self.buzz_time = None
         self.buzz_delays = []
+        self.stats = {
+            "correct": 0,
+            "incorrect": 0,
+            "revenue": 0,
+            "losses": 0,
+        }
 
     def __hash__(self):
         return int.from_bytes(self.token, sys.byteorder)

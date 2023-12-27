@@ -39,8 +39,12 @@ stats_labels = [
     "First buzzes",
     "Early buzzes",
     "Late buzzes",
-    "Average buzz time",
+    "Avg. buzz time",
     "Fastest buzz",
+    "Correct",
+    "Incorrect",
+    "Total revenue",
+    "Total losses",
 ]
 
 
@@ -117,6 +121,12 @@ class StatsBox(QDialog):
                 table.setCellWidget(5, i+1, QLabel(f"{fastest_buzz:.3f}s"))
             else:
                 table.setCellWidget(5, i+1, QLabel("N/A"))
+            
+            # Other stats which are already prerecorded
+            table.setCellWidget(6, i+1, QLabel(str(player.stats["correct"])))
+            table.setCellWidget(7, i+1, QLabel(str(player.stats["incorrect"])))
+            table.setCellWidget(8, i+1, QLabel(f"${player.stats['revenue']:,}"))
+            table.setCellWidget(9, i+1, QLabel(f"${player.stats['losses']:,}"))
 
 
         # Set the table width to match the window width
