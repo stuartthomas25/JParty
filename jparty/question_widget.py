@@ -41,6 +41,10 @@ class QuestionWidget(QWidget):
                 except requests.exceptions.RequestException as e:
                     logging.info(f"failed to load image: {question.image_link}")
             
+            logging.info(f"question has image content: {question.image_content}")
+            if question.image_content is not None and b"html" in question.image_content.lower():
+                question.image_content = None
+
             disable_images = self.config.get('showtextwithimages', DEFAULT_CONFIG['showtextwithimages']) == 'Only show text'
 
             if not disable_images and question.image_content is not None and b"Not Found" not in question.image_content:
