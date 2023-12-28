@@ -57,7 +57,7 @@ def get_image_link(text):
     # Getting the image link:
     image_link = None
     # Extract image link
-    image_link_pattern = r'\bhttps?:\/\/\S+?\.(?:png|jpe?g|bmp|PNG|JPE?G|BMP)\b'
+    image_link_pattern = r'https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)'
     image_link = re.findall(image_link_pattern, text)
     if image_link:
         image_link = image_link[0]  # Take the first link if there are multiple
@@ -67,7 +67,7 @@ def get_image_link(text):
         logging.info(f"Question: {text}, image_link: {image_link}")
 
     # Remove image link from text:
-    text_extract_pattern = r'https?:\/\/\S+?\.(?:png|jpe?g|gif|bmp|PNG|JPE?G|BMP)\b'
+    text_extract_pattern = r'https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)'
     text = re.sub(text_extract_pattern, '', text)
 
     return_values = {
