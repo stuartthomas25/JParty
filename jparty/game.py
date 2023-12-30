@@ -469,8 +469,16 @@ class Game(QObject):
 
     def start_final(self):
         logging.info("start final")
-        for player in self.players:
-            self.dc.player_widget(player).set_lights(True)
+
+        if self.config.get('allownegativeinfinal', 'True') == 'True':
+            for player in self.players:
+                self.dc.player_widget(player).set_lights(True)
+        else:
+            for player in self.players:
+                if player.score < 0:
+                    self.remove_player(player)
+                else:
+                    self.dc.player_widget(player).set_lights(True)
 
         self.buzzer_controller.open_wagers()
     

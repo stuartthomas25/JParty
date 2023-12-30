@@ -339,6 +339,7 @@ class SettingsMenu(QDialog):
         current_showtextwithimages = config.get('showtextwithimages', DEFAULT_CONFIG['showtextwithimages'])
         current_earlybuzztimeout = config.get('earlybuzztimeout', DEFAULT_CONFIG['earlybuzztimeout'])
         current_allownegative = config.get('allownegative', DEFAULT_CONFIG['allownegative'])
+        current_allownegativeinfinal = config.get('allownegativeinfinal', DEFAULT_CONFIG['allownegativeinfinal'])
 
         self.setWindowTitle("Settings")
         self.setFixedSize(400, 400)
@@ -453,6 +454,31 @@ class SettingsMenu(QDialog):
         allownegative_layout.addWidget(allownegative_label)
         allownegative_layout.addWidget(self.allownegative_combobox)
 
+        # Add a label for the "allownegativeinfinal" section
+        allownegativeinfinal_label = QLabel("Allow Negative Score In Final Jeopardy:", self)
+
+        # Add a combo box for allownegativeinfinal selection
+        self.allownegativeinfinal_combobox = QComboBox(self)
+        self.allownegativeinfinal_combobox.addItem("True")
+        self.allownegativeinfinal_combobox.addItem("False")
+        self.allownegativeinfinal_combobox.setCurrentText(current_allownegativeinfinal)
+
+        # Set the font to bold and text color to white
+        font = self.allownegativeinfinal_combobox.font()
+        font.setBold(True)
+        self.allownegativeinfinal_combobox.setFont(font)
+        palette = self.allownegativeinfinal_combobox.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        self.allownegativeinfinal_combobox.setPalette(palette)
+
+        # Add a white border around the dropdown menu
+        self.allownegativeinfinal_combobox.setStyleSheet("QComboBox { border: 2px solid white; }")
+
+        # Create a horizontal layout for the label and combo box
+        allownegativeinfinal_layout = QHBoxLayout()
+        allownegativeinfinal_layout.addWidget(allownegativeinfinal_label)
+        allownegativeinfinal_layout.addWidget(self.allownegativeinfinal_combobox)
+
         # Add the horizontal layouts to the main layout
         layout.addLayout(settings_info_layout)
         layout.addSpacing(20)
@@ -460,6 +486,7 @@ class SettingsMenu(QDialog):
         layout.addLayout(showtextwithimages_layout)
         layout.addLayout(earlybuzztimeout_layout)
         layout.addLayout(allownegative_layout)
+        layout.addLayout(allownegativeinfinal_layout)
 
         # Add space before the Apply button
         layout.addSpacing(10)
@@ -508,6 +535,9 @@ class SettingsMenu(QDialog):
         # Show allow negative setting
         allownegative = self.allownegative_combobox.currentText()
 
+        # Show allow negative in final setting
+        allownegativeinfinal = self.allownegativeinfinal_combobox.currentText()
+
         # Save config
         logging.info("Saving settings...")
         with open('config.json', 'w') as f:
@@ -515,7 +545,8 @@ class SettingsMenu(QDialog):
                 'theme': theme,
                 'showtextwithimages': showtextwithimages,
                 'earlybuzztimeout': earlybuzztimeout,
-                'allownegative': allownegative
+                'allownegative': allownegative,
+                'allownegativeinfinal': allownegativeinfinal
             }, f)
 
         if requires_restart:
