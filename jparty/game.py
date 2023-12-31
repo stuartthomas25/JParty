@@ -376,8 +376,8 @@ class Game(QObject):
         already_answered = False
         player_already_timed_out = player.istimedout
 
-        if player_already_timed_out == True:
-            logging.info(f"player is timed out")
+        # Check if player is already answering or timed out
+        if player_already_timed_out == True or self.answering_player is player:
             return
 
         if self.accepting_responses and self.answering_player is None:
