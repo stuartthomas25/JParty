@@ -480,7 +480,7 @@ class Game(QObject):
                 else:
                     self.dc.player_widget(player).set_lights(True)
 
-            self.buzzer_controller.open_wagers()
+        self.buzzer_controller.open_wagers()
     
     def preload_images(self, round):
         logging.info(f"Starting to pre-load images")
