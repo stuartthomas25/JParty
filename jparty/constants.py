@@ -11,5 +11,6 @@ DEFAULT_CONFIG = {
   'theme': 'Default',
   'showtextwithimages': 'Show both',
   'earlybuzztimeout': 500,
-  'allownegative': 'True'
+  'allownegative': 'True',
+  'allownegativeinfinal': 'True'
 }

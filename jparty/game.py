@@ -469,10 +469,18 @@ class Game(QObject):
 
     def start_final(self):
         logging.info("start final")
-        for player in self.players:
-            self.dc.player_widget(player).set_lights(True)
 
-        self.buzzer_controller.open_wagers()
+        if self.config.get('allownegativeinfinal', 'True') == 'True':
+            for player in self.players:
+                self.dc.player_widget(player).set_lights(True)
+        else:
+            for player in self.players.copy():  # Use copy for iteration
+                if player.score < 0:
+                    self.remove_player(player)  # Remove from original list
+                else:
+                    self.dc.player_widget(player).set_lights(True)
+
+            self.buzzer_controller.open_wagers()
     
     def preload_images(self, round):
         logging.info(f"Starting to pre-load images")
