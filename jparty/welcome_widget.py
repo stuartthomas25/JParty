@@ -200,17 +200,22 @@ class Welcome(StartWidget):
         self.textbox.setFont(f)
 
     def __random(self):
-        while True:
-            game_id = get_random_game()
-            logging.info(f"GAMEID {game_id}")
-            self.game.data = get_game(game_id)
-            if self.game.valid_game():
-                break
-            else:
-                time.sleep(0.25)
+        try:
+            while True:
+                game_id = get_random_game()
+                logging.info(f"GAMEID {game_id}")
+                self.game.data = get_game(game_id)
+                if self.game.valid_game():
+                    break
+                else:
+                    time.sleep(0.25)
 
-        self.gameid_trigger.emit(str(game_id))
-        self.summary_trigger.emit(self.game.data.date + "\n" + self.game.data.comments)
+            self.gameid_trigger.emit(str(game_id))
+            self.summary_trigger.emit(self.game.data.date + "\n" + self.game.data.comments)
+
+        except Exception as e:
+            logging.error(e)
+            self.summary_trigger.emit("Cannot get game")
 
     def random(self, checked):
         self.summary_trigger.emit("Loading...")
@@ -228,7 +233,8 @@ class Welcome(StartWidget):
             else:
                 self.summary_trigger.emit("Game has blank questions")
 
-        except Exception:
+        except Exception as e:
+            logging.error(e)
             self.summary_trigger.emit("Cannot get game")
 
         self.check_start()
