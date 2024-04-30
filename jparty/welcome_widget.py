@@ -152,14 +152,19 @@ class Welcome(StartWidget):
         self.quit_button = DynamicButton("Quit", self)
         self.quit_button.clicked.connect(self.game.close)
 
-        self.help_button = DynamicButton("Show help", self)
+        self.help_button = DynamicButton("Help", self)
         self.help_button.clicked.connect(self.show_help)
+
+        self.settings_button = DynamicButton("Settings", self)
+        self.settings_button.clicked.connect(self.show_settings)
 
         footer_layout = QHBoxLayout()
         footer_layout.addStretch(5)
         footer_layout.addWidget(self.quit_button, 3)
         footer_layout.addStretch(1)
         footer_layout.addWidget(self.help_button, 3)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(self.settings_button, 3)
         footer_layout.addStretch(5)
 
         main_layout.addStretch(3)
@@ -186,6 +191,17 @@ class Welcome(StartWidget):
             QMessageBox.Icon.NoIcon,
             "JParty Help",
             helpmsg,
+            QMessageBox.StandardButton.Ok,
+            self,
+        )
+        msgbox.exec()
+
+    def show_settings(self):
+        logging.info("Showing settings")
+        msgbox = QMessageBox(
+            QMessageBox.Icon.NoIcon,
+            "JParty settings",
+            "TODO: settings",
             QMessageBox.StandardButton.Ok,
             self,
         )
