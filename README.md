@@ -60,11 +60,11 @@ cd jparty
 python ../run.py
 ```
 
-Too build from source, run
+To build from source, run
 
-`
+```
 pyinstaller -y JParty.spec
-`
+```
 
 ## FAQ
 
