@@ -54,11 +54,11 @@ The host sees the answer on the laptop screen and can adjudicate with the arrow 
 
 To debug, run 
 
-`
-pip install -r requirements.txt;
-cd jparty;
+```
+conda env create -f environment.yml
+cd jparty
 python ../run.py
-`
+```
 
 Too build from source, run
 
