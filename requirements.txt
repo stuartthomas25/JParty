@@ -1,5 +1,5 @@
 PyQt6==6.4.0
-requests==2.31.0
+requests==2.32.0
 simpleaudio==1.0.4
 tornado==6.3.3
 BeautifulSoup4==4.11.1
