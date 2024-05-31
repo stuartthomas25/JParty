@@ -151,14 +151,19 @@ class Welcome(StartWidget):
         self.quit_button = DynamicButton("Quit", self)
         self.quit_button.clicked.connect(self.game.close)
 
-        self.help_button = DynamicButton("Show help", self)
+        self.help_button = DynamicButton("Help", self)
         self.help_button.clicked.connect(self.show_help)
+
+        self.settings_button = DynamicButton("Settings", self)
+        self.settings_button.clicked.connect(self.show_settings)
 
         footer_layout = QHBoxLayout()
         footer_layout.addStretch(5)
         footer_layout.addWidget(self.quit_button, 3)
         footer_layout.addStretch(1)
         footer_layout.addWidget(self.help_button, 3)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(self.settings_button, 3)
         footer_layout.addStretch(5)
 
         main_layout.addStretch(3)
@@ -190,6 +195,17 @@ class Welcome(StartWidget):
         )
         msgbox.exec()
 
+    def show_settings(self):
+        logging.info("Showing settings")
+        msgbox = QMessageBox(
+            QMessageBox.Icon.NoIcon,
+            "JParty settings",
+            "TODO: settings",
+            QMessageBox.StandardButton.Ok,
+            self,
+        )
+        msgbox.exec()
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
 
@@ -200,17 +216,22 @@ class Welcome(StartWidget):
         self.textbox.setFont(f)
 
     def __random(self):
-        while True:
-            game_id = get_random_game()
-            logging.info(f"GAMEID {game_id}")
-            self.game.data = get_game(game_id)
-            if self.game.valid_game():
-                break
-            else:
-                time.sleep(0.25)
+        try:
+            while True:
+                game_id = get_random_game()
+                logging.info(f"GAMEID {game_id}")
+                self.game.data = get_game(game_id)
+                if self.game.valid_game():
+                    break
+                else:
+                    time.sleep(0.25)
 
-        self.gameid_trigger.emit(str(game_id))
-        self.summary_trigger.emit(self.game.data.date + "\n" + self.game.data.comments)
+            self.gameid_trigger.emit(str(game_id))
+            self.summary_trigger.emit(self.game.data.date + "\n" + self.game.data.comments)
+
+        except Exception as e:
+            logging.error(e)
+            self.summary_trigger.emit("Cannot get game")
 
     def random(self, checked):
         self.summary_trigger.emit("Loading...")
@@ -228,7 +249,8 @@ class Welcome(StartWidget):
             else:
                 self.summary_trigger.emit("Game has blank questions")
 
-        except Exception:
+        except Exception as e:
+            logging.error(e)
             self.summary_trigger.emit("Cannot get game")
 
         self.check_start()
