@@ -1,4 +1,4 @@
-from PyQt6.QtGui import QColor, QPalette, QGuiApplication
+from PyQt6.QtGui import QColor, QPalette, QGuiApplication, QPixmap
 from PyQt6.QtCore import QMargins
 
 from PyQt6.QtWidgets import (
@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
+    QLabel,
 )
 
 from jparty.board_widget import BoardWidget
@@ -21,6 +22,7 @@ from jparty.question_widget import (
 )
 from jparty.final_display import FinalDisplay
 from jparty.welcome_widget import Welcome, QRWidget
+from jparty.utils import resource_path
 
 
 class DisplayWindow(QMainWindow):
@@ -159,6 +161,9 @@ class DisplayWindow(QMainWindow):
 class HostDisplayWindow(DisplayWindow):
     def __init__(self, game):
         super().__init__(game)
+        self.settings_button = QLabel(self)
+        self.settings_button.setPixmap(QPixmap(resource_path("settings.png")))
+
 
     def host(self):
         return True
@@ -174,6 +179,9 @@ class HostDisplayWindow(DisplayWindow):
 
     def create_border_widget(self):
         return HostBorders(self)
+
+    # def create_settings_widget(self):
+    #     return HostBorders(self)
 
     def create_question_widget(self, q):
         if q.dd:
