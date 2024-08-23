@@ -188,6 +188,7 @@ class Game(QObject):
         self.accepting_responses = False
         self.answering_player = None
         self.previous_answerer = None
+        self.modifying_players = False
         self.timer = None
         self.soliciting_player = False  # part of selecting who found a daily double
 
@@ -259,7 +260,7 @@ class Game(QObject):
     def startable(self):
         return self.valid_game() and len(self.buzzer_controller.connected_players) > 0
 
-    def begin(self):
+    def begin_theme_song(self):
         self.song_player.play(repeat=True)
 
     def start_game(self):
@@ -267,6 +268,7 @@ class Game(QObject):
         self.dc.hide_welcome_widgets()
         self.dc.board_widget.load_round(self.current_round)
         self.buzzer_controller.accepting_players = False
+        self.host_display.settings_button.show()
         self.song_player.stop()
 
     def setDisplays(self, host_display, main_display):
@@ -293,6 +295,7 @@ class Game(QObject):
         player.waiter.close()
         self.dc.scoreboard.refresh_players()
         self.host_display.welcome_widget.check_start()
+        self.check_all_wagered()
 
     def valid_game(self):
         return self.data is not None and all(b.complete() for b in self.data.rounds)
@@ -305,6 +308,11 @@ class Game(QObject):
             self.timer = QuestionTimer(QUESTIONTIME, self.stumped)
 
         self.timer.start()
+
+    def modify_players(self, val):
+        self.modifying_players = val
+        self.host_display.scoreboard.show_close_buttons(val)
+        self.buzzer_controller.accepting_players = val
 
     def close_responses(self):
         self.timer.pause()
@@ -346,6 +354,8 @@ class Game(QObject):
 
     def next_round(self):
         logging.info("next round")
+        print(self.data.rounds)
+        print(self.current_round)
         i = self.data.rounds.index(self.current_round)
         logging.info(f"ROUND {i}")
         self.current_round = self.data.rounds[i + 1]
@@ -368,7 +378,10 @@ class Game(QObject):
         player.wager = amount
         self.dc.player_widget(player).set_lights(False)
         logging.info(f"{player} wagered {amount}")
-        if all(p.wager is not None for p in self.players):
+        self.check_all_wagered()
+
+    def check_all_wagered(self):
+        if all(p.wager is not None for p in self.players) and len(self.players)>0:
             self.host_display.question_widget.hint_label.setText(
                 "Press space to show clue!"
             )
@@ -466,7 +479,7 @@ class Game(QObject):
         self.data = None
         self.__judgement_round = 0
         self.dc.restart()
-        self.begin()
+        self.begin_theme_song()
 
     def get_dd_wager(self, player):
         self.answering_player = player

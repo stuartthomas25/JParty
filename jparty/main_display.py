@@ -1,5 +1,5 @@
-from PyQt6.QtGui import QColor, QPalette, QGuiApplication, QPixmap
-from PyQt6.QtCore import QMargins
+from PyQt6.QtGui import QColor, QPalette, QGuiApplication, QPixmap, QPainter, QBrush
+from PyQt6.QtCore import QMargins, Qt, pyqtSignal, QSize
 
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -20,9 +20,11 @@ from jparty.question_widget import (
     HostDailyDoubleWidget,
     HostFinalJeopardyWidget,
 )
+from jparty.settings import SettingsDialog
 from jparty.final_display import FinalDisplay
 from jparty.welcome_widget import Welcome, QRWidget
 from jparty.utils import resource_path
+import logging
 
 
 class DisplayWindow(QMainWindow):
@@ -106,9 +108,10 @@ class DisplayWindow(QMainWindow):
         if self.final_display is not None:
             self.final_display.setGeometry(fullrect)
 
+    # TODO: combine these
     def show_welcome_widgets(self):
         self.welcome_widget.setVisible(True)
-        self.welcome_widget.setDisabled(False)
+        self.welcome_widget.setEnabled(False)
         self.welcome_widget.restart()
 
     def hide_welcome_widgets(self):
@@ -158,12 +161,50 @@ class DisplayWindow(QMainWindow):
         self.scoreboard.refresh_players()
 
 
+
+class SettingsLabel(QLabel):
+    click_trigger = pyqtSignal()
+    size = 16
+    margin = 10
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.pixmap = QPixmap(resource_path("settings.png"))
+        self.setPixmap(
+            self.pixmap.scaled(
+                QSize(self.size,self.size),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                transformMode=Qt.TransformationMode.SmoothTransformation,
+            )
+        )
+
+        self.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+        self.setGeometry(0,0,self.size,self.size)
+
+        host_display = self.parent()
+        self.click_trigger.connect(host_display.show_settings)
+        self.show()
+
+    def mousePressEvent(self, ev):
+        self.click_trigger.emit()
+        super().mousePressEvent(ev)
+
+    def show_button(self,val):
+        self.setVisible(val)
+        self.setEnabled(val)
+
 class HostDisplayWindow(DisplayWindow):
     def __init__(self, game):
+        self.pause_widget = None
+        self.settings_button = None
         super().__init__(game)
-        self.settings_button = QLabel(self)
-        self.settings_button.setPixmap(QPixmap(resource_path("settings.png")))
+        self.settings_button = SettingsLabel(self)
+        self.pause_widget = SettingsDialog(self)
 
+        self.show()
+        print("geo", self.settings_button.geometry())
+        print(self.settings_button.isVisible())
+        self.settings_button.setVisible(False)
 
     def host(self):
         return True
@@ -180,8 +221,21 @@ class HostDisplayWindow(DisplayWindow):
     def create_border_widget(self):
         return HostBorders(self)
 
-    # def create_settings_widget(self):
-    #     return HostBorders(self)
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.pause_widget is not None:
+            self.pause_widget.setGeometry(self.welcome_widget.geometry())
+
+
+        if self.settings_button is not None:
+            size = self.settings_button.size
+            margin = self.settings_button.margin
+
+            self.settings_button.setGeometry(self.width() - size - margin,
+                            margin,
+                            size,
+                            size)
+
 
     def create_question_widget(self, q):
         if q.dd:
@@ -197,4 +251,14 @@ class HostDisplayWindow(DisplayWindow):
 
     def hide_welcome_widgets(self):
         super().hide_welcome_widgets()
-        self.scoreboard.hide_close_buttons()
+        self.scoreboard.show_close_buttons(False)
+
+    def show_settings_button(self, val):
+        self.borders.show_settings_button(val)
+
+
+    def show_settings(self):
+        logging.info("Showing game settings")
+        self.pause_widget.show()
+        # settings = SettingsDialog(self)
+        # settings.exec()

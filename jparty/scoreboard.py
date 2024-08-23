@@ -58,7 +58,6 @@ class PlayerWidget(QWidget):
         self.name_label = NameLabel(player.name, self)
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
 
-        # self.resizeEvent(None)
         self.update_score()
 
         self.setMouseTracking(True)
@@ -147,7 +146,8 @@ class PlayerWidget(QWidget):
             self.game.get_dd_wager(self.player)
             return None
 
-        self.game.adjust_score(self.player)
+        if self.game.modify_players:
+            self.game.adjust_score(self.player)
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -231,7 +231,6 @@ class HostScoreBoard(ScoreBoard):
     def create_player_widget(self, player):
         return HostPlayerWidget(self.game, player, self)
 
-    def hide_close_buttons(self):
+    def show_close_buttons(self, val):
         for pw in self.player_widgets:
-            pw.remove_button.setVisible(False)
-            pw.remove_button.setEnabled(False)
+            pw.remove_button.setVisible(val)
