@@ -95,7 +95,7 @@ def main():
     game.setDisplays(host_window, main_window)
     
     try:
-        game.begin()
+        game.begin_theme_song()
     except SimpleaudioError as e:
         audio_error()
         exit(1)
