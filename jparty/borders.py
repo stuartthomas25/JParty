@@ -50,12 +50,16 @@ class HostBorders(Borders):
                 b.show_hints(key)
             time.sleep(0.5)
             for b in self:
-               b.hide_hints(key)
+                b.hide_hints(key)
             time.sleep(0.5)
 
     def buzz_hint(self):
         self.__buzz_hint_thread = Thread(target=self.__buzz_hint, name="buzz_hint")
         self.__buzz_hint_thread.start()
+
+    def show_settings_button(self, val):
+        for b in self:
+            b.show_settings_button(val)
 
     def arrowhints(self, val):
         for b in self:
@@ -142,7 +146,8 @@ class HostBorderWidget(BorderWidget):
         self.hint_label.setPixmap(QPixmap())
 
     def resizeEvent(self, event):
-        self.hint_label.setMargin(int(self.width() * 0.05))
+        margin = int(self.width() * 0.05)
+        self.hint_label.setMargin(margin)
 
     def paintEvent(self, event):
         super().paintEvent(event)

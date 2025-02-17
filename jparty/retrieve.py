@@ -50,32 +50,79 @@ def get_Gsheet_game(file_id):
         return list_to_game(list(r3))
 
 
+class RetrievalException(Exception):
+    pass
+
+
+class IncompleteException(Exception):
+    pass
+
+
 def get_game(game_id):
     if len(str(game_id)) < 7:
         try:
-            return get_wayback_game(game_id)
-        except Exception as e:
-            logging.error(e)
+            logging.info("trying jarchive")
             return get_jarchive_game(game_id)
+        except RetrievalException as e:
+            logging.error(e)
+            logging.info("trying wayback")
+            return get_wayback_game(game_id)
     else:
         return get_Gsheet_game(str(game_id))
+
+
+def get_jarchive_game(game_id):
+    return get_generic_game(
+        game_id, f"http://www.j-archive.com/showgame.php?game_id={game_id}"
+    )
+
+
+def get_wayback_game(game_id):
+    # kudos to Abhi Kumbar: https://medium.com/analytics-vidhya/the-wayback-machine-scraper-63238f6abb66
+    # this query's the wayback cdx api for possible instances of the saved jarchive page with the specified game id & returns the latest one
+    JArchive_url = f"j-archive.com/showgame.php?game_id={str(game_id)}"  # use the url w/o the http:// or https:// to include both in query
+    url = f"http://web.archive.org/cdx/search/cdx?url={JArchive_url}&collapse=digest&limit=-2&fastLatest=true&output=json"  # for some reason, using limit=-1 does not work
+    urls = requests.get(url).text
+    parse_url = json.loads(urls)  # parses the JSON from urls.
+    if len(parse_url) == 0:  # if no results, return None
+        logging.info("no games found in wayback")
+        # alternative: use fallback to get game from scraping j-archive directly
+        raise RetrievalException("no games found in wayback")
+
+    # Extracts timestamp and original columns from urls and compiles a url list.
+    url_list = []
+    for i in range(1, len(parse_url)):  # gets the wayback url
+        orig_url = parse_url[i][2]
+        tstamp = parse_url[i][1]
+        waylink = tstamp + "/" + orig_url
+        final_url = f"http://web.archive.org/web/{waylink}"
+        url_list.append(final_url)
+    latest_url = url_list[-1]
+    return get_generic_game(game_id, latest_url)
 
 
 def findanswer(clue):
     return re.findall(r'correct_response">(.*?)</em', unescape(str(clue)))[0]
 
-def get_jarchive_game(game_id):
-    return get_generic_game(game_id, f"http://www.j-archive.com/showgame.php?game_id={game_id}")
 
 def get_generic_game(game_id, url):
     logging.info(f"getting game {game_id} from url {url}")
-    r = requests.get(url)
+    try:
+        r = requests.get(url, timeout=5)
+    except requests.exceptions.ConnectTimeout as e:
+        logging.info(repr(type(e)))
+        raise RetrievalException(repr(e))
+
+    logging.info(f"returned status {r.status_code}")
+    if r.status_code != 200:
+        raise RetrievalException(f"{url} returned HTTP code {r.status_code}")
+
     soup = BeautifulSoup(r.text, "html.parser")
-    datesearch = re.search(
-        r"- \w+, (.*?)$", soup.select("#game_title > h1")[0].contents[0]
-    )
+    datesearch = re.search(r"<h1>(.*?)</h1>", str(soup.select("#game_title > h1")[0]))
+
     if datesearch is None:
-        return None
+        raise RetrievalException("Cannot get game summary")
+
     date = datesearch.groups()[0]
     comments = soup.select("#game_comments")[0].contents
     comments = comments[0] if len(comments) > 0 else ""
@@ -90,8 +137,7 @@ def get_generic_game(game_id, url):
         for clue in ro.find_all(class_="clue"):
             text_obj = clue.find(class_="clue_text")
             if text_obj is None:
-                logging.info("this game is incomplete")
-                return None
+                raise IncompleteException()
 
             text = text_obj.text
             index_key = text_obj["id"]
@@ -114,8 +160,7 @@ def get_generic_game(game_id, url):
     clue = final_round_obj.find_all(class_="clue")[0]
     text_obj = clue.find(class_="clue_text")
     if text_obj is None:
-        logging.info("this game is incomplete")
-        return None
+        raise IncompleteException()
 
     text = text_obj.text
     answer = findanswer(final_round_obj)
@@ -124,29 +169,6 @@ def get_generic_game(game_id, url):
     boards.append(FinalBoard(category, question))
 
     return GameData(boards, date, comments)
-
-def get_wayback_game(game_id):
-    # kudos to Abhi Kumbar: https://medium.com/analytics-vidhya/the-wayback-machine-scraper-63238f6abb66
-    # this query's the wayback cdx api for possible instances of the saved jarchive page with the specified game id & returns the latest one
-    JArchive_url = f"j-archive.com/showgame.php?game_id={str(game_id)}"  # use the url w/o the http:// or https:// to include both in query
-    url = f'http://web.archive.org/cdx/search/cdx?url={JArchive_url}&collapse=digest&limit=-2&fastLatest=true&output=json'  # for some reason, using limit=-1 does not work
-    urls = requests.get(url).text
-    parse_url = json.loads(urls)  # parses the JSON from urls.
-    if len(parse_url) == 0:  # if no results, return None
-        logging.info("no games found in wayback")
-        # alternative: use fallback to get game from scraping j-archive directly
-        raise Exception("no games found in wayback")
-
-    ## Extracts timestamp and original columns from urls and compiles a url list.
-    url_list = []
-    for i in range(1, len(parse_url)): # gets the wayback url
-        orig_url = parse_url[i][2]
-        tstamp = parse_url[i][1]
-        waylink = tstamp + '/' + orig_url
-        final_url = f'http://web.archive.org/web/{waylink}'
-        url_list.append(final_url)
-    latest_url = url_list[-1]
-    return get_generic_game(game_id, latest_url)
 
 
 def get_game_sum(soup):

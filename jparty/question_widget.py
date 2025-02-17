@@ -110,6 +110,7 @@ class FinalJeopardyWidget(QuestionWidget):
 
 class HostFinalJeopardyWidget(FinalJeopardyWidget, HostQuestionWidget):
     def __init__(self, question, parent):
+        self.display = parent
         super().__init__(question, parent)
         self.answer_label.setVisible(False)
 
@@ -126,6 +127,7 @@ class HostFinalJeopardyWidget(FinalJeopardyWidget, HostQuestionWidget):
     def show_question(self):
         super().show_question()
         self.main_layout.replaceWidget(self.hint_label, self.answer_label)
+        self.display.settings_button.setVisible(False)
         self.hint_label.deleteLater()
         self.hint_label = None
         self.answer_label.setVisible(True)

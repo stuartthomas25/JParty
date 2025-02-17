@@ -58,7 +58,6 @@ class PlayerWidget(QWidget):
         self.name_label = NameLabel(player.name, self)
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
 
-        # self.resizeEvent(None)
         self.update_score()
 
         self.setMouseTracking(True)
@@ -147,7 +146,9 @@ class PlayerWidget(QWidget):
             self.game.get_dd_wager(self.player)
             return None
 
-        self.game.adjust_score(self.player)
+        if self.game.modify_players:
+            self.game.host_display.player_widget(self.player).set_lights(True)
+            self.game.host_display.show_player_settings(self.player)
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -169,10 +170,12 @@ class HostPlayerWidget(PlayerWidget):
         self.remove_button = None
         super().__init__(game, player, parent)
         self.remove_button = QPushButton("", self)
-        # self.remove_button.setStyleSheet("color: red")
         self.remove_button.clicked.connect(partial(self.game.remove_player, player))
         self.remove_button.setIcon(QIcon(resource_path("close-icon.png")))
         self.remove_button.show()
+
+        if self.game.game_started():
+            self.remove_button.setVisible(False)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -208,7 +211,7 @@ class ScoreBoard(QWidget):
                 self.player_widgets.remove(pw)
                 pw.deleteLater()
 
-        for (i, p) in enumerate(self.game.players):
+        for i, p in enumerate(self.game.players):
             if not any(pw.player is p for pw in self.player_widgets):
                 pw = self.create_player_widget(p)
                 self.player_layout.insertWidget(2 * i + 1, pw)
@@ -231,7 +234,6 @@ class HostScoreBoard(ScoreBoard):
     def create_player_widget(self, player):
         return HostPlayerWidget(self.game, player, self)
 
-    def hide_close_buttons(self):
+    def show_close_buttons(self, val):
         for pw in self.player_widgets:
-            pw.remove_button.setVisible(False)
-            pw.remove_button.setEnabled(False)
+            pw.remove_button.setVisible(val)

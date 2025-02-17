@@ -71,7 +71,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         try:
             self.write_message(data)
             logging.info(f"Sent {data}")
-        except:
+        except Exception:
             logging.error(f"Error sending message {msg}", exc_info=True)
 
     def check_if_exists(self, token):
@@ -155,11 +155,11 @@ class BuzzerController:
     def start(self, threaded=True, tries=0):
         try:
             self.app.listen(self.port)
-        except OSError as e:
-            if tries>10:
+        except OSError:
+            if tries > 10:
                 raise Exception("Cannot find open port")
             self.port += 1
-            self.start(threaded, tries+1)
+            self.start(threaded, tries + 1)
             return
 
         if threaded:
@@ -173,7 +173,6 @@ class BuzzerController:
         for p in self.connected_players:
             p.waiter.close()
         self.connected_players = []
-        self.accepting_players = True
 
     def buzz(self, player):
         if self.game:
@@ -224,6 +223,14 @@ class BuzzerController:
         for p in players:
             p.waiter.send("PROMPTWAGER", str(max(p.score, 0)))
             p.page = "wager"
+
+    def close_wagers(self, players=None):
+        if players is None:
+            players = self.connected_players
+
+        for p in players:
+            p.waiter.send("BACK")
+            p.page = "buzz"
 
     def prompt_answers(self):
         for p in self.connected_players:

@@ -1,6 +1,8 @@
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
-from PyQt6.QtWidgets import QInputDialog, QApplication
-
+from PyQt6.QtWidgets import (
+    QInputDialog,
+    QApplication,
+    )
 
 import threading
 import time
@@ -11,8 +13,8 @@ import simpleaudio as sa
 from collections.abc import Iterable
 import logging
 
-from jparty.utils import SongPlayer, resource_path, CompoundObject
-from jparty.constants import FJTIME, QUESTIONTIME
+from jparty.utils import SongPlayer, resource_path, CompoundObject, DDWagerDialog
+from jparty.constants import FJTIME, QUESTIONTIME, BUZZER_DELAY
 
 
 class QuestionTimer(object):
@@ -132,7 +134,7 @@ class Board(object):
     def __init__(self, categories, questions, dj=False):
         self.categories = categories
         self.dj = dj
-        if not questions is None:
+        if questions is not None:
             self.questions = questions
         else:
             self.questions = []
@@ -259,14 +261,16 @@ class Game(QObject):
     def startable(self):
         return self.valid_game() and len(self.buzzer_controller.connected_players) > 0
 
-    def begin(self):
+    def begin_theme_song(self):
         self.song_player.play(repeat=True)
 
     def start_game(self):
+        logging.info("starting game")
         self.current_round = self.data.rounds[0]
-        self.dc.hide_welcome_widgets()
+        self.dc.show_welcome_widgets(False)
         self.dc.board_widget.load_round(self.current_round)
-        self.buzzer_controller.accepting_players = False
+        self.modify_players(False)
+        self.host_display.settings_button.show()
         self.song_player.stop()
 
     def setDisplays(self, host_display, main_display):
@@ -284,27 +288,44 @@ class Game(QObject):
         self.host_display.borders.spacehints(val)
 
     def new_player(self):
+        new_players = set(self.buzzer_controller.connected_players) - set(self.players)
         self.players = self.buzzer_controller.connected_players
         self.dc.scoreboard.refresh_players()
-        self.host_display.welcome_widget.check_start()
+        if not self.game_started():
+            self.host_display.welcome_widget.check_start()
+        if self.is_final():
+            self.controller.open_wagers(new_players)
+
+
 
     def remove_player(self, player):
         self.players.remove(player)
         player.waiter.close()
         self.dc.scoreboard.refresh_players()
         self.host_display.welcome_widget.check_start()
+        self.check_all_wagered()
 
     def valid_game(self):
         return self.data is not None and all(b.complete() for b in self.data.rounds)
 
     def open_responses(self):
         self.dc.borders.lights(True)
+        QApplication.processEvents()
+        time.sleep(BUZZER_DELAY)
+
         self.accepting_responses = True
 
         if not self.timer:
             self.timer = QuestionTimer(QUESTIONTIME, self.stumped)
 
         self.timer.start()
+
+    def modify_players(self, val):
+        self.buzzer_controller.accepting_players = val
+        self.host_display.scoreboard.show_close_buttons(val)
+        self.main_display.show_welcome_widgets(val)
+        if val:
+            self.main_display.welcome_widget.show()
 
     def close_responses(self):
         self.timer.pause()
@@ -334,7 +355,7 @@ class Game(QObject):
         self.answering_player = None
 
     def back_to_board(self):
-        logging.info("back_to_board")
+        logging.info("back to board")
         self.dc.hide_question()
         self.timer = None
         self.active_question.complete = True
@@ -344,16 +365,48 @@ class Game(QObject):
             logging.info("NEXT ROUND")
             self.keystroke_manager.activate("NEXT_ROUND")
 
+    def index_of_current_round(self):
+        return self.data.rounds.index(self.current_round)
+
+    def is_final(self):
+        return isinstance(self.current_round, FinalBoard)
+
+    def prev_round(self):
+        logging.info("previous round")
+        i = self.index_of_current_round()
+        logging.info(f"ROUND {i}")
+        if i == 0:
+            logging.error("Already at first round")
+
+        if self.is_final():
+            for player in self.players:
+                self.dc.player_widget(player).set_lights(False)
+            self.buzzer_controller.close_wagers()
+            self.dc.close_final()
+
+        self.current_round = self.data.rounds[i - 1]
+        self.dc.board_widget.load_round(self.current_round)
+
+
     def next_round(self):
         logging.info("next round")
-        i = self.data.rounds.index(self.current_round)
+        i = self.index_of_current_round()
         logging.info(f"ROUND {i}")
-        self.current_round = self.data.rounds[i + 1]
 
-        if isinstance(self.current_round, FinalBoard):
+        if i == len(self.data.rounds) - 1:
+            logging.error("Already at final round")
+
+        self.current_round = self.data.rounds[i + 1]
+        if self.is_final():
+            self.host_display.set_player_in_control(None)
+
             self.dc.load_final(self.current_round.question)
             self.start_final()
         else:
+            # Highlight player with least money to have control
+            losing_player = min(self.players, key=lambda p: p.score)
+            self.host_display.set_player_in_control(losing_player)
+
             self.dc.board_widget.load_round(self.current_round)
 
     def start_final(self):
@@ -368,7 +421,10 @@ class Game(QObject):
         player.wager = amount
         self.dc.player_widget(player).set_lights(False)
         logging.info(f"{player} wagered {amount}")
-        if all(p.wager is not None for p in self.players):
+        self.check_all_wagered()
+
+    def check_all_wagered(self):
+        if all(p.wager is not None for p in self.players) and len(self.players) > 0:
             self.host_display.question_widget.hint_label.setText(
                 "Press space to show clue!"
             )
@@ -465,21 +521,20 @@ class Game(QObject):
         self.timer = None
         self.data = None
         self.__judgement_round = 0
+        self.modify_players(True)
         self.dc.restart()
-        self.begin()
+        self.begin_theme_song()
+
+    def game_started(self):
+        return self.current_round is not None
 
     def get_dd_wager(self, player):
         self.answering_player = player
         self.soliciting_player = False
 
         max_wager = max(self.answering_player.score, 1000)
-        wager_res = QInputDialog.getInt(
-            self.host_display,
-            "Wager",
-            f"How much do they wager? (max: ${max_wager})",
-            min=0,
-            max=max_wager,
-        )
+        wager_res = DDWagerDialog.getInt(self.host_display, max_wager)
+
         if not wager_res[1]:
             self.soliciting_player = True
             return False
@@ -514,7 +569,13 @@ class Game(QObject):
             self.answering_player,
             self.answering_player.score + self.active_question.value,
         )
+        self.host_display.set_player_in_control(self.answering_player)
         self.dc.borders.lights(False)
+
+        if self.active_question.dd:
+            wo = sa.WaveObject.from_wave_file(resource_path("applause.wav"))
+            wo.play()
+
         self.answer_given()
         self.back_to_board()
 
