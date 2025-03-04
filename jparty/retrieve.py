@@ -53,10 +53,10 @@ def get_Gsheet_game(file_id):
 def get_game(game_id):
     if len(str(game_id)) < 7:
         try:
-            return get_wayback_game(game_id)
+            return get_jarchive_game(game_id)
         except Exception as e:
             logging.error(e)
-            return get_jarchive_game(game_id)
+            return get_wayback_game(game_id)
     else:
         return get_Gsheet_game(str(game_id))
 
