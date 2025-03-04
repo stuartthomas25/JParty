@@ -13,10 +13,11 @@ from PyQt6.QtCore import Qt, QSize, pyqtSignal
 import qrcode
 import time
 from threading import Thread
+import threading
 import logging
 
 from jparty.version import version
-from jparty.retrieve import get_game, get_random_game
+from jparty.retrieve import get_game, get_random_game, IncompleteException
 from jparty.utils import resource_path, add_shadow, DynamicLabel, DynamicButton
 from jparty.helpmsg import helpmsg
 from jparty.style import WINDOWPAL
@@ -117,7 +118,7 @@ class Welcome(StartWidget):
         self.gameid_label.setOpenExternalLinks(True)
 
         self.textbox = QLineEdit(self)
-        self.textbox.textChanged.connect(self.show_summary)
+        self.textbox.textEdited.connect(self.load_game)
         f = self.textbox.font()
         self.textbox.setFont(f)
 
@@ -220,40 +221,52 @@ class Welcome(StartWidget):
             while True:
                 game_id = get_random_game()
                 logging.info(f"GAMEID {game_id}")
-                self.game.data = get_game(game_id)
-                if self.game.valid_game():
+                try:
+                    self.game.data = get_game(game_id)
                     break
-                else:
+                except IncompleteException as e:
+                    logging.error("this game is complete")
                     time.sleep(0.25)
 
             self.gameid_trigger.emit(str(game_id))
-            self.summary_trigger.emit(self.game.data.date + "\n" + self.game.data.comments)
+            summary_string = self.game.data.date + "\n" + self.game.data.comments
+
 
         except Exception as e:
             logging.error(e)
-            self.summary_trigger.emit("Cannot get game")
+            summary_string = "Cannot get game"
+
+        self.summary_trigger.emit(summary_string)
+        self.check_start()
 
     def random(self, checked):
         self.summary_trigger.emit("Loading...")
         t = Thread(target=self.__random)
         t.start()
 
-    def __show_summary(self):
+    def __load_game(self):
+        logging.info("textbox changed, reading ID")
         game_id = self.textbox.text()
         try:
-            self.game.data = get_game(game_id)
-            if self.game.valid_game():
-                self.summary_trigger.emit(
-                    self.game.data.date + "\n" + self.game.data.comments
-                )
-            else:
-                self.summary_trigger.emit("Game has blank questions")
+            game_data = get_game(game_id)
+            summary_string = game_data.date + "\n" + game_data.comments
+
+        except IncompleteException as e:
+            game_data = None
+            summary_string = "Game is incomplete"
 
         except Exception as e:
-            logging.error(e)
-            self.summary_trigger.emit("Cannot get game")
+            logging.error(repr(e))
+            game_data = None
+            summary_string = "Cannot get game"
 
-        self.check_start()
+        # make sure the game is the one in the textbox
+        if self.textbox.text() == game_id:
+            self.game.data = game_data
+            self.summary_trigger.emit(summary_string)
+            self.check_start()
+
+
 
     def set_summary(self, text):
         self.summary_label.setText(text)
@@ -261,9 +274,9 @@ class Welcome(StartWidget):
     def set_gameid(self, text):
         self.textbox.setText(text)
 
-    def show_summary(self, text=None):
+    def load_game(self, text=None):
         self.summary_trigger.emit("Loading...")
-        t = Thread(target=self.__show_summary)
+        t = Thread(target=self.__load_game, name="retrieve")
         t.start()
 
         self.check_start()
@@ -275,7 +288,7 @@ class Welcome(StartWidget):
             self.start_button.setEnabled(False)
 
     def restart(self):
-        self.show_summary(self)
+        self.load_game(self)
 
 
 class QRWidget(StartWidget):
