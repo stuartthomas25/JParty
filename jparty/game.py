@@ -132,7 +132,7 @@ class Board(object):
     def __init__(self, categories, questions, dj=False):
         self.categories = categories
         self.dj = dj
-        if not questions is None:
+        if questions is not None:
             self.questions = questions
         else:
             self.questions = []
