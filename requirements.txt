@@ -1,7 +1,7 @@
 PyQt6==6.4.0
 requests==2.32.0
 simpleaudio==1.0.4
-tornado==6.4.1
+tornado==6.5.1
 BeautifulSoup4==4.11.1
 pyinstaller==5.13.1
 qrcode==7.3.1
