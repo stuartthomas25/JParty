@@ -20,7 +20,7 @@ from jparty.question_widget import (
     HostDailyDoubleWidget,
     HostFinalJeopardyWidget,
 )
-from jparty.settings import SettingsDialog
+from jparty.settings import SettingsDialog, PlayerSettingsDialog
 from jparty.final_display import FinalDisplay
 from jparty.welcome_widget import Welcome, QRWidget
 from jparty.utils import resource_path
@@ -196,6 +196,7 @@ class SettingsLabel(QLabel):
 class HostDisplayWindow(DisplayWindow):
     def __init__(self, game):
         self.pause_widget = None
+        self.player_settings_widget = None
         self.settings_button = None
         super().__init__(game)
         self.settings_button = SettingsLabel(self)
@@ -262,3 +263,8 @@ class HostDisplayWindow(DisplayWindow):
         self.pause_widget.show()
         # settings = SettingsDialog(self)
         # settings.exec()
+
+    def show_player_settings(self, player):
+        logging.info("Showing player game settings")
+        self.player_settings_widget = PlayerSettingsDialog(player, self)
+        self.player_settings_widget.show()

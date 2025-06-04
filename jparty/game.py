@@ -311,7 +311,7 @@ class Game(QObject):
 
     def modify_players(self, val):
         self.modifying_players = val
-        self.host_display.scoreboard.show_close_buttons(val)
+        # self.host_display.scoreboard.show_close_buttons(val)
         self.buzzer_controller.accepting_players = val
 
     def close_responses(self):

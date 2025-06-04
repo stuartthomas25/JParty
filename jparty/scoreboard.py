@@ -166,21 +166,25 @@ class PlayerWidget(QWidget):
 
 class HostPlayerWidget(PlayerWidget):
     def __init__(self, game, player, parent=None):
-        self.remove_button = None
+        self.settings_button = None
         super().__init__(game, player, parent)
-        self.remove_button = QPushButton("", self)
-        # self.remove_button.setStyleSheet("color: red")
-        self.remove_button.clicked.connect(partial(self.game.remove_player, player))
-        self.remove_button.setIcon(QIcon(resource_path("close-icon.png")))
-        self.remove_button.show()
+        # self.remove_button = qpushbutton("", self)
+        self.settings_button = QPushButton("", self)
+        # self.remove_button.clicked.connect(partial(self.game.remove_player, player))
+        # self.remove_button.setIcon(QIcon(resource_path("close-icon.png")))
+        # self.remove_button.show()
+
+        self.settings_button.clicked.connect(partial(self.game.host_display.show_player_settings, player))
+        self.settings_button.setIcon(QIcon(resource_path("settings.png")))
+        self.settings_button.show()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if self.remove_button is not None:
-            self.remove_button.move(QPoint(0, 0))
+        if self.settings_button is not None:
+            self.settings_button.move(QPoint(0, 0))
             xbutton_size = int(self.width() * 0.2)
-            self.remove_button.resize(QSize(xbutton_size, xbutton_size))
-            self.remove_button.setIconSize(self.size())
+            self.settings_button.resize(QSize(xbutton_size, xbutton_size))
+            self.settings_button.setIconSize(self.size())
 
 
 class ScoreBoard(QWidget):
@@ -233,4 +237,4 @@ class HostScoreBoard(ScoreBoard):
 
     def show_close_buttons(self, val):
         for pw in self.player_widgets:
-            pw.remove_button.setVisible(val)
+            pw.settings_button.setVisible(val)
