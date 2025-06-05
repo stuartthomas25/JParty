@@ -65,6 +65,10 @@ class StartWidget(QWidget):
         self.icon_layout.addWidget(self.icon_label)
         self.icon_layout.addStretch()
 
+        self.title_font = QFont()
+        self.title_font.setBold(True)
+        self.title_font.setPixelSize(int(self.height() * 0.1))
+
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
@@ -94,8 +98,6 @@ class Welcome(StartWidget):
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.title_font = QFont()
-        self.title_font.setBold(True)
 
         self.title_label = DynamicLabel("JParty!", lambda: self.height() * 0.1, self)
         self.title_label.setFont(self.title_font)

@@ -1,5 +1,10 @@
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
-from PyQt6.QtWidgets import QInputDialog, QApplication
+from PyQt6.QtWidgets import (
+    QInputDialog,
+    QApplication,
+    QPushButton,
+    QVBoxLayout,
+)
 
 
 import threading
@@ -164,7 +169,6 @@ class GameData:
     rounds: list
     date: str
     comments: str
-
 
 class Game(QObject):
     buzz_trigger = pyqtSignal(int)

@@ -20,7 +20,7 @@ from jparty.question_widget import (
     HostDailyDoubleWidget,
     HostFinalJeopardyWidget,
 )
-from jparty.settings import SettingsDialog, PlayerSettingsDialog
+from jparty.settings import InGameSettingsDialog, PlayerSettingsDialog
 from jparty.final_display import FinalDisplay
 from jparty.welcome_widget import Welcome, QRWidget
 from jparty.utils import resource_path
@@ -200,11 +200,9 @@ class HostDisplayWindow(DisplayWindow):
         self.settings_button = None
         super().__init__(game)
         self.settings_button = SettingsLabel(self)
-        self.pause_widget = SettingsDialog(self)
+        self.pause_widget = InGameSettingsDialog(self)
 
         self.show()
-        print("geo", self.settings_button.geometry())
-        print(self.settings_button.isVisible())
         self.settings_button.setVisible(False)
 
     def host(self):
