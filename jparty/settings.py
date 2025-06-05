@@ -28,33 +28,12 @@ class SettingsDialog(StartWidget):
         self.game = parent.game
         add_shadow(self, radius=0.2)
         self.setPalette(WINDOWPAL)
-        # self.setWindowTitle("Settings")
-
-
-        # Create layout and form elements for settings
-        # layout = QVBoxLayout()
-
-
-        # # Add OK and Cancel buttons
-        # buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        # buttons.accepted.connect(self.accept)
-
-        # layout.addWidget(buttons)
-
-        # self.setLayout(layout)
-
-    # def show(self):
-    #     super().show()
-
-    # def close(self):
-    #     super().close()
 
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
         qp.setBrush(QBrush(WINDOWPAL.color(QPalette.ColorRole.Window)))
         qp.drawRect(self.rect())
-
 
 class PlayerSettingsDialog(SettingsDialog):
     contentMargin = 0.5

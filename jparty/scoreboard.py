@@ -147,7 +147,6 @@ class PlayerWidget(QWidget):
             return None
 
         if self.game.modify_players:
-            # self.settings_button.clicked.connect(partial(self.game.host_display.show_player_settings, player))
             self.game.host_display.player_widget(self.player).set_lights(True)
             self.game.host_display.show_player_settings(self.player)
 
@@ -174,10 +173,6 @@ class HostPlayerWidget(PlayerWidget):
         self.remove_button.clicked.connect(partial(self.game.remove_player, player))
         self.remove_button.setIcon(QIcon(resource_path("close-icon.png")))
         self.remove_button.show()
-
-        # self.settings_button.clicked.connect(partial(self.game.host_display.show_player_settings, player))
-        # self.settings_button.setIcon(QIcon(resource_path("settings.png")))
-        # self.settings_button.show()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
