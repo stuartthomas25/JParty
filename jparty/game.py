@@ -11,7 +11,7 @@ import simpleaudio as sa
 from collections.abc import Iterable
 import logging
 
-from jparty.utils import SongPlayer, resource_path, CompoundObject
+from jparty.utils import SongPlayer, resource_path, CompoundObject, DDWagerDialog
 from jparty.constants import FJTIME, QUESTIONTIME
 
 
@@ -481,18 +481,19 @@ class Game(QObject):
         self.dc.restart()
         self.begin_theme_song()
 
+    def game_started(self):
+        return self.current_round is None
+
     def get_dd_wager(self, player):
         self.answering_player = player
         self.soliciting_player = False
 
         max_wager = max(self.answering_player.score, 1000)
-        wager_res = QInputDialog.getInt(
+        wager_res = DDWagerDialog.getInt(
             self.host_display,
-            "Wager",
-            f"How much do they wager? (max: ${max_wager})",
-            min=0,
-            max=max_wager,
+            max_wager
         )
+
         if not wager_res[1]:
             self.soliciting_player = True
             return False

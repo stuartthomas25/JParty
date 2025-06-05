@@ -7,7 +7,16 @@ import sys
 
 
 from PyQt6.QtGui import QColor, QFontMetrics
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QPushButton, QSizePolicy
+from PyQt6.QtWidgets import (
+    QGraphicsDropShadowEffect,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QHBoxLayout,
+    QDialog,
+    QLineEdit,
+)
 from PyQt6.QtCore import Qt, QSize
 
 
@@ -224,3 +233,68 @@ class DynamicButton(QPushButton, AutosizeWidget):
 
     def flags(self):
         return 0
+
+class DDWagerDialog(QDialog):
+    def __init__(self, parent=None, max_wager=42):
+        super().__init__(parent)
+        self.setWindowTitle("Daily Double Wager")
+        self.value = None
+        self.max_wager = max_wager
+
+        # Create layout
+        layout = QVBoxLayout(self)
+
+        # Input label and line edit
+        self.label = QLabel("Wager:", self)
+        layout.addWidget(self.label)
+
+        self.input_field = QLineEdit(self)
+        self.input_field.returnPressed.connect(self.submit)
+        layout.addWidget(self.input_field)
+
+        # Buttons layout
+        buttons_layout = QHBoxLayout()
+
+        # Predefined value button
+        self.truedd_button = QPushButton("True Daily Double!", self)
+        self.truedd_button.clicked.connect(self.submit_predefined)
+        buttons_layout.addWidget(self.truedd_button)
+
+
+        # Submit button
+        self.submit_button = QPushButton("Submit", self)
+        self.submit_button.clicked.connect(self.submit)
+        buttons_layout.addWidget(self.submit_button)
+
+        # Cancel button
+        self.cancel_button = QPushButton("Cancel", self)
+        self.cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.cancel_button)
+
+
+        layout.setContentsMargins(4,4,4,4)
+        layout.setSpacing(10)
+        layout.addLayout(buttons_layout)
+
+    def submit(self):
+        """Handle submission of the entered value."""
+        try:
+            self.value = int(self.input_field.text())
+            if self.value < 0 or self.value > self.max_wager:
+                raise ValueError()
+            self.accept()
+        except ValueError:
+            self.label.setText(f"Please enter a whole number between 0 and {self.max_wager}")
+            self.label.setStyleSheet("color: red;")
+
+    def submit_predefined(self):
+        """Handle submission of the predefined value."""
+        self.value = self.max_wager
+        self.accept()
+
+    @staticmethod
+    def getInt(parent=None, max_wager=1000):
+        """Static method to get an integer from the user."""
+        dialog = DDWagerDialog(parent, max_wager)
+        result = dialog.exec()
+        return dialog.value, result == QDialog.DialogCode.Accepted
