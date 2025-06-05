@@ -528,6 +528,11 @@ class Game(QObject):
             self.answering_player.score + self.active_question.value,
         )
         self.dc.borders.lights(False)
+
+        if self.active_question.dd:
+            wo = sa.WaveObject.from_wave_file(resource_path("applause.wav"))
+            wo.play()
+
         self.answer_given()
         self.back_to_board()
 
