@@ -56,6 +56,7 @@ class StartWidget(QWidget):
         super().__init__(parent)
         self.icon = QPixmap(resource_path("icon.png"))
         self.icon_label = DynamicLabel("", 0, self)
+        self.icon_label = QLabel(self)
 
         add_shadow(self, radius=0.2)
         self.setPalette(WINDOWPAL)
@@ -75,7 +76,7 @@ class StartWidget(QWidget):
         qp.drawRect(self.rect())
 
     def resizeEvent(self, event):
-        icon_size = self.icon_label.height()
+        icon_size = int(self.height() * 0.2)
         self.icon_label.setPixmap(
             self.icon.scaled(
                 icon_size,
@@ -314,7 +315,7 @@ class QRWidget(StartWidget):
         self.url_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         main_layout.addStretch(1)
-        main_layout.addLayout(self.icon_layout, 5)
+        main_layout.addLayout(self.icon_layout, 6)
         main_layout.addWidget(self.hint_label, 2)
         main_layout.addWidget(self.qrlabel, 5)
         main_layout.addWidget(self.url_label, 2)
@@ -323,6 +324,7 @@ class QRWidget(StartWidget):
         self.setLayout(main_layout)
 
         self.show()
+        self.resizeEvent(None)
 
     def start_fontsize(self):
         return 0.1 * self.width()
@@ -334,6 +336,3 @@ class QRWidget(StartWidget):
                 self.url, image_factory=Image, box_size=max(self.height() / 50, 1)
             ).pixmap()
         )
-
-    def restart(self):
-        pass
