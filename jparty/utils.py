@@ -207,8 +207,11 @@ class DynamicLabel(QLabel, AutosizeWidget):
         AutosizeWidget.resizeEvent(self, event)
 
     def setText(self, text):
+        ss = self.styleSheet()
+        self.setStyleSheet("color: transparent;")
         super().setText(text)
         self.autoresize()
+        self.setStyleSheet(ss)
 
     def initialSize(self):
         if callable(self.__initialSize):
