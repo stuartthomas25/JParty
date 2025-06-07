@@ -147,25 +147,28 @@ class BoardWidget(QWidget):
                 if y == 0:
                     # Categories
                     gl.itemAtPosition(y, x).widget().setText("")
-                    threading.Thread(target=self.set_category, args=(x, y, round.categories[x], category_delay + x * CATEGORY_REVEAL_TIME)).start()
+                    # threading.Thread(target=self.set_category, args=(x, y, round.categories[x], category_delay + x * CATEGORY_REVEAL_TIME)).start()
+                    self.set_category(x, y, round.categories[x], 0)
                 else:
                     # Questions
                     q = round.get_question(x, y - 1)
                     gl.itemAtPosition(y, x).widget().question = None
-                    threading.Thread(target=self.set_question, args=(x, y, q, random.randint(0, 5) * QUESTION_REVEAL_TIME + BEFORE_REVEAL_WAIT_TIME)).start()
+                    # threading.Thread(target=self.set_question, args=(x, y, q, random.randint(0, 5) * QUESTION_REVEAL_TIME + BEFORE_REVEAL_WAIT_TIME)).start()
+                    self.set_question(x, y, q, 0)
 
     def resizeEvent(self, event):
         self.grid_layout.setSpacing(self.width() // 150)
 
     def set_category(self, x, y, text, delay):
         time.sleep(delay)
-        gl = self.grid_layout
-        gl.itemAtPosition(y, x).widget().setText(text)
+        card = self.grid_layout.itemAtPosition(y, x).widget()
+        card.setText(text)
+
     
     def set_question(self, x, y, question, delay):
         time.sleep(delay)
-        gl = self.grid_layout
-        gl.itemAtPosition(y, x).widget().question = question
+        card = self.grid_layout.itemAtPosition(y, x).widget()
+        card.question = question
 
     @property
     def board(self):
