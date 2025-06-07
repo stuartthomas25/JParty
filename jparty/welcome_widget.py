@@ -13,7 +13,6 @@ from PyQt6.QtCore import Qt, QSize, pyqtSignal
 import qrcode
 import time
 from threading import Thread
-import threading
 import logging
 
 from jparty.version import version
@@ -225,7 +224,7 @@ class Welcome(StartWidget):
                 try:
                     self.game.data = get_game(game_id)
                     break
-                except IncompleteException as e:
+                except IncompleteException:
                     logging.error("this game is complete")
                     time.sleep(0.25)
 
@@ -251,7 +250,7 @@ class Welcome(StartWidget):
             game_data = get_game(game_id)
             summary_string = game_data.date + "\n" + game_data.comments
 
-        except IncompleteException as e:
+        except IncompleteException:
             game_data = None
             summary_string = "Game is incomplete"
 

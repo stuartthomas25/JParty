@@ -89,7 +89,7 @@ def get_wayback_game(game_id):
         # alternative: use fallback to get game from scraping j-archive directly
         raise RetrievalException("no games found in wayback")
 
-    ## Extracts timestamp and original columns from urls and compiles a url list.
+    # Extracts timestamp and original columns from urls and compiles a url list.
     url_list = []
     for i in range(1, len(parse_url)):  # gets the wayback url
         orig_url = parse_url[i][2]

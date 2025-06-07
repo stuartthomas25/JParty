@@ -44,11 +44,11 @@ def permission_error():
 
 
 def audio_error():
-    logging.error(f"Cannot access audio device")
+    logging.error("Cannot access audio device")
     QMessageBox.critical(
         None,
         "Audio error Error",
-        f"JParty cannot access an audio device.",
+        "JParty cannot access an audio device.",
         buttons=QMessageBox.StandardButton.Abort,
         defaultButton=QMessageBox.StandardButton.Abort,
     )
@@ -76,7 +76,7 @@ def main():
     check_internet()
     app.setFont(QFont("Verdana"))
 
-    i = QFontDatabase.addApplicationFont(resource_path("ITC_ Korinna Normal.ttf"))
+    QFontDatabase.addApplicationFont(resource_path("ITC_ Korinna Normal.ttf"))
 
     game = Game()
 
@@ -86,7 +86,7 @@ def main():
 
     try:
         socket_controller.start()
-    except PermissionError as e:
+    except PermissionError:
         permission_error()
         exit(1)
 
@@ -96,7 +96,7 @@ def main():
 
     try:
         game.begin_theme_song()
-    except SimpleaudioError as e:
+    except SimpleaudioError:
         audio_error()
         exit(1)
 

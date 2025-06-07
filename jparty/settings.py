@@ -3,12 +3,8 @@ from PyQt6.QtCore import Qt, QMargins
 from PyQt6.QtWidgets import (
     QDialog,
     QLabel,
-    QFormLayout,
     QVBoxLayout,
-    QLineEdit,
-    QDialogButtonBox,
     QMessageBox,
-    QComboBox,
     QPushButton,
 )
 

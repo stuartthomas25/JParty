@@ -71,7 +71,7 @@ class BuzzerSocketHandler(tornado.websocket.WebSocketHandler):
         try:
             self.write_message(data)
             logging.info(f"Sent {data}")
-        except:
+        except Exception:
             logging.error(f"Error sending message {msg}", exc_info=True)
 
     def check_if_exists(self, token):
@@ -155,7 +155,7 @@ class BuzzerController:
     def start(self, threaded=True, tries=0):
         try:
             self.app.listen(self.port)
-        except OSError as e:
+        except OSError:
             if tries > 10:
                 raise Exception("Cannot find open port")
             self.port += 1

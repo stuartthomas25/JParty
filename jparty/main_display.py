@@ -2,12 +2,9 @@ from PyQt6.QtGui import (
     QColor,
     QPalette,
     QGuiApplication,
-    QPixmap,
-    QPainter,
-    QBrush,
     QIcon,
 )
-from PyQt6.QtCore import QMargins, Qt, pyqtSignal, QSize, QPoint
+from PyQt6.QtCore import QMargins, QSize
 
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
 
@@ -25,7 +22,7 @@ from jparty.question_widget import (
 from jparty.settings import InGameSettingsDialog, PlayerSettingsDialog
 from jparty.final_display import FinalDisplay
 from jparty.welcome_widget import Welcome, QRWidget
-from jparty.utils import resource_path, DynamicLabel
+from jparty.utils import resource_path
 import logging
 
 
