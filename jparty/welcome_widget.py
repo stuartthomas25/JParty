@@ -157,16 +157,16 @@ class Welcome(StartWidget):
         self.help_button = DynamicButton("Help", self)
         self.help_button.clicked.connect(self.show_help)
 
-        self.settings_button = DynamicButton("Settings", self)
-        self.settings_button.clicked.connect(self.show_settings)
+        # self.settings_button = DynamicButton("Settings", self)
+        # self.settings_button.clicked.connect(self.show_settings)
 
         footer_layout = QHBoxLayout()
         footer_layout.addStretch(5)
         footer_layout.addWidget(self.quit_button, 3)
         footer_layout.addStretch(1)
         footer_layout.addWidget(self.help_button, 3)
-        footer_layout.addStretch(1)
-        footer_layout.addWidget(self.settings_button, 3)
+        # footer_layout.addStretch(1)
+        # footer_layout.addWidget(self.settings_button, 3)
         footer_layout.addStretch(5)
 
         main_layout.addStretch(3)
