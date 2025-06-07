@@ -225,6 +225,14 @@ class BuzzerController:
             p.waiter.send("PROMPTWAGER", str(max(p.score, 0)))
             p.page = "wager"
 
+    def close_wagers(self, players=None):
+        if players is None:
+            players = self.connected_players
+
+        for p in players:
+            p.waiter.send("BACK")
+            p.page = "buzz"
+
     def prompt_answers(self):
         for p in self.connected_players:
             p.waiter.send("PROMPTANSWER")

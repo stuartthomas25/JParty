@@ -174,6 +174,9 @@ class HostPlayerWidget(PlayerWidget):
         self.remove_button.setIcon(QIcon(resource_path("close-icon.png")))
         self.remove_button.show()
 
+        if self.game.game_started():
+            self.remove_button.setVisible(False)
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if self.remove_button is not None:

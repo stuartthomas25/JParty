@@ -290,7 +290,8 @@ class Welcome(StartWidget):
             self.start_button.setEnabled(False)
 
     def restart(self):
-        self.load_game(self)
+        self.textbox.setText("")
+        self.summary_label.setText("")
 
 
 class QRWidget(StartWidget):
@@ -336,3 +337,6 @@ class QRWidget(StartWidget):
                 self.url, image_factory=Image, box_size=max(self.height() / 50, 1)
             ).pixmap()
         )
+
+    def restart(self):
+        pass

@@ -111,7 +111,7 @@ class DisplayWindow(QMainWindow):
     # TODO: combine these
     def show_welcome_widgets(self):
         self.welcome_widget.setVisible(True)
-        self.welcome_widget.setEnabled(False)
+        self.welcome_widget.setDisabled(False)
         self.welcome_widget.restart()
 
     def hide_welcome_widgets(self):
@@ -119,10 +119,11 @@ class DisplayWindow(QMainWindow):
         self.welcome_widget.setDisabled(True)
 
     def hide_question(self):
-        self.board_widget.setVisible(True)
-        self.board_layout.replaceWidget(self.question_widget, self.board_widget)
-        self.question_widget.deleteLater()
-        self.question_widget = None
+        if self.question_widget is not None:
+            self.board_widget.setVisible(True)
+            self.board_layout.replaceWidget(self.question_widget, self.board_widget)
+            self.question_widget.deleteLater()
+            self.question_widget = None
 
     def load_question(self, q):
         self.question_widget = self.create_question_widget(q)
@@ -152,55 +153,28 @@ class DisplayWindow(QMainWindow):
             if label.question is q:
                 label.question = None
 
+    def close_final(self):
+        logging.info("close final")
+        self.board_widget.setVisible(True)
+        if self.question_widget is not None:
+            self.board_layout.replaceWidget(self.question_widget, self.board_widget)
+            self.question_widget.close()
+
+        if self.final_display is not None:
+            self.final_display.close()
+            self.final_display = None
+
     def restart(self):
         self.hide_question()
-        self.final_display.close()
-        self.final_display = None
+        self.close_final()
         self.board_widget.clear()
         self.show_welcome_widgets()
         self.scoreboard.refresh_players()
 
-
-
-# class SettingsLabel(QLabel):
-#     click_trigger = pyqtSignal()
-#     size = 16
-#     margin = 10
-
-#     def __init__(self, parent):
-#         super().__init__(parent)
-#         self.pixmap = QPixmap(resource_path("settings.png"))
-#         self.setPixmap(
-#             self.pixmap.scaled(
-#                 QSize(self.size,self.size),
-#                 Qt.AspectRatioMode.KeepAspectRatio,
-#                 transformMode=Qt.TransformationMode.SmoothTransformation,
-#             )
-#         )
-
-#         self.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
-#         self.setGeometry(0,0,self.size,self.size)
-
-#         host_display = self.parent()
-#         self.click_trigger.connect(host_display.show_settings)
-#         self.show()
-
-#     def mousePressEvent(self, ev):
-#         self.click_trigger.emit()
-#         super().mousePressEvent(ev)
-
-#     def show_button(self,val):
-#         self.setVisible(val)
-#         self.setEnabled(val)
-
 class HostDisplayWindow(DisplayWindow):
     def __init__(self, game):
-        # self.pause_widget = None
-        # self.player_settings_widget = None
         self.settings_button = None
         super().__init__(game)
-        # self.settings_icon = QPixmap(resource_path("settings.png"))
-        # self.settings_button = DynamicLabel("", 0, self)
 
         self.settings_button = QPushButton("", self)
         self.settings_button.clicked.connect(self.show_settings)
@@ -211,12 +185,10 @@ class HostDisplayWindow(DisplayWindow):
                 border: none;
             }
         """)
-        # self.settings_button.setGeometry(0,0,100,100)
-        self.settings_button.show()
-        # self.pause_widget = None
 
         self.show()
-        # self.settings_button.setVisible(False)
+        self.resizeEvent(None)
+        self.settings_button.setVisible(False)
 
     def host(self):
         return True
@@ -235,27 +207,16 @@ class HostDisplayWindow(DisplayWindow):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        # if self.pause_widget is not None:
-        #     self.pause_widget.setGeometry(self.welcome_widget.geometry())
 
         if self.settings_button is not None:
-            # size = int(self.width() * 0.05)
             size = self.borders.right.width()
-            # margin = 5
 
             self.settings_button.setGeometry(self.width() - size,
                             0,
                             size,
                             size)
 
-            # self.settings_button.resize()
             self.settings_button.setIconSize(QSize(size, size))
-
-            # # self.settings_button.setGeometry(0, 0, 100, 100)
-
-            # self.settings_button.move(QPoint(0, 0))
-            # xbutton_size = int(self.width() * 0.2)
-
 
     def create_question_widget(self, q):
         if q.dd:
@@ -287,3 +248,15 @@ class HostDisplayWindow(DisplayWindow):
         logging.info("Showing player game settings")
         self.player_settings_widget = PlayerSettingsDialog(player, self)
         self.player_settings_widget.show()
+
+    def restart(self):
+        super().restart()
+        self.settings_button.setVisible(False)
+
+    def hide_question(self):
+        super().hide_question()
+        self.settings_button.setVisible(True)
+
+    def load_question(self, q):
+        super().load_question(q)
+        self.settings_button.setVisible(False)

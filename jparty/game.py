@@ -17,7 +17,7 @@ from collections.abc import Iterable
 import logging
 
 from jparty.utils import SongPlayer, resource_path, CompoundObject, DDWagerDialog
-from jparty.constants import FJTIME, QUESTIONTIME
+from jparty.constants import FJTIME, QUESTIONTIME, BUZZER_DELAY
 
 
 class QuestionTimer(object):
@@ -306,12 +306,16 @@ class Game(QObject):
 
     def open_responses(self):
         self.dc.borders.lights(True)
+        QApplication.processEvents()
+        time.sleep(BUZZER_DELAY)
+
         self.accepting_responses = True
 
         if not self.timer:
             self.timer = QuestionTimer(QUESTIONTIME, self.stumped)
 
         self.timer.start()
+
 
     def modify_players(self, val):
         self.modifying_players = val
@@ -346,7 +350,7 @@ class Game(QObject):
         self.answering_player = None
 
     def back_to_board(self):
-        logging.info("back_to_board")
+        logging.info("back to board")
         self.dc.hide_question()
         self.timer = None
         self.active_question.complete = True
@@ -355,15 +359,34 @@ class Game(QObject):
         if all(q.complete for q in self.current_round.questions):
             logging.info("NEXT ROUND")
             self.keystroke_manager.activate("NEXT_ROUND")
+    def index_of_current_round(self):
+        return self.data.rounds.index(self.current_round)
+
+    def prev_round(self):
+        logging.info("previous round")
+        i = self.index_of_current_round()
+        logging.info(f"ROUND {i}")
+        if i==0:
+            logging.error("Already at first round") # TODO better error catch maybe?
+
+        if isinstance(self.current_round, FinalBoard):
+            for player in self.players:
+                self.dc.player_widget(player).set_lights(False)
+            self.buzzer_controller.close_wagers()
+            self.dc.close_final()
+
+        self.current_round = self.data.rounds[i - 1]
+        self.dc.board_widget.load_round(self.current_round)
 
     def next_round(self):
         logging.info("next round")
-        print(self.data.rounds)
-        print(self.current_round)
-        i = self.data.rounds.index(self.current_round)
+        i = self.index_of_current_round()
         logging.info(f"ROUND {i}")
-        self.current_round = self.data.rounds[i + 1]
 
+        if i==len(self.data.rounds)-1:
+            logging.error("Already at final round") # TODO better error catch maybe?
+
+        self.current_round = self.data.rounds[i + 1]
         if isinstance(self.current_round, FinalBoard):
             self.dc.load_final(self.current_round.question)
             self.start_final()
@@ -486,7 +509,7 @@ class Game(QObject):
         self.begin_theme_song()
 
     def game_started(self):
-        return self.current_round is None
+        return self.current_round is not None
 
     def get_dd_wager(self, player):
         self.answering_player = player
