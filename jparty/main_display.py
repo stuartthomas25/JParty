@@ -6,7 +6,14 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtCore import QMargins, QSize
 
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
+from PyQt6.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QGraphicsDropShadowEffect,
+)
 
 from jparty.board_widget import BoardWidget
 from jparty.scoreboard import ScoreBoard, HostScoreBoard
@@ -258,3 +265,16 @@ class HostDisplayWindow(DisplayWindow):
     def load_question(self, q):
         super().load_question(q)
         self.settings_button.setVisible(False)
+
+    def set_player_in_control(self, new_player):
+        for player in self.players:
+            # Remove glow around player widget
+            self.player_widget(player).setGraphicsEffect(None)
+
+        if new_player is not None:
+            # Add white glow around player widget with offset 0, 0
+            effect = QGraphicsDropShadowEffect()
+            effect.setColor(QColor(255, 255, 255, 255))
+            effect.setBlurRadius(100)
+            effect.setOffset(0, 0)
+            self.player_widget(new_player).setGraphicsEffect(effect)
