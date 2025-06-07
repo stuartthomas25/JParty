@@ -2,8 +2,7 @@ from PyQt6.QtCore import Qt, QObject, pyqtSignal
 from PyQt6.QtWidgets import (
     QInputDialog,
     QApplication,
-)
-
+    )
 
 import threading
 import time
@@ -377,6 +376,7 @@ class Game(QObject):
         self.current_round = self.data.rounds[i - 1]
         self.dc.board_widget.load_round(self.current_round)
 
+
     def next_round(self):
         logging.info("next round")
         i = self.index_of_current_round()
@@ -387,9 +387,15 @@ class Game(QObject):
 
         self.current_round = self.data.rounds[i + 1]
         if isinstance(self.current_round, FinalBoard):
+            self.host_display.set_player_in_control(None)
+
             self.dc.load_final(self.current_round.question)
             self.start_final()
         else:
+            # Highlight player with least money to have control
+            losing_player = min(self.players, key=lambda p: p.score)
+            self.host_display.set_player_in_control(losing_player)
+
             self.dc.board_widget.load_round(self.current_round)
 
     def start_final(self):
@@ -551,6 +557,7 @@ class Game(QObject):
             self.answering_player,
             self.answering_player.score + self.active_question.value,
         )
+        self.host_display.set_player_in_control(self.answering_player)
         self.dc.borders.lights(False)
 
         if self.active_question.dd:
