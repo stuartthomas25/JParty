@@ -134,6 +134,7 @@ class InGameSettingsDialog(SettingsDialog):
         layout.setSpacing(10)
 
         self.setLayout(layout)
+        self.show()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

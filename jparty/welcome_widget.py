@@ -67,7 +67,6 @@ class StartWidget(QWidget):
 
         self.title_font = QFont()
         self.title_font.setBold(True)
-        self.title_font.setPixelSize(int(self.height() * 0.1))
 
     def paintEvent(self, event):
         qp = QPainter()
