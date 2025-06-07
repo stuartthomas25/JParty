@@ -50,7 +50,7 @@ class HostBorders(Borders):
                 b.show_hints(key)
             time.sleep(0.5)
             for b in self:
-               b.hide_hints(key)
+                b.hide_hints(key)
             time.sleep(0.5)
 
     def buzz_hint(self):
@@ -112,7 +112,6 @@ class BorderWidget(QWidget):
         if self.__lit:
             qp.setBrush(QBrush(QColor("white")))
             qp.drawRect(self.rect())
-
 
 
 class HostBorderWidget(BorderWidget):

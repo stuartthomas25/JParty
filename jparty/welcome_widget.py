@@ -98,7 +98,6 @@ class Welcome(StartWidget):
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-
         self.title_label = DynamicLabel("JParty!", lambda: self.height() * 0.1, self)
         self.title_label.setFont(self.title_font)
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -233,7 +232,6 @@ class Welcome(StartWidget):
             self.gameid_trigger.emit(str(game_id))
             summary_string = self.game.data.date + "\n" + self.game.data.comments
 
-
         except Exception as e:
             logging.error(e)
             summary_string = "Cannot get game"
@@ -267,8 +265,6 @@ class Welcome(StartWidget):
             self.game.data = game_data
             self.summary_trigger.emit(summary_string)
             self.check_start()
-
-
 
     def set_summary(self, text):
         self.summary_label.setText(text)

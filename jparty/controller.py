@@ -156,10 +156,10 @@ class BuzzerController:
         try:
             self.app.listen(self.port)
         except OSError as e:
-            if tries>10:
+            if tries > 10:
                 raise Exception("Cannot find open port")
             self.port += 1
-            self.start(threaded, tries+1)
+            self.start(threaded, tries + 1)
             return
 
         if threaded:

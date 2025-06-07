@@ -211,7 +211,7 @@ class ScoreBoard(QWidget):
                 self.player_widgets.remove(pw)
                 pw.deleteLater()
 
-        for (i, p) in enumerate(self.game.players):
+        for i, p in enumerate(self.game.players):
             if not any(pw.player is p for pw in self.player_widgets):
                 pw = self.create_player_widget(p)
                 self.player_layout.insertWidget(2 * i + 1, pw)

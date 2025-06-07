@@ -42,6 +42,7 @@ def permission_error():
         defaultButton=QMessageBox.StandardButton.Abort,
     )
 
+
 def audio_error():
     logging.error(f"Cannot access audio device")
     QMessageBox.critical(
@@ -51,6 +52,7 @@ def audio_error():
         buttons=QMessageBox.StandardButton.Abort,
         defaultButton=QMessageBox.StandardButton.Abort,
     )
+
 
 def check_second_monitor():
     if len(QApplication.instance().screens()) < 2:
@@ -74,9 +76,7 @@ def main():
     check_internet()
     app.setFont(QFont("Verdana"))
 
-    i = QFontDatabase.addApplicationFont(
-        resource_path("ITC_ Korinna Normal.ttf")
-    )
+    i = QFontDatabase.addApplicationFont(resource_path("ITC_ Korinna Normal.ttf"))
 
     game = Game()
 
@@ -93,7 +93,7 @@ def main():
     main_window = DisplayWindow(game)
     host_window = HostDisplayWindow(game)
     game.setDisplays(host_window, main_window)
-    
+
     try:
         game.begin_theme_song()
     except SimpleaudioError as e:
@@ -102,9 +102,7 @@ def main():
 
     song_player = game.song_player
 
-
-
-    r=1 # fail by default
+    r = 1  # fail by default
     try:
         r = app.exec()
     finally:

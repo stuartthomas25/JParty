@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox,
     QMessageBox,
     QComboBox,
-    QPushButton
+    QPushButton,
 )
 
 from functools import partial
@@ -22,6 +22,7 @@ from jparty.style import WINDOWPAL
 modify_players_help_text = """
 Click on a player's podium for player settings
 """
+
 
 class SettingsDialog(StartWidget):
     def __init__(self, parent=None):
@@ -37,8 +38,10 @@ class SettingsDialog(StartWidget):
         qp.setBrush(QBrush(WINDOWPAL.color(QPalette.ColorRole.Window)))
         qp.drawRect(self.rect())
 
+
 class PlayerSettingsDialog(SettingsDialog):
     contentMargin = 0.5
+
     def __init__(self, player, parent=None):
         super().__init__(parent)
         self.player = player
@@ -52,23 +55,23 @@ class PlayerSettingsDialog(SettingsDialog):
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.title_label, 4)
 
-
         self.remove_button = QPushButton("Remove player", self)
-        self.remove_button.clicked.connect(partial(self.game.remove_player, self.player))
+        self.remove_button.clicked.connect(
+            partial(self.game.remove_player, self.player)
+        )
         self.remove_button.clicked.connect(super().close)
         layout.addWidget(self.remove_button, 3)
 
         self.score_button = QPushButton("Change score", self)
-        self.score_button.clicked.connect(partial(self.game.adjust_score,self.player))
+        self.score_button.clicked.connect(partial(self.game.adjust_score, self.player))
         layout.addWidget(self.score_button, 3)
 
         self.close_button = QPushButton("Done", self)
         self.close_button.clicked.connect(self.close)
         layout.addWidget(self.close_button, 3)
 
-
         m = int(PlayerSettingsDialog.contentMargin * self.width())
-        layout.setContentsMargins(m,0,m,m)
+        layout.setContentsMargins(m, 0, m, m)
         layout.setSpacing(10)
 
         self.setLayout(layout)
@@ -82,15 +85,14 @@ class PlayerSettingsDialog(SettingsDialog):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         fullrect = self.parent().rect()
-        margins = (
-            QMargins(
-                int(0.35 * fullrect.width()),
-                int(0.4 * fullrect.height()),
-                int(0.35 * fullrect.width()),
-                int(0.4 * fullrect.height())
-            )
+        margins = QMargins(
+            int(0.35 * fullrect.width()),
+            int(0.4 * fullrect.height()),
+            int(0.35 * fullrect.width()),
+            int(0.4 * fullrect.height()),
         )
         self.setGeometry(fullrect - margins)
+
 
 class NewPlayersPopup(QDialog):
     def __init__(self, parent=None):
@@ -111,12 +113,14 @@ class NewPlayersPopup(QDialog):
         # Spinning loading circle
         spinner_label = QLabel()
 
-        spinner_label.setStyleSheet("""
+        spinner_label.setStyleSheet(
+            """
             QPushButton {
                 background: red;
                 border: none;
             }
-        """)
+        """
+        )
         spinner_movie = QMovie(resource_path("loading.gif"))
         spinner_label.setMovie(spinner_movie)
         spinner_movie.start()
@@ -142,6 +146,7 @@ class InGameSettingsDialog(SettingsDialog):
     # - skip rounds
     # - reopen players
     contentMargin = 0.5
+
     def __init__(self, parent=None):
         # self.allowing_new_players = False
         super().__init__(parent)
@@ -156,8 +161,6 @@ class InGameSettingsDialog(SettingsDialog):
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.title_label, 2)
 
-
-
         summary_string = self.game.data.date + "\n" + self.game.data.comments
         self.summary_label = QLabel(summary_string, self)
         self.summary_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -166,7 +169,6 @@ class InGameSettingsDialog(SettingsDialog):
         self.help_label = QLabel(modify_players_help_text, self)
         self.help_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.help_label, 2)
-
 
         self.next_button = QPushButton("Next round", self)
         self.next_button.clicked.connect(self.game.next_round)
@@ -191,7 +193,7 @@ class InGameSettingsDialog(SettingsDialog):
         layout.addWidget(self.close_button, 3)
 
         m = int(PlayerSettingsDialog.contentMargin * self.width())
-        layout.setContentsMargins(m,0,m,m)
+        layout.setContentsMargins(m, 0, m, m)
         layout.setSpacing(10)
 
         self.setLayout(layout)
@@ -225,16 +227,13 @@ class InGameSettingsDialog(SettingsDialog):
         self.prev_button.setDisabled(i == 0)
         self.next_button.setDisabled(i == 2)
 
-
     def resizeEvent(self, event):
         super().resizeEvent(event)
         fullrect = self.parent().rect()
-        margins = (
-            QMargins(
-                int(0.35 * fullrect.width()),
-                int(0.25 * fullrect.height()),
-                int(0.35 * fullrect.width()),
-                int(0.25 * fullrect.height())
-            )
+        margins = QMargins(
+            int(0.35 * fullrect.width()),
+            int(0.25 * fullrect.height()),
+            int(0.35 * fullrect.width()),
+            int(0.25 * fullrect.height()),
         )
         self.setGeometry(fullrect - margins)

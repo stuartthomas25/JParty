@@ -234,6 +234,7 @@ class DynamicButton(QPushButton, AutosizeWidget):
     def flags(self):
         return 0
 
+
 class DDWagerDialog(QDialog):
     def __init__(self, parent=None, max_wager=42):
         super().__init__(parent)
@@ -260,7 +261,6 @@ class DDWagerDialog(QDialog):
         self.truedd_button.clicked.connect(self.submit_predefined)
         buttons_layout.addWidget(self.truedd_button)
 
-
         # Submit button
         self.submit_button = QPushButton("Submit", self)
         self.submit_button.clicked.connect(self.submit)
@@ -271,8 +271,7 @@ class DDWagerDialog(QDialog):
         self.cancel_button.clicked.connect(self.reject)
         buttons_layout.addWidget(self.cancel_button)
 
-
-        layout.setContentsMargins(4,4,4,4)
+        layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(10)
         layout.addLayout(buttons_layout)
 
@@ -284,7 +283,9 @@ class DDWagerDialog(QDialog):
                 raise ValueError()
             self.accept()
         except ValueError:
-            self.label.setText(f"Please enter a whole number between 0 and {self.max_wager}")
+            self.label.setText(
+                f"Please enter a whole number between 0 and {self.max_wager}"
+            )
             self.label.setStyleSheet("color: red;")
 
     def submit_predefined(self):

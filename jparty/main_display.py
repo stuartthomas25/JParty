@@ -1,13 +1,15 @@
-from PyQt6.QtGui import QColor, QPalette, QGuiApplication, QPixmap, QPainter, QBrush, QIcon
+from PyQt6.QtGui import (
+    QColor,
+    QPalette,
+    QGuiApplication,
+    QPixmap,
+    QPainter,
+    QBrush,
+    QIcon,
+)
 from PyQt6.QtCore import QMargins, Qt, pyqtSignal, QSize, QPoint
 
-from PyQt6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton
-)
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
 
 from jparty.board_widget import BoardWidget
 from jparty.scoreboard import ScoreBoard, HostScoreBoard
@@ -171,6 +173,7 @@ class DisplayWindow(QMainWindow):
         self.show_welcome_widgets()
         self.scoreboard.refresh_players()
 
+
 class HostDisplayWindow(DisplayWindow):
     def __init__(self, game):
         self.settings_button = None
@@ -179,12 +182,14 @@ class HostDisplayWindow(DisplayWindow):
         self.settings_button = QPushButton("", self)
         self.settings_button.clicked.connect(self.show_settings)
         self.settings_button.setIcon(QIcon(resource_path("settings.png")))
-        self.settings_button.setStyleSheet("""
+        self.settings_button.setStyleSheet(
+            """
             QPushButton {
                 background: none;
                 border: none;
             }
-        """)
+        """
+        )
 
         self.show()
         self.resizeEvent(None)
@@ -211,10 +216,7 @@ class HostDisplayWindow(DisplayWindow):
         if self.settings_button is not None:
             size = self.borders.right.width()
 
-            self.settings_button.setGeometry(self.width() - size,
-                            0,
-                            size,
-                            size)
+            self.settings_button.setGeometry(self.width() - size, 0, size, size)
 
             self.settings_button.setIconSize(QSize(size, size))
 
@@ -236,7 +238,6 @@ class HostDisplayWindow(DisplayWindow):
 
     def show_settings_button(self, val):
         self.borders.show_settings_button(val)
-
 
     def show_settings(self):
         logging.info("Showing game settings")

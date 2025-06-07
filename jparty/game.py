@@ -170,6 +170,7 @@ class GameData:
     date: str
     comments: str
 
+
 class Game(QObject):
     buzz_trigger = pyqtSignal(int)
     new_player_trigger = pyqtSignal()
@@ -316,7 +317,6 @@ class Game(QObject):
 
         self.timer.start()
 
-
     def modify_players(self, val):
         self.modifying_players = val
         # self.host_display.scoreboard.show_close_buttons(val)
@@ -359,6 +359,7 @@ class Game(QObject):
         if all(q.complete for q in self.current_round.questions):
             logging.info("NEXT ROUND")
             self.keystroke_manager.activate("NEXT_ROUND")
+
     def index_of_current_round(self):
         return self.data.rounds.index(self.current_round)
 
@@ -366,8 +367,8 @@ class Game(QObject):
         logging.info("previous round")
         i = self.index_of_current_round()
         logging.info(f"ROUND {i}")
-        if i==0:
-            logging.error("Already at first round") # TODO better error catch maybe?
+        if i == 0:
+            logging.error("Already at first round")  # TODO better error catch maybe?
 
         if isinstance(self.current_round, FinalBoard):
             for player in self.players:
@@ -383,8 +384,8 @@ class Game(QObject):
         i = self.index_of_current_round()
         logging.info(f"ROUND {i}")
 
-        if i==len(self.data.rounds)-1:
-            logging.error("Already at final round") # TODO better error catch maybe?
+        if i == len(self.data.rounds) - 1:
+            logging.error("Already at final round")  # TODO better error catch maybe?
 
         self.current_round = self.data.rounds[i + 1]
         if isinstance(self.current_round, FinalBoard):
@@ -408,7 +409,7 @@ class Game(QObject):
         self.check_all_wagered()
 
     def check_all_wagered(self):
-        if all(p.wager is not None for p in self.players) and len(self.players)>0:
+        if all(p.wager is not None for p in self.players) and len(self.players) > 0:
             self.host_display.question_widget.hint_label.setText(
                 "Press space to show clue!"
             )
@@ -516,10 +517,7 @@ class Game(QObject):
         self.soliciting_player = False
 
         max_wager = max(self.answering_player.score, 1000)
-        wager_res = DDWagerDialog.getInt(
-            self.host_display,
-            max_wager
-        )
+        wager_res = DDWagerDialog.getInt(self.host_display, max_wager)
 
         if not wager_res[1]:
             self.soliciting_player = True
