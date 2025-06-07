@@ -13,7 +13,6 @@ from PyQt6.QtCore import Qt, QSize, pyqtSignal
 import qrcode
 import time
 from threading import Thread
-import threading
 import logging
 
 from jparty.version import version
@@ -56,6 +55,7 @@ class StartWidget(QWidget):
         super().__init__(parent)
         self.icon = QPixmap(resource_path("icon.png"))
         self.icon_label = DynamicLabel("", 0, self)
+        self.icon_label = QLabel(self)
 
         add_shadow(self, radius=0.2)
         self.setPalette(WINDOWPAL)
@@ -65,6 +65,9 @@ class StartWidget(QWidget):
         self.icon_layout.addWidget(self.icon_label)
         self.icon_layout.addStretch()
 
+        self.title_font = QFont()
+        self.title_font.setBold(True)
+
     def paintEvent(self, event):
         qp = QPainter()
         qp.begin(self)
@@ -72,7 +75,7 @@ class StartWidget(QWidget):
         qp.drawRect(self.rect())
 
     def resizeEvent(self, event):
-        icon_size = self.icon_label.height()
+        icon_size = int(self.height() * 0.2)
         self.icon_label.setPixmap(
             self.icon.scaled(
                 icon_size,
@@ -93,9 +96,6 @@ class Welcome(StartWidget):
 
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        self.title_font = QFont()
-        self.title_font.setBold(True)
 
         self.title_label = DynamicLabel("JParty!", lambda: self.height() * 0.1, self)
         self.title_label.setFont(self.title_font)
@@ -152,14 +152,19 @@ class Welcome(StartWidget):
         self.quit_button = DynamicButton("Quit", self)
         self.quit_button.clicked.connect(self.game.close)
 
-        self.help_button = DynamicButton("Show help", self)
+        self.help_button = DynamicButton("Help", self)
         self.help_button.clicked.connect(self.show_help)
+
+        # self.settings_button = DynamicButton("Settings", self)
+        # self.settings_button.clicked.connect(self.show_settings)
 
         footer_layout = QHBoxLayout()
         footer_layout.addStretch(5)
         footer_layout.addWidget(self.quit_button, 3)
         footer_layout.addStretch(1)
         footer_layout.addWidget(self.help_button, 3)
+        # footer_layout.addStretch(1)
+        # footer_layout.addWidget(self.settings_button, 3)
         footer_layout.addStretch(5)
 
         main_layout.addStretch(3)
@@ -191,6 +196,17 @@ class Welcome(StartWidget):
         )
         msgbox.exec()
 
+    def show_settings(self):
+        logging.info("Showing settings")
+        msgbox = QMessageBox(
+            QMessageBox.Icon.NoIcon,
+            "JParty settings",
+            "TODO: settings",
+            QMessageBox.StandardButton.Ok,
+            self,
+        )
+        msgbox.exec()
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
 
@@ -208,13 +224,12 @@ class Welcome(StartWidget):
                 try:
                     self.game.data = get_game(game_id)
                     break
-                except IncompleteException as e:
+                except IncompleteException:
                     logging.error("this game is complete")
                     time.sleep(0.25)
 
             self.gameid_trigger.emit(str(game_id))
             summary_string = self.game.data.date + "\n" + self.game.data.comments
-
 
         except Exception as e:
             logging.error(e)
@@ -235,7 +250,7 @@ class Welcome(StartWidget):
             game_data = get_game(game_id)
             summary_string = game_data.date + "\n" + game_data.comments
 
-        except IncompleteException as e:
+        except IncompleteException:
             game_data = None
             summary_string = "Game is incomplete"
 
@@ -249,8 +264,6 @@ class Welcome(StartWidget):
             self.game.data = game_data
             self.summary_trigger.emit(summary_string)
             self.check_start()
-
-
 
     def set_summary(self, text):
         self.summary_label.setText(text)
@@ -272,7 +285,8 @@ class Welcome(StartWidget):
             self.start_button.setEnabled(False)
 
     def restart(self):
-        self.load_game(self)
+        self.textbox.setText("")
+        self.summary_label.setText("")
 
 
 class QRWidget(StartWidget):
@@ -297,7 +311,7 @@ class QRWidget(StartWidget):
         self.url_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         main_layout.addStretch(1)
-        main_layout.addLayout(self.icon_layout, 5)
+        main_layout.addLayout(self.icon_layout, 6)
         main_layout.addWidget(self.hint_label, 2)
         main_layout.addWidget(self.qrlabel, 5)
         main_layout.addWidget(self.url_label, 2)
@@ -306,6 +320,7 @@ class QRWidget(StartWidget):
         self.setLayout(main_layout)
 
         self.show()
+        self.resizeEvent(None)
 
     def start_fontsize(self):
         return 0.1 * self.width()
