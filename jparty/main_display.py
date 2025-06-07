@@ -267,9 +267,9 @@ class HostDisplayWindow(DisplayWindow):
         self.settings_button.setVisible(False)
 
     def set_player_in_control(self, new_player):
-        for player in self.players:
+        for pw in self.scoreboard.player_widgets:
             # Remove glow around player widget
-            self.player_widget(player).setGraphicsEffect(None)
+            pw.setGraphicsEffect(None)
 
         if new_player is not None:
             # Add white glow around player widget with offset 0, 0
