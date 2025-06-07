@@ -205,6 +205,9 @@ var updater = {
                     set_max_wager(jsondata.text);
                     load_page("wager");
                     break;
+                case "BACK":
+                    load_page("buzz");
+                    break;
                 case "PROMPTANSWER":
                     load_page("answer");
                     break;

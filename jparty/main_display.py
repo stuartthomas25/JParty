@@ -1,12 +1,12 @@
-from PyQt6.QtGui import QColor, QPalette, QGuiApplication
-from PyQt6.QtCore import QMargins
-
-from PyQt6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
+from PyQt6.QtGui import (
+    QColor,
+    QPalette,
+    QGuiApplication,
+    QIcon,
 )
+from PyQt6.QtCore import QMargins, QSize
+
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
 
 from jparty.board_widget import BoardWidget
 from jparty.scoreboard import ScoreBoard, HostScoreBoard
@@ -19,8 +19,11 @@ from jparty.question_widget import (
     HostDailyDoubleWidget,
     HostFinalJeopardyWidget,
 )
+from jparty.settings import InGameSettingsDialog, PlayerSettingsDialog
 from jparty.final_display import FinalDisplay
 from jparty.welcome_widget import Welcome, QRWidget
+from jparty.utils import resource_path
+import logging
 
 
 class DisplayWindow(QMainWindow):
@@ -104,6 +107,7 @@ class DisplayWindow(QMainWindow):
         if self.final_display is not None:
             self.final_display.setGeometry(fullrect)
 
+    # TODO: combine these
     def show_welcome_widgets(self):
         self.welcome_widget.setVisible(True)
         self.welcome_widget.setDisabled(False)
@@ -114,10 +118,11 @@ class DisplayWindow(QMainWindow):
         self.welcome_widget.setDisabled(True)
 
     def hide_question(self):
-        self.board_widget.setVisible(True)
-        self.board_layout.replaceWidget(self.question_widget, self.board_widget)
-        self.question_widget.deleteLater()
-        self.question_widget = None
+        if self.question_widget is not None:
+            self.board_widget.setVisible(True)
+            self.board_layout.replaceWidget(self.question_widget, self.board_widget)
+            self.question_widget.deleteLater()
+            self.question_widget = None
 
     def load_question(self, q):
         self.question_widget = self.create_question_widget(q)
@@ -147,10 +152,20 @@ class DisplayWindow(QMainWindow):
             if label.question is q:
                 label.question = None
 
+    def close_final(self):
+        logging.info("close final")
+        self.board_widget.setVisible(True)
+        if self.question_widget is not None:
+            self.board_layout.replaceWidget(self.question_widget, self.board_widget)
+            self.question_widget.close()
+
+        if self.final_display is not None:
+            self.final_display.close()
+            self.final_display = None
+
     def restart(self):
         self.hide_question()
-        self.final_display.close()
-        self.final_display = None
+        self.close_final()
         self.board_widget.clear()
         self.show_welcome_widgets()
         self.scoreboard.refresh_players()
@@ -158,7 +173,24 @@ class DisplayWindow(QMainWindow):
 
 class HostDisplayWindow(DisplayWindow):
     def __init__(self, game):
+        self.settings_button = None
         super().__init__(game)
+
+        self.settings_button = QPushButton("", self)
+        self.settings_button.clicked.connect(self.show_settings)
+        self.settings_button.setIcon(QIcon(resource_path("settings.png")))
+        self.settings_button.setStyleSheet(
+            """
+            QPushButton {
+                background: none;
+                border: none;
+            }
+        """
+        )
+
+        self.show()
+        self.resizeEvent(None)
+        self.settings_button.setVisible(False)
 
     def host(self):
         return True
@@ -175,6 +207,16 @@ class HostDisplayWindow(DisplayWindow):
     def create_border_widget(self):
         return HostBorders(self)
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+
+        if self.settings_button is not None:
+            size = self.borders.right.width()
+
+            self.settings_button.setGeometry(self.width() - size, 0, size, size)
+
+            self.settings_button.setIconSize(QSize(size, size))
+
     def create_question_widget(self, q):
         if q.dd:
             return HostDailyDoubleWidget(q, self)
@@ -189,4 +231,30 @@ class HostDisplayWindow(DisplayWindow):
 
     def hide_welcome_widgets(self):
         super().hide_welcome_widgets()
-        self.scoreboard.hide_close_buttons()
+        self.scoreboard.show_close_buttons(False)
+
+    def show_settings_button(self, val):
+        self.borders.show_settings_button(val)
+
+    def show_settings(self):
+        logging.info("Showing game settings")
+        InGameSettingsDialog(self)
+        # settings = SettingsDialog(self)
+        # settings.exec()
+
+    def show_player_settings(self, player):
+        logging.info("Showing player game settings")
+        self.player_settings_widget = PlayerSettingsDialog(player, self)
+        self.player_settings_widget.show()
+
+    def restart(self):
+        super().restart()
+        self.settings_button.setVisible(False)
+
+    def hide_question(self):
+        super().hide_question()
+        self.settings_button.setVisible(True)
+
+    def load_question(self, q):
+        super().load_question(q)
+        self.settings_button.setVisible(False)
