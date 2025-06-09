@@ -22,7 +22,7 @@ from jparty.helpmsg import helpmsg
 from jparty.style import WINDOWPAL
 
 
-class Image(qrcode.image.base.BaseImage):
+class QRImage(qrcode.image.base.BaseImage):
     """QR code image widget"""
 
     def __init__(self, border, width, box_size):
@@ -105,7 +105,7 @@ class Welcome(StartWidget):
             f"version {version}", lambda: self.height() * 0.03
         )
         self.version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.version_label.setStyleSheet("QLabel { color : grey}")
+        self.version_label.setStyleSheet("color : grey;")
 
         select_layout = QHBoxLayout()
 
@@ -329,7 +329,7 @@ class QRWidget(StartWidget):
         super().resizeEvent(event)
         self.qrlabel.setPixmap(
             qrcode.make(
-                self.url, image_factory=Image, box_size=max(self.height() / 50, 1)
+                self.url, image_factory=QRImage, box_size=max(self.height() / 50, 1)
             ).pixmap()
         )
 

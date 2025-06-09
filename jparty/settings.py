@@ -1,5 +1,5 @@
 from PyQt6.QtGui import QPalette, QPainter, QBrush, QMovie
-from PyQt6.QtCore import Qt, QMargins
+from PyQt6.QtCore import Qt, QMargins, QSize
 from PyQt6.QtWidgets import (
     QDialog,
     QLabel,
@@ -23,6 +23,7 @@ Click on a player's podium for player settings
 class SettingsDialog(StartWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.game = parent.game
         add_shadow(self, radius=0.2)
         self.setPalette(WINDOWPAL)
@@ -96,51 +97,39 @@ class NewPlayersPopup(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Loading")
         self.setFixedSize(300, 200)
+        self.setStyleSheet("background-color: #d1d1fa;")
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
-        # Create layout
         layout = QVBoxLayout()
 
-        # Label for the message
-        message_label = QLabel("Accepting new players...")
-        message_label.setStyleSheet("font-size: 16px; text-align: center;")
+        message_label = QLabel("Accepting new players...", self)
+        # message_label.setStyleSheet("font-size: 16px; text-align: center;background: blue; border: none")
         message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(message_label)
+        layout.addWidget(message_label, 1)
 
-        # Spinning loading circle
-        spinner_label = QLabel()
-
-        spinner_label.setStyleSheet(
-            """
-            QPushButton {
-                background: red;
-                border: none;
-            }
-        """
-        )
+        spinner_label = QLabel(self)
+        # spinner_label.setStyleSheet("background: red; border: none")
         spinner_movie = QMovie(resource_path("loading.gif"))
         spinner_label.setMovie(spinner_movie)
+        spinner_movie.setScaledSize(QSize(70,70))
         spinner_movie.start()
         spinner_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(spinner_label)
+        # spinner_label.setFixedSize(300, 300)
+        layout.addWidget(spinner_label, 5)
 
-        # Cancel button
-        cancel_button = QPushButton("Done")
+        cancel_button = QPushButton("Done", self)
         cancel_button.clicked.connect(self.close)
-        layout.addWidget(cancel_button)
+        layout.addWidget(cancel_button,1)
 
-        # Set layout
         self.setLayout(layout)
         self.show()
 
     def close(self):
-        self.game.buzzer_controller.accepting_players = False
+        self.game.modify_players(False)
         super().close()
 
 
 class InGameSettingsDialog(SettingsDialog):
-    # TODO should be able to
-    # - skip rounds
-    # - reopen players
     contentMargin = 0.5
 
     def __init__(self, parent=None):
@@ -159,11 +148,13 @@ class InGameSettingsDialog(SettingsDialog):
 
         summary_string = self.game.data.date + "\n" + self.game.data.comments
         self.summary_label = QLabel(summary_string, self)
+        self.summary_label.setWordWrap(True)
         self.summary_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.summary_label, 2)
 
         self.help_label = QLabel(modify_players_help_text, self)
         self.help_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.help_label.setWordWrap(True)
         layout.addWidget(self.help_label, 2)
 
         self.next_button = QPushButton("Next round", self)
@@ -216,7 +207,7 @@ class InGameSettingsDialog(SettingsDialog):
     def allow_new_players(self):
         logging.info("allow new players")
         NewPlayersPopup(self)
-        self.game.buzzer_controller.accepting_players = True
+        self.game.modify_players(True)
 
     def disable_buttons(self):
         i = self.game.index_of_current_round()
