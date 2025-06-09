@@ -1,9 +1,10 @@
 from PyQt6.QtWidgets import QWidget, QGridLayout
 from PyQt6.QtGui import QPalette
-import time
-import threading
+from PyQt6.QtCore import QTimer
 import random
+import itertools
 import simpleaudio as sa
+from functools import partial
 
 from jparty.game import Board
 from jparty.style import MyLabel, CARDPAL, JBLUE, DARKBLUE
@@ -142,31 +143,32 @@ class BoardWidget(QWidget):
 
         category_delay = BEFORE_REVEAL_WAIT_TIME + 8 * QUESTION_REVEAL_TIME
 
+        question_cards_ix = list( itertools.product(range(Board.size[0]), range(1, Board.size[1]+1)) )
+        random.shuffle(question_cards_ix)
+
+        for (x,y) in question_cards_ix:
+            q = round.get_question(x, y - 1)
+            gl.itemAtPosition(y, x).widget().question = None
+            delay = random.randint(0, 5) * QUESTION_REVEAL_TIME + BEFORE_REVEAL_WAIT_TIME
+            QTimer.singleShot(delay, partial(self.set_question, x, y, q))
+
         for x in range(Board.size[0]):
-            for y in range(Board.size[1], -1, -1):
-                if y == 0:
-                    # Categories
-                    gl.itemAtPosition(y, x).widget().setText("")
-                    # threading.Thread(target=self.set_category, args=(x, y, round.categories[x], category_delay + x * CATEGORY_REVEAL_TIME)).start()
-                    self.set_category(x, y, round.categories[x], 0)
-                else:
-                    # Questions
-                    q = round.get_question(x, y - 1)
-                    gl.itemAtPosition(y, x).widget().question = None
-                    # threading.Thread(target=self.set_question, args=(x, y, q, random.randint(0, 5) * QUESTION_REVEAL_TIME + BEFORE_REVEAL_WAIT_TIME)).start()
-                    self.set_question(x, y, q, 0)
+            gl.itemAtPosition(y, x).widget().setText("")
+            delay = category_delay + x * CATEGORY_REVEAL_TIME
+            QTimer.singleShot(delay, partial(self.set_category, x, round.categories[x]))
 
     def resizeEvent(self, event):
         self.grid_layout.setSpacing(self.width() // 150)
 
-    def set_category(self, x, y, text, delay):
-        time.sleep(delay)
-        card = self.grid_layout.itemAtPosition(y, x).widget()
+    def set_category(self, x, text):
+        if not self.game.game_started():
+            return
+        card = self.grid_layout.itemAtPosition(0, x).widget()
         card.setText(text)
 
-    
-    def set_question(self, x, y, question, delay):
-        time.sleep(delay)
+    def set_question(self, x, y, question):
+        if not self.game.game_started():
+            return
         card = self.grid_layout.itemAtPosition(y, x).widget()
         card.question = question
 

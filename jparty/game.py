@@ -190,7 +190,6 @@ class Game(QObject):
         self.accepting_responses = False
         self.answering_player = None
         self.previous_answerer = None
-        self.modifying_players = False
         self.timer = None
         self.soliciting_player = False  # part of selecting who found a daily double
 
@@ -267,9 +266,9 @@ class Game(QObject):
 
     def start_game(self):
         self.current_round = self.data.rounds[0]
-        self.dc.hide_welcome_widgets()
+        self.dc.show_welcome_widgets(False)
         self.dc.board_widget.load_round(self.current_round)
-        self.buzzer_controller.accepting_players = False
+        self.modify_players(False)
         self.host_display.settings_button.show()
         self.song_player.stop()
 
@@ -288,9 +287,15 @@ class Game(QObject):
         self.host_display.borders.spacehints(val)
 
     def new_player(self):
+        new_players = set(self.buzzer_controller.connected_players) - set(self.players)
         self.players = self.buzzer_controller.connected_players
         self.dc.scoreboard.refresh_players()
-        self.host_display.welcome_widget.check_start()
+        if not self.game_started():
+            self.host_display.welcome_widget.check_start()
+        if self.is_final():
+            self.controller.open_wagers(new_players)
+
+
 
     def remove_player(self, player):
         self.players.remove(player)
@@ -315,9 +320,11 @@ class Game(QObject):
         self.timer.start()
 
     def modify_players(self, val):
-        self.modifying_players = val
-        # self.host_display.scoreboard.show_close_buttons(val)
         self.buzzer_controller.accepting_players = val
+        self.host_display.scoreboard.show_close_buttons(val)
+        self.main_display.show_welcome_widgets(val)
+        if val:
+            self.main_display.welcome_widget.show()
 
     def close_responses(self):
         self.timer.pause()
@@ -360,14 +367,17 @@ class Game(QObject):
     def index_of_current_round(self):
         return self.data.rounds.index(self.current_round)
 
+    def is_final(self):
+        return isinstance(self.current_round, FinalBoard)
+
     def prev_round(self):
         logging.info("previous round")
         i = self.index_of_current_round()
         logging.info(f"ROUND {i}")
         if i == 0:
-            logging.error("Already at first round")  # TODO better error catch maybe?
+            logging.error("Already at first round")
 
-        if isinstance(self.current_round, FinalBoard):
+        if self.is_final():
             for player in self.players:
                 self.dc.player_widget(player).set_lights(False)
             self.buzzer_controller.close_wagers()
@@ -383,10 +393,10 @@ class Game(QObject):
         logging.info(f"ROUND {i}")
 
         if i == len(self.data.rounds) - 1:
-            logging.error("Already at final round")  # TODO better error catch maybe?
+            logging.error("Already at final round")
 
         self.current_round = self.data.rounds[i + 1]
-        if isinstance(self.current_round, FinalBoard):
+        if self.is_final():
             self.host_display.set_player_in_control(None)
 
             self.dc.load_final(self.current_round.question)
@@ -510,6 +520,7 @@ class Game(QObject):
         self.timer = None
         self.data = None
         self.__judgement_round = 0
+        self.modify_players(True)
         self.dc.restart()
         self.begin_theme_song()
 

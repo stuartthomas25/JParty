@@ -114,15 +114,11 @@ class DisplayWindow(QMainWindow):
         if self.final_display is not None:
             self.final_display.setGeometry(fullrect)
 
-    # TODO: combine these
-    def show_welcome_widgets(self):
-        self.welcome_widget.setVisible(True)
-        self.welcome_widget.setDisabled(False)
-        self.welcome_widget.restart()
-
-    def hide_welcome_widgets(self):
-        self.welcome_widget.setVisible(False)
-        self.welcome_widget.setDisabled(True)
+    def show_welcome_widgets(self, val):
+        self.welcome_widget.setVisible(val)
+        self.welcome_widget.setEnabled(val)
+        if val:
+            self.welcome_widget.restart()
 
     def hide_question(self):
         if self.question_widget is not None:
@@ -174,7 +170,7 @@ class DisplayWindow(QMainWindow):
         self.hide_question()
         self.close_final()
         self.board_widget.clear()
-        self.show_welcome_widgets()
+        self.show_welcome_widgets(True)
         self.scoreboard.refresh_players()
 
 
@@ -244,10 +240,11 @@ class HostDisplayWindow(DisplayWindow):
         self.borders.show_settings_button(val)
 
     def show_settings(self):
+        if any(c.isVisible() for c in self.findChildren(InGameSettingsDialog)):
+            return
+
         logging.info("Showing game settings")
         InGameSettingsDialog(self)
-        # settings = SettingsDialog(self)
-        # settings.exec()
 
     def show_player_settings(self, player):
         logging.info("Showing player game settings")

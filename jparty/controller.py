@@ -173,7 +173,6 @@ class BuzzerController:
         for p in self.connected_players:
             p.waiter.close()
         self.connected_players = []
-        self.accepting_players = True
 
     def buzz(self, player):
         if self.game:
