@@ -153,7 +153,7 @@ class BoardWidget(QWidget):
             QTimer.singleShot(delay, partial(self.set_question, x, y, q))
 
         for x in range(Board.size[0]):
-            gl.itemAtPosition(y, x).widget().setText("")
+            gl.itemAtPosition(0, x).widget().setText("")
             delay = category_delay + x * CATEGORY_REVEAL_TIME
             QTimer.singleShot(delay, partial(self.set_category, x, round.categories[x]))
 
