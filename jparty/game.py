@@ -265,6 +265,7 @@ class Game(QObject):
         self.song_player.play(repeat=True)
 
     def start_game(self):
+        logging.info("starting game")
         self.current_round = self.data.rounds[0]
         self.dc.show_welcome_widgets(False)
         self.dc.board_widget.load_round(self.current_round)

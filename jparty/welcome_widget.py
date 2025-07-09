@@ -259,8 +259,8 @@ class Welcome(StartWidget):
             game_data = None
             summary_string = "Cannot get game"
 
-        # make sure the game is the one in the textbox
-        if self.textbox.text() == game_id:
+        # make sure the game is the one in the textbox and game hasn't started
+        if self.textbox.text() == game_id and not self.game.game_started():
             self.game.data = game_data
             self.summary_trigger.emit(summary_string)
             self.check_start()
