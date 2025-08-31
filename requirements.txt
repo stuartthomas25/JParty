@@ -1,4 +1,4 @@
-PyQt6==6.4.0
+PyQt6==6.6.0
 requests==2.31.0
 simpleaudio==1.0.4
 tornado==6.3.2
@@ -6,7 +6,7 @@ BeautifulSoup4==4.11.1
 pyinstaller==6.2.0
 qrcode==7.3.1
 pygame==2.5.2
-PyQt6-Qt6==6.4.3
-PyQt6-WebEngine-Qt6==6.6.1
+PyQt6-Qt6==6.6.0
+PyQt6-WebEngine-Qt6==6.6.0
 PyQt6-WebEngine==6.6.0
 websocket-client==1.7.0
