@@ -24,7 +24,7 @@ from jparty.constants import DEFAULT_CONFIG
 class NameLabel(MyLabel):
     name_aspect_ratio = 1.3422
 
-    def __init__(self, name, parent):
+    def __init__(self, name, parent, height=None):
         self.signature = None
         super().__init__("", self.startNameFontSize, parent)
 
@@ -37,6 +37,8 @@ class NameLabel(MyLabel):
 
         self.setGraphicsEffect(None)
         self.setAutosizeMargins(0.05)
+        if height is not None:
+            self.setFixedHeight(height)
 
     def startNameFontSize(self):
         return self.height() * 1

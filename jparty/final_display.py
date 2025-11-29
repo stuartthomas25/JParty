@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
 
 from jparty.scoreboard import NameLabel
 from jparty.style import MyLabel, CARDPAL
@@ -42,13 +42,14 @@ class FinalAnswerWidget(QWidget):
         self.show()
 
     def startFontSize(self):
-        return self.height() * 0.2
+        return 50
 
     def show_winner(self, winner):
         self.guess_label.setText("We have a winner!")
         self.wager_label.setText("")
-        self.winner_label = NameLabel(winner.name, self)
+        self.winner_label = NameLabel(winner.name, self, height=300)
         self.main_layout.replaceWidget(self.wager_label, self.winner_label)
+        self.setFixedHeight(400)
 
     def show_tie(self):
         self.guess_label.setText("We have a tie!")
