@@ -44,24 +44,13 @@ class NameLabel(MyLabel):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if self.signature is not None:
-            orig_w = self.signature.width()
-            orig_h = self.signature.height()
-            bleed_h = max(4, int(self.height() * 0.03))
-
-            # Scale pixmap to fill label width, preserve aspect ratio
-            target_w = self.width() + bleed_h * 2
-            aspect_ratio = orig_w / orig_h if orig_h else 1
-            target_h = int(target_w / aspect_ratio)
-
-            scaled = self.signature.scaled(
-                target_w,
-                target_h,
-                transformMode=Qt.TransformationMode.SmoothTransformation,
+            self.setPixmap(
+                self.signature.scaled(
+                    int(self.height() * NameLabel.name_aspect_ratio),
+                    self.height(),
+                    transformMode=Qt.TransformationMode.SmoothTransformation,
+                )
             )
-
-            self.setPixmap(scaled)
-            self.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-            self.setContentsMargins(-bleed_h, 0, -bleed_h, 0)
 
 
 class PlayerWidget(QWidget):
