@@ -256,6 +256,9 @@ class Game(QObject):
             "BACK_TO_BOARD", Qt.Key.Key_Space, self.back_to_board, self.spacehints
         )
         self.keystroke_manager.addEvent(
+            "PLAY_AUDIO", Qt.Key.Key_Space, self.play_audio, self.spacehints
+        )
+        self.keystroke_manager.addEvent(
             "OPEN_RESPONSES", Qt.Key.Key_Space, self.open_responses, self.spacehints
         )
         self.keystroke_manager.addEvent(
@@ -409,6 +412,10 @@ class Game(QObject):
 
     def valid_game(self):
         return self.data is not None and all(b.complete() for b in self.data.rounds)
+
+    def play_audio(self):
+        self.host_display.question_widget.play_video()
+        self.keystroke_manager.activate("OPEN_RESPONSES")
 
     def open_responses(self):
         self.dc.borders.lights(True)
@@ -711,15 +718,17 @@ class Game(QObject):
     def load_question(self, q):
         self.active_question = q
         self.keystroke_manager.activate("ADMIN_SKIP_QUESTION")
+        self.dc.load_question(q)
+        self.dc.remove_card(q)
         if q.dd:
             logging.info("Daily double!")
             wo = sa.WaveObject.from_wave_file(resource_path("dd.wav"))
             wo.play()
             self.soliciting_player = True
+        elif q.includes_audio:
+            self.keystroke_manager.activate("PLAY_AUDIO")
         else:
             self.keystroke_manager.activate("OPEN_RESPONSES")
-        self.dc.load_question(q)
-        self.dc.remove_card(q)
 
     def open_final(self):
         self.dc.question_widget.show_question()

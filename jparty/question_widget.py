@@ -136,6 +136,9 @@ class QuestionWidget(QWidget):
                     self.web_view.page().settings().setAttribute(
                         QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True
                     )
+                    self.web_view.page().settings().setAttribute(
+                        QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False
+                    )
 
                     if audio_only or parent.host():
                         self.web_view.setFixedHeight(self.height() * 5)
@@ -158,6 +161,11 @@ class QuestionWidget(QWidget):
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             logging.info(f"error: {exc_type}, {fname}:{exc_tb.tb_lineno}")
+    
+    def play_video(self):
+        if hasattr(self, 'web_view'):
+            self.web_view.page().runJavaScript("startVideo();")
+            print("Starting video via JavaScript")
 
     def hide_video(self):
         if hasattr(self, 'web_view'):
