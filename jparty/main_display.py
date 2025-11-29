@@ -154,6 +154,12 @@ class DisplayWindow(QMainWindow):
         self.board_widget.clear()
         self.show_welcome_widgets()
         self.scoreboard.refresh_players()
+    
+    def hide_player_kick_buttons(self):
+        print("DisplayWindow: hide_player_kick_buttons (do nothing)")
+
+    def show_player_kick_buttons(self):
+        print("DisplayWindow: show_player_kick_buttons (do nothing)")
 
 
 class HostDisplayWindow(DisplayWindow):
@@ -190,4 +196,12 @@ class HostDisplayWindow(DisplayWindow):
 
     def hide_welcome_widgets(self):
         super().hide_welcome_widgets()
+        self.hide_player_kick_buttons()
+    
+    def hide_player_kick_buttons(self):
+        print("HostDisplayWindow: hide_player_kick_buttons")
         self.scoreboard.hide_close_buttons()
+
+    def show_player_kick_buttons(self):
+        print("HostDisplayWindow: show_player_kick_buttons")
+        self.scoreboard.show_close_buttons()

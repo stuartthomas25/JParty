@@ -306,3 +306,8 @@ class HostScoreBoard(ScoreBoard):
         for pw in self.player_widgets:
             pw.remove_button.setVisible(False)
             pw.remove_button.setEnabled(False)
+    
+    def show_close_buttons(self):
+        for pw in self.player_widgets:
+            pw.remove_button.setVisible(True)
+            pw.remove_button.setEnabled(True)
