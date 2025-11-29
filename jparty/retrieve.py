@@ -32,7 +32,7 @@ def list_to_game(s):
                 image_link = process_values['image_link']
                 video_link = process_values['video_link']
 
-                questions.append(Question(index, text, answer, cat, image_link, video_link, None, value, dd))
+                questions.append(Question(index, text, answer, cat, image_link, video_link, False, None, value, dd))
 
         boards.append(Board(categories, questions, dj=(n1 == 14)))
 
@@ -49,7 +49,7 @@ def list_to_game(s):
 
     answer = fj[3]
     category = fj[1]
-    question = Question(index, text, answer, category, image_link, video_link)
+    question = Question(index, text, answer, category, image_link, video_link, False)
     boards.append(FinalBoard(category, question))
     date = fj[5]
     comments = fj[7]
@@ -153,7 +153,7 @@ def get_JArchive_Game(game_id, wayback_url=None):
             value = MONIES[i][index[1]]
             answer = findanswer(clue)
             questions.append(
-                Question(index, text, answer, categories[index[0]], image_link, None, None, value, dd)
+                Question(index, text, answer, categories[index[0]], image_link, None, False, None, value, dd)
             )
         boards.append(Board(categories, questions, dj=(i == 1)))
 

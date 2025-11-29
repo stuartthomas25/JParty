@@ -42,20 +42,20 @@ class QuestionWidget(QWidget):
         self.main_layout.setContentsMargins(0, 50, 0, 50)
 
         if question.video_link is not None:
-            logging.info(f"QUESTION HAS VIDEO, LOADING VIDEO: {question.video_link}")
-            self.load_video(parent, question.video_link)
+            logging.info(f"Question has video, loading video: {question.video_link}")
+            self.load_video(parent, question)
 
         elif question.image_link is not None:
-            logging.info(f"question has image: {question.image_link}")
+            logging.info(f"Question has image: {question.image_link}")
             if question.image_content is None:
                 try:
                     request = requests.get(question.image_link, timeout=1)
                     question.image_content = request.content
-                    logging.info(f"loaded image: {question.image_link}")
+                    logging.info(f"Loaded image: {question.image_link}")
                 except requests.exceptions.RequestException as e:
-                    logging.info(f"failed to load image: {question.image_link}")
+                    logging.info(f"Failed to load image: {question.image_link}")
             
-            logging.info(f"question has image content: {question.image_content}")
+            logging.info(f"Question has image content: {question.image_content}")
             if question.image_content is not None and b"html" in question.image_content.lower():
                 question.image_content = None
 
@@ -83,14 +83,14 @@ class QuestionWidget(QWidget):
         self.setPalette(CARDPAL)
         self.show()
 
-    def load_video(self, parent, video_link):
+    def load_video(self, parent, question):
         try:
             # --- Parse YouTube URL variants robustly ---
             video_url = None
             video_length = VIDEO_PLAY_TIME
             audio_only = False
 
-            u = urlparse(video_link)
+            u = urlparse(question.video_link)
             host = (u.hostname or "").lower()
             qs = parse_qs(u.query or "")
 
@@ -121,6 +121,7 @@ class QuestionWidget(QWidget):
                 a_val = (qs.get("a") or [None])[0]
                 if a_val == "1":
                     audio_only = True
+                    question.includes_audio = True
                     parts.append("a=1")
 
                 video_url = "&".join(parts)
@@ -149,8 +150,7 @@ class QuestionWidget(QWidget):
                     if not audio_only:
                         def end_video(main_layout, web_view, video_length):
                             time.sleep(video_length)
-                            main_layout.removeWidget(web_view)
-                            web_view.deleteLater()
+                            self.hide_video()
 
                         thread = threading.Thread(target=end_video, args=(self.main_layout, self.web_view, video_length,))
                         thread.start()
@@ -159,6 +159,11 @@ class QuestionWidget(QWidget):
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             logging.info(f"error: {exc_type}, {fname}:{exc_tb.tb_lineno}")
 
+    def hide_video(self):
+        if hasattr(self, 'web_view'):
+            self.main_layout.removeWidget(self.web_view)
+            self.web_view.deleteLater()
+            del self.web_view
 
     def startFontSize(self):
         return self.width() * 0.05

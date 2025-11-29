@@ -129,6 +129,7 @@ class Question:
     category: str
     image_link: str = None
     video_link: str = None
+    includes_audio: bool = False
     image_content: str = None
     value: int = -1
     dd: bool = False
@@ -417,7 +418,6 @@ class Game(QObject):
         # Set stats for players who buzzed early
         for player in self.players:
             if player.buzz_time is not None:
-                logging.info(f"GARRETT setting stats for early buzz")
                 time_elapsed = datetime.datetime.now() - player.buzz_time
                 self.dc.player_widget(player).update_stats(time_elapsed.total_seconds(), "early")
                 player.buzz_time = None
@@ -426,6 +426,9 @@ class Game(QObject):
             self.timer = QuestionTimer(QUESTIONTIME, self.stumped)
 
         self.timer.start()
+
+        if self.active_question.includes_audio:
+            self.host_display.question_widget.hide_video()
 
     def close_responses(self):
         self.timer.pause()

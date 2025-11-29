@@ -55,8 +55,12 @@
                 >
                 </iframe>
             </div>
+            <div id="click-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10;"></div>
         </div>
+        <script src="https://www.youtube.com/iframe_api"></script>
         <script>
+            var playerInstance;
+
             (function() {
                 // Get video id and timestamp int from url parameters
                 var urlParams = new URLSearchParams(window.location.search);
@@ -64,7 +68,7 @@
                 var timestamp = urlParams.get('t');
                 var audioOnly = urlParams.get('a');
 
-                var videoSource = "https://www.youtube.com/embed/" + videoId + "?&start=" + timestamp + "&disablekb=1";
+                var videoSource = "https://www.youtube.com/embed/" + videoId + "?&start=" + timestamp + "&disablekb=1&enablejsapi=1";
 
                 if (audioOnly) {
                     
@@ -76,6 +80,16 @@
                 var player = document.getElementById("ytplayer");
                 player.setAttribute("src", videoSource)
             })();
+
+            // Handle click on overlay to play video
+            document.getElementById('click-overlay').addEventListener('click', function() {
+                const iframe = document.getElementById("ytplayer").contentWindow;
+
+                iframe.postMessage(
+                JSON.stringify({ event: "command", func: "playVideo" }),
+                "*"
+                );
+            });
         </script>
     </body>
 </html>
