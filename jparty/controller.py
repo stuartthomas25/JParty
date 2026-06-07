@@ -30,6 +30,7 @@ class Application(tornado.web.Application):
             static_path=os.path.join(root, "buzzer", "static"),
             xsrf_cookies=False,
             websocket_ping_interval=0.19,
+            websocket_ping_timeout=0
         )
         super(Application, self).__init__(handlers, **settings)
         self.controller = controller
