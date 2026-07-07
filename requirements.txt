@@ -1,6 +1,6 @@
 --prefer-binary
 PyQt6==6.9.1
-requests==2.32.4
+requests==2.33.0
 simpleaudio==1.0.4
 tornado==6.5.1
 BeautifulSoup4==4.11.1
