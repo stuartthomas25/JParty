@@ -1,11 +1,9 @@
 from PyQt6.QtGui import QPainter, QBrush, QColor, QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, QTimer
 
 
 from jparty.utils import resource_path
-import time
-from threading import Thread, current_thread
 
 
 class Borders(object):
@@ -13,6 +11,10 @@ class Borders(object):
         super().__init__()
         self.left = self.create_widget(parent, -1)
         self.right = self.create_widget(parent, 1)
+        self.__flash_states = []
+        self.__flash_timer = QTimer(parent)
+        self.__flash_timer.setInterval(200)
+        self.__flash_timer.timeout.connect(self.__advance_flash)
 
     def __iter__(self):
         return iter([self.left, self.right])
@@ -20,16 +22,16 @@ class Borders(object):
     def create_widget(self, parent, d):
         return BorderWidget(parent, d)
 
-    def __flash(self):
-        self.lights(False)
-        time.sleep(0.2)
-        self.lights(True)
-        time.sleep(0.2)
-        self.lights(False)
-
     def flash(self):
-        self.__flash_thread = Thread(target=self.__flash, name="flash")
-        self.__flash_thread.start()
+        self.__flash_timer.stop()
+        self.lights(False)
+        self.__flash_states = [True, False]
+        self.__flash_timer.start()
+
+    def __advance_flash(self):
+        self.lights(self.__flash_states.pop(0))
+        if not self.__flash_states:
+            self.__flash_timer.stop()
 
     def lights(self, val):
         for b in self:
@@ -39,23 +41,34 @@ class Borders(object):
 class HostBorders(Borders):
     def __init__(self, parent):
         super().__init__(parent)
-        self.__active_thread = None
+        self.__hint_key = None
+        self.__hints_visible = False
+        self.__hint_timer = QTimer(parent)
+        self.__hint_timer.setInterval(500)
+        self.__hint_timer.timeout.connect(self.__toggle_hints)
 
     def create_widget(self, parent, d):
         return HostBorderWidget(parent, d)
 
-    def __flash_hints(self, key):
-        while self.__active_thread == current_thread():
-            for b in self:
-                b.show_hints(key)
-            time.sleep(0.5)
-            for b in self:
-                b.hide_hints(key)
-            time.sleep(0.5)
+    def __toggle_hints(self):
+        self.__hints_visible = not self.__hints_visible
+        for b in self:
+            if self.__hints_visible:
+                b.show_hints(self.__hint_key)
+            else:
+                b.hide_hints(self.__hint_key)
 
-    def buzz_hint(self):
-        self.__buzz_hint_thread = Thread(target=self.__buzz_hint, name="buzz_hint")
-        self.__buzz_hint_thread.start()
+    def __set_hints(self, key, val):
+        self.__hint_timer.stop()
+        if self.__hint_key is not None:
+            for b in self:
+                b.hide_hints(self.__hint_key)
+
+        self.__hint_key = key if val else None
+        self.__hints_visible = False
+        if val:
+            self.__toggle_hints()
+            self.__hint_timer.start()
 
     def show_settings_button(self, val):
         for b in self:
@@ -67,29 +80,12 @@ class HostBorders(Borders):
             b.update()
 
         if val:
-            self.__active_thread = Thread(
-                target=self.__flash_hints, args=("arrow",), name="arrow_hints"
-            )
-            self.__active_thread.start()
+            self.__set_hints("arrow", True)
         else:
-            self.__active_thread = None
-            for b in self:
-                b.hide_hints("arrow")
+            self.__set_hints("arrow", False)
 
     def spacehints(self, val):
-        if val:
-            self.__active_thread = Thread(
-                target=self.__flash_hints, args=("space",), name="space_hints"
-            )
-            self.__active_thread.start()
-        else:
-            self.__active_thread = None
-            for b in self:
-                b.hide_hints("space")
-
-    def closeEvent(self, event):
-        super().closeEvent(event)
-        self.__active_hint = None
+        self.__set_hints("space", val)
 
 
 class BorderWidget(QWidget):

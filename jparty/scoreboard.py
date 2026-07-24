@@ -1,9 +1,7 @@
 from PyQt6.QtGui import QPainter, QPixmap, QImage, QPalette, QColor, QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy, QPushButton
-from PyQt6.QtCore import Qt, QSize, QPoint
+from PyQt6.QtCore import Qt, QSize, QPoint, QTimer
 
-import time
-from threading import Thread
 from base64 import urlsafe_b64decode
 from functools import partial
 
@@ -51,9 +49,15 @@ class PlayerWidget(QWidget):
         super().__init__(parent)
         self.player = player
         self.game = game
-        self.__buzz_hint_thread = None
-        self.__flash_thread = None
-        self.__light_thread = None
+        self.__light_index = 0
+
+        self.__buzz_hint_timer = QTimer(self)
+        self.__buzz_hint_timer.setSingleShot(True)
+        self.__buzz_hint_timer.timeout.connect(lambda: self.set_lights(False))
+
+        self.__light_timer = QTimer(self)
+        self.__light_timer.setInterval(1000)
+        self.__light_timer.timeout.connect(self.__advance_lights)
 
         self.name_label = NameLabel(player.name, self)
         self.score_label = MyLabel("$0", self.startScoreFontSize, self)
@@ -101,14 +105,10 @@ class PlayerWidget(QWidget):
         self.background = self.active_background if val else self.main_background
         self.update()
 
-    def __buzz_hint(self):
-        self.set_lights(True)
-        time.sleep(0.25)
-        self.set_lights(False)
-
     def buzz_hint(self):
-        self.__buzz_hint_thread = Thread(target=self.__buzz_hint, name="buzz_hint")
-        self.__buzz_hint_thread.start()
+        self.__buzz_hint_timer.stop()
+        self.set_lights(True)
+        self.__buzz_hint_timer.start(250)
 
     def update_score(self):
         score = self.player.score
@@ -122,23 +122,23 @@ class PlayerWidget(QWidget):
         self.score_label.setText(f"{score:,}")
 
     def run_lights(self):
-        self.__light_thread = Thread(target=self.__lights, name="lights")
-        self.__light_thread.start()
+        self.__light_timer.stop()
+        self.__light_index = 0
+        self.__advance_lights()
+        self.__light_timer.start()
 
     def stop_lights(self):
-        self.__light_thread = None
+        self.__light_timer.stop()
         self.set_lights(False)
-        self.update()
 
-    def __lights(self):
-        for img in self.lights_backgrounds:
-            self.background = img
-            self.update()
-            time.sleep(1.0)
-            if self.__light_thread is None:  # provide stopability
-                return None
+    def __advance_lights(self):
+        if self.__light_index >= len(self.lights_backgrounds):
+            self.__light_timer.stop()
+            self.set_lights(True)
+            return
 
-        self.set_lights(True)
+        self.background = self.lights_backgrounds[self.__light_index]
+        self.__light_index += 1
         self.update()
 
     def mousePressEvent(self, event):
